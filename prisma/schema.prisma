@@ -2,13 +2,13 @@
 // Banco: PostgreSQL via Supabase
 
 generator client {
-  provider        = "prisma-client-js"
-  previewFeatures = ["postgresqlExtensions"]
+  provider = "prisma-client-js"
 }
 
 datasource db {
-  provider   = "postgresql"
-  extensions = [vector]
+  provider          = "postgresql"
+  url               = env("DATABASE_URL")
+  directUrl         = env("DIRECT_URL")
 }
 
 model User {
@@ -112,11 +112,6 @@ model Item {
   encryptedPassword String?
   encryptedNotes    String?
   passwordStrength  String? // weak | medium | strong
-
-  // IA (busca semântica futura)
-  embedding Unsupported("vector(1536)")?
-  aiTags    String[] @default([])
-  aiSummary String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

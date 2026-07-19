@@ -265,3 +265,115 @@ body {
   30%       { transform: rotate(5deg)  translateY(-4px); }
   60%       { transform: rotate(-3deg) translateY(2px); }
 }
+
+/* ============================================================
+   PROSE-VAULT — Editor de notas typography
+   ============================================================ */
+
+.prose-vault {
+  color: var(--foreground);
+  font-size: 0.9375rem;      /* 15px */
+  line-height: 1.75;
+  caret-color: var(--primary);
+}
+
+/* Placeholder via CSS (contenteditable empty state) */
+.prose-vault:empty::before,
+.prose-vault > :only-child:is(br):before {
+  content: attr(data-placeholder);
+  color: var(--foreground-subtle);
+  pointer-events: none;
+}
+
+/* Headings */
+.prose-vault h1 {
+  font-size: 2rem;
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: -0.025em;
+  color: var(--foreground);
+  margin-top: 1.75rem;
+  margin-bottom: 0.5rem;
+}
+.prose-vault h2 {
+  font-size: 1.4rem;
+  font-weight: 600;
+  line-height: 1.3;
+  letter-spacing: -0.015em;
+  color: var(--foreground);
+  margin-top: 1.5rem;
+  margin-bottom: 0.4rem;
+}
+.prose-vault h3 {
+  font-size: 1.15rem;
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--foreground);
+  margin-top: 1.25rem;
+  margin-bottom: 0.3rem;
+}
+
+/* Paragraph */
+.prose-vault p {
+  margin-top: 0;
+  margin-bottom: 0.75rem;
+  color: var(--foreground-muted);
+}
+
+/* Links */
+.prose-vault a {
+  color: var(--primary);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-color: rgba(124, 58, 237, 0.35);
+  transition: text-decoration-color 0.15s;
+}
+.prose-vault a:hover {
+  text-decoration-color: var(--primary);
+}
+
+/* Strong / Em */
+.prose-vault strong, .prose-vault b { font-weight: 600; color: var(--foreground); }
+.prose-vault em, .prose-vault i { font-style: italic; }
+.prose-vault s { text-decoration: line-through; color: var(--foreground-subtle); }
+.prose-vault u { text-decoration: underline; text-underline-offset: 3px; }
+
+/* Inline code */
+.prose-vault code {
+  font-family: 'JetBrains Mono', Menlo, Consolas, monospace;
+  font-size: 0.85em;
+  background: var(--background-elevated);
+  border: 1px solid var(--border-strong);
+  border-radius: 5px;
+  padding: 0.1em 0.4em;
+  color: var(--primary);
+}
+
+/* Blockquote */
+.prose-vault blockquote {
+  border-left: 3px solid var(--primary);
+  margin: 1rem 0;
+  padding: 0.5rem 0 0.5rem 1.25rem;
+  color: var(--foreground-muted);
+  font-style: italic;
+  background: var(--gradient-brand-soft);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+}
+
+/* Lists */
+.prose-vault ul, .prose-vault ol {
+  margin: 0.5rem 0 0.75rem;
+  padding-left: 1.5rem;
+  color: var(--foreground-muted);
+}
+.prose-vault ul { list-style-type: disc; }
+.prose-vault ol { list-style-type: decimal; }
+.prose-vault li { margin-bottom: 0.25rem; }
+.prose-vault li::marker { color: var(--primary); }
+
+/* Horizontal rule */
+.prose-vault hr {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 1.5rem 0;
+}

@@ -127,3 +127,14 @@ export async function purgeExpiredTrash() {
     where: { isDeleted: true, deletedAt: { lt: cutoff } },
   });
 }
+
+/**
+ * Lista todos os itens não deletados e não arquivados de um usuário.
+ * Usado pelos Server Components para hidratar o store Zustand.
+ */
+export async function listAllItems(userId: string) {
+  return db.item.findMany({
+    where: { userId, isDeleted: false },
+    orderBy: { updatedAt: "desc" },
+  });
+}

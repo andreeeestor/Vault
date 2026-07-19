@@ -6,7 +6,12 @@ import { mapFolder, mapItem } from "@/lib/mappers";
 import { VaultStoreHydrator } from "@/components/vault/vault-store-hydrator";
 import { VaultFolderView } from "@/components/vault/vault-folder-view";
 
-export default async function VaultRootPage() {
+export default async function FolderPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = await params;
   const session = await auth();
   if (!session?.user?.id) redirect("/login");
 
@@ -20,14 +25,14 @@ export default async function VaultRootPage() {
   const folders = rawFolders.map(mapFolder);
   const items = rawItems.map(mapItem);
 
-  // Encontrar id da pasta raiz (isRoot = true)
-  const rootFolder = folders.find((f) => f.isRoot);
-  const rootId = rootFolder?.id ?? "root";
+  // Verificar se pasta pertence ao usuário
+  const folder = folders.find((f) => f.id === id);
+  if (!folder) redirect("/vault");
 
   return (
     <>
       <VaultStoreHydrator folders={folders} items={items} />
-      <VaultFolderView folderId={rootId} />
+      <VaultFolderView folderId={id} />
     </>
   );
 }

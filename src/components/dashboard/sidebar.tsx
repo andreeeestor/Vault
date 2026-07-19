@@ -1,10 +1,15 @@
 import { FolderTree } from "@/components/vault/folder-tree";
 import { StorageBar } from "./storage-bar";
-import { MOCK_STORAGE, MOCK_USER } from "@/lib/mock-data";
 import { ShieldCheck } from "lucide-react";
+import type { StorageUsage } from "@/types";
 
-export function Sidebar() {
-  const initials = MOCK_USER.name
+interface SidebarProps {
+  user: { name: string; email: string; image: string | null };
+  storage: StorageUsage;
+}
+
+export function Sidebar({ user, storage }: SidebarProps) {
+  const initials = user.name
     .split(" ")
     .map((p) => p[0])
     .slice(0, 2)
@@ -28,11 +33,16 @@ export function Sidebar() {
           className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-semibold text-white"
           style={{ background: "var(--gradient-brand)" }}
         >
-          {initials}
+          {user.image ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={user.image} alt={user.name} className="h-8 w-8 rounded-full object-cover" />
+          ) : (
+            initials
+          )}
         </div>
         <div className="min-w-0">
-          <p className="truncate text-sm font-medium text-[var(--foreground)]">{MOCK_USER.name}</p>
-          <p className="truncate text-xs text-[var(--foreground-subtle)]">{MOCK_USER.email}</p>
+          <p className="truncate text-sm font-medium text-[var(--foreground)]">{user.name}</p>
+          <p className="truncate text-xs text-[var(--foreground-subtle)]">{user.email}</p>
         </div>
       </div>
 
@@ -41,7 +51,7 @@ export function Sidebar() {
       </div>
 
       <div className="p-3">
-        <StorageBar used={MOCK_STORAGE.used} limit={MOCK_STORAGE.limit} plan={MOCK_STORAGE.plan} />
+        <StorageBar used={storage.used} limit={storage.limit} plan={storage.plan} />
       </div>
     </aside>
   );

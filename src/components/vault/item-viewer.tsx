@@ -5,6 +5,7 @@ import { ZoomIn, ZoomOut, ExternalLink } from "lucide-react";
 import type { VaultItem } from "@/types";
 import { PasswordField } from "./password-item";
 import { SnippetEditor } from "./snippet-editor";
+import { NoteEditor } from "./note-editor";
 import { cn } from "@/lib/utils";
 
 export function ItemViewer({ item }: { item: VaultItem }) {
@@ -16,7 +17,7 @@ export function ItemViewer({ item }: { item: VaultItem }) {
     case "AUDIO":
       return <AudioViewer item={item} />;
     case "NOTE":
-      return <NoteViewer item={item} />;
+      return <NoteEditor item={item} />;
     case "SNIPPET":
       return <SnippetEditor item={item} />;
     case "LINK":
@@ -117,43 +118,6 @@ function WaveformIcon() {
         />
       ))}
     </div>
-  );
-}
-
-function NoteViewer({ item }: { item: VaultItem }) {
-  return (
-    <div className="mx-auto h-full w-full max-w-2xl overflow-y-auto p-8">
-      <article className="prose-vault">
-        {(item.noteContent ?? "").split("\n").map((line, i) => (
-          <MarkdownLine key={i} line={line} />
-        ))}
-      </article>
-    </div>
-  );
-}
-
-function MarkdownLine({ line }: { line: string }) {
-  if (line.startsWith("# "))
-    return (
-      <h1 className="text-display mb-3 mt-1 text-2xl font-bold text-[var(--foreground)]">
-        {line.slice(2)}
-      </h1>
-    );
-  if (line.startsWith("## "))
-    return (
-      <h2 className="text-heading mb-2 mt-4 text-xl font-semibold text-[var(--foreground)]">
-        {line.slice(3)}
-      </h2>
-    );
-  if (line.startsWith("- "))
-    return (
-      <li className="text-body ml-4 text-sm text-[var(--foreground-muted)]">
-        {line.slice(2)}
-      </li>
-    );
-  if (line.trim() === "") return <div className="h-2" />;
-  return (
-    <p className="text-body text-sm text-[var(--foreground-muted)]">{line}</p>
   );
 }
 

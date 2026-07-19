@@ -8,7 +8,6 @@ import type {
   VaultItem,
   ViewMode,
 } from "@/types";
-import { MOCK_FOLDERS, MOCK_ITEMS } from "@/lib/mock-data";
 
 interface DragState {
   isDragging: boolean;
@@ -71,8 +70,8 @@ function folderChildren(folders: Folder[], parentId: string): Folder[] {
 }
 
 export const useVaultStore = create<VaultState>((set, get) => ({
-  folders: MOCK_FOLDERS,
-  items: MOCK_ITEMS,
+  folders: [],
+  items: [],
 
   currentFolderId: "root",
   viewMode: "grid",

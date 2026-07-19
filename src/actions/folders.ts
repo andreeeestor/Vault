@@ -74,5 +74,8 @@ export async function listFolderTree(userId: string) {
   return db.folder.findMany({
     where: { userId },
     orderBy: { order: "asc" },
+    include: {
+      _count: { select: { items: true, children: true } },
+    },
   });
 }

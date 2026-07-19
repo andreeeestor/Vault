@@ -6,8 +6,7 @@ import bcrypt from "bcryptjs";
 import { db } from "@/lib/db";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
-  // MOCK: Comentado para não exigir conexão com o banco de dados
-  // adapter: PrismaAdapter(db),
+  adapter: PrismaAdapter(db),
   session: { strategy: "jwt" },
   pages: {
     signIn: "/login",
@@ -24,15 +23,6 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         password: { label: "Senha", type: "password" },
       },
       authorize: async (credentials) => {
-        // MOCK: Login liberado para qualquer credencial para visualizar a interface
-        return { 
-          id: "mock-user-id", 
-          name: "Usuário de Teste", 
-          email: "teste@vault.com", 
-          image: "https://github.com/shadcn.png" 
-        };
-
-        /* Código real comentado:
         const email = credentials?.email as string | undefined;
         const password = credentials?.password as string | undefined;
         if (!email || !password) return null;
@@ -44,16 +34,41 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         if (!valid) return null;
 
         return { id: user.id, name: user.name, email: user.email, image: user.image };
-        */
       },
     }),
   ],
   callbacks: {
+    jwt: async ({ token, user }) => {
+      if (user?.id) token.sub = user.id;
+      return token;
+    },
     session: async ({ session, token }) => {
       if (session.user && token.sub) {
         session.user.id = token.sub;
       }
       return session;
+    },
+  },
+  events: {
+    // Quando usuário faz login via Google pela primeira vez,
+    // criar pasta raiz se não existir
+    createUser: async ({ user }) => {
+      if (!user.id) return;
+      const existing = await db.folder.findFirst({
+        where: { userId: user.id, isRoot: true },
+      });
+      if (!existing) {
+        await db.folder.create({
+          data: {
+            userId: user.id,
+            name: "Meu Vault",
+            isRoot: true,
+            color: "violet",
+            icon: "folder",
+            order: 0,
+          },
+        });
+      }
     },
   },
 });

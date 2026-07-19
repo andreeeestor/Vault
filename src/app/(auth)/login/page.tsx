@@ -37,7 +37,11 @@ export default function LoginPage() {
         </p>
       </div>
 
-      <button className="flex h-10 items-center justify-center gap-2 rounded-[var(--radius-md)] border border-[var(--border-strong)] bg-[var(--surface)] text-sm font-medium text-[var(--foreground)] transition-colors hover:bg-[var(--surface-hover)]">
+      <button
+        type="button"
+        onClick={() => signIn("google", { callbackUrl: "/vault" })}
+        className="flex h-10 items-center justify-center gap-2 rounded-[var(--radius-md)] border border-[var(--border-strong)] bg-[var(--surface)] text-sm font-medium text-[var(--foreground)] transition-colors hover:bg-[var(--surface-hover)]"
+      >
         <GoogleIcon /> Continuar com Google
       </button>
 
