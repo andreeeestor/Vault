@@ -4,6 +4,7 @@ import { useState } from "react";
 import { ZoomIn, ZoomOut, ExternalLink } from "lucide-react";
 import type { VaultItem } from "@/types";
 import { PasswordField } from "./password-item";
+import { SnippetEditor } from "./snippet-editor";
 import { cn } from "@/lib/utils";
 
 export function ItemViewer({ item }: { item: VaultItem }) {
@@ -17,7 +18,7 @@ export function ItemViewer({ item }: { item: VaultItem }) {
     case "NOTE":
       return <NoteViewer item={item} />;
     case "SNIPPET":
-      return <SnippetViewer item={item} />;
+      return <SnippetEditor item={item} />;
     case "LINK":
       return <LinkViewer item={item} />;
     case "PASSWORD":
@@ -69,7 +70,11 @@ function PdfViewer({ item }: { item: VaultItem }) {
   return (
     <div className="flex h-full flex-col bg-[#0C0A0F]">
       {item.url ? (
-        <iframe src={item.url} title={item.title} className="h-full w-full border-0" />
+        <iframe
+          src={item.url}
+          title={item.title}
+          className="h-full w-full border-0"
+        />
       ) : (
         <div className="flex flex-1 items-center justify-center text-sm text-[var(--foreground-subtle)]">
           Documento indisponível
@@ -88,7 +93,9 @@ function AudioViewer({ item }: { item: VaultItem }) {
       >
         <WaveformIcon />
       </div>
-      <p className="text-heading text-lg font-medium text-[var(--foreground)]">{item.title}</p>
+      <p className="text-heading text-lg font-medium text-[var(--foreground)]">
+        {item.title}
+      </p>
       {item.url && (
         <audio controls src={item.url} className="w-full max-w-md">
           <track kind="captions" />
@@ -127,25 +134,26 @@ function NoteViewer({ item }: { item: VaultItem }) {
 
 function MarkdownLine({ line }: { line: string }) {
   if (line.startsWith("# "))
-    return <h1 className="text-display mb-3 mt-1 text-2xl font-bold text-[var(--foreground)]">{line.slice(2)}</h1>;
+    return (
+      <h1 className="text-display mb-3 mt-1 text-2xl font-bold text-[var(--foreground)]">
+        {line.slice(2)}
+      </h1>
+    );
   if (line.startsWith("## "))
-    return <h2 className="text-heading mb-2 mt-4 text-xl font-semibold text-[var(--foreground)]">{line.slice(3)}</h2>;
+    return (
+      <h2 className="text-heading mb-2 mt-4 text-xl font-semibold text-[var(--foreground)]">
+        {line.slice(3)}
+      </h2>
+    );
   if (line.startsWith("- "))
-    return <li className="text-body ml-4 text-sm text-[var(--foreground-muted)]">{line.slice(2)}</li>;
+    return (
+      <li className="text-body ml-4 text-sm text-[var(--foreground-muted)]">
+        {line.slice(2)}
+      </li>
+    );
   if (line.trim() === "") return <div className="h-2" />;
-  return <p className="text-body text-sm text-[var(--foreground-muted)]">{line}</p>;
-}
-
-function SnippetViewer({ item }: { item: VaultItem }) {
   return (
-    <div className="flex h-full flex-col bg-[#0C0A0F]">
-      <div className="flex items-center justify-between border-b border-white/10 px-4 py-2">
-        <span className="text-xs font-medium text-violet-300">{item.codeLanguage}</span>
-      </div>
-      <pre className="flex-1 overflow-auto p-6 text-sm leading-relaxed text-violet-100">
-        <code>{item.codeContent}</code>
-      </pre>
-    </div>
+    <p className="text-body text-sm text-[var(--foreground-muted)]">{line}</p>
   );
 }
 
@@ -157,12 +165,16 @@ function LinkViewer({ item }: { item: VaultItem }) {
         target="_blank"
         rel="noopener noreferrer"
         className={cn(
-          "group flex flex-col overflow-hidden rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface)] shadow-[var(--shadow-sm)] transition-shadow hover:shadow-[var(--shadow-md)]"
+          "group flex flex-col overflow-hidden rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface)] shadow-[var(--shadow-sm)] transition-shadow hover:shadow-[var(--shadow-md)]",
         )}
       >
         {item.linkOgImage && (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={item.linkOgImage} alt={item.title} className="h-48 w-full object-cover" />
+          <img
+            src={item.linkOgImage}
+            alt={item.title}
+            className="h-48 w-full object-cover"
+          />
         )}
         <div className="flex flex-col gap-1.5 p-4">
           <div className="flex items-center justify-between">
@@ -172,9 +184,13 @@ function LinkViewer({ item }: { item: VaultItem }) {
             <ExternalLink className="h-4 w-4 shrink-0 text-[var(--foreground-subtle)] transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
           </div>
           {item.linkOgDescription && (
-            <p className="text-body text-sm text-[var(--foreground-muted)]">{item.linkOgDescription}</p>
+            <p className="text-body text-sm text-[var(--foreground-muted)]">
+              {item.linkOgDescription}
+            </p>
           )}
-          <span className="text-caption truncate text-xs text-[var(--foreground-subtle)]">{item.url}</span>
+          <span className="text-caption truncate text-xs text-[var(--foreground-subtle)]">
+            {item.url}
+          </span>
         </div>
       </a>
     </div>

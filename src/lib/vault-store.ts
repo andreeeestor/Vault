@@ -1,7 +1,13 @@
 "use client";
 
 import { create } from "zustand";
-import type { Folder, SortDirection, SortField, VaultItem, ViewMode } from "@/types";
+import type {
+  Folder,
+  SortDirection,
+  SortField,
+  VaultItem,
+  ViewMode,
+} from "@/types";
 import { MOCK_FOLDERS, MOCK_ITEMS } from "@/lib/mock-data";
 
 interface DragState {
@@ -42,10 +48,15 @@ interface VaultState {
   // CRUD básico (client-side, otimista — plugar em server actions depois)
   createFolder: (name: string, parentId: string) => Folder;
   renameEntity: (id: string, name: string, kind: "item" | "folder") => void;
+  updateItem: (id: string, patch: Partial<VaultItem>) => void;
   toggleFavorite: (id: string) => void;
   toggleArchive: (id: string) => void;
   softDelete: (ids: string[]) => void;
-  moveEntities: (itemIds: string[], folderIds: string[], destinationFolderId: string) => void;
+  moveEntities: (
+    itemIds: string[],
+    folderIds: string[],
+    destinationFolderId: string,
+  ) => void;
 
   // drag & drop
   startDrag: (ids: string[], kind: "item" | "folder") => void;
@@ -54,7 +65,9 @@ interface VaultState {
 }
 
 function folderChildren(folders: Folder[], parentId: string): Folder[] {
-  return folders.filter((f) => f.parentId === parentId).sort((a, b) => a.order - b.order);
+  return folders
+    .filter((f) => f.parentId === parentId)
+    .sort((a, b) => a.order - b.order);
 }
 
 export const useVaultStore = create<VaultState>((set, get) => ({
@@ -69,9 +82,15 @@ export const useVaultStore = create<VaultState>((set, get) => ({
   selectedIds: new Set(),
   lastSelectedId: null,
 
-  drag: { isDragging: false, draggedIds: [], draggedKind: null, hoveredDropTargetId: null },
+  drag: {
+    isDragging: false,
+    draggedIds: [],
+    draggedKind: null,
+    hoveredDropTargetId: null,
+  },
 
-  setCurrentFolder: (id) => set({ currentFolderId: id, selectedIds: new Set(), lastSelectedId: null }),
+  setCurrentFolder: (id) =>
+    set({ currentFolderId: id, selectedIds: new Set(), lastSelectedId: null }),
 
   setViewMode: (mode) => set({ viewMode: mode }),
 
@@ -79,7 +98,11 @@ export const useVaultStore = create<VaultState>((set, get) => ({
     set((state) => ({
       sortField: field,
       sortDirection:
-        state.sortField === field ? (state.sortDirection === "asc" ? "desc" : "asc") : "asc",
+        state.sortField === field
+          ? state.sortDirection === "asc"
+            ? "desc"
+            : "asc"
+          : "asc",
     })),
 
   selectOnly: (id) => set({ selectedIds: new Set([id]), lastSelectedId: id }),
@@ -97,7 +120,8 @@ export const useVaultStore = create<VaultState>((set, get) => ({
       const anchor = state.lastSelectedId ?? id;
       const from = orderedIds.indexOf(anchor);
       const to = orderedIds.indexOf(id);
-      if (from === -1 || to === -1) return { selectedIds: new Set([id]), lastSelectedId: id };
+      if (from === -1 || to === -1)
+        return { selectedIds: new Set([id]), lastSelectedId: id };
       const [start, end] = from < to ? [from, to] : [to, from];
       const range = orderedIds.slice(start, end + 1);
       return { selectedIds: new Set(range), lastSelectedId: id };
@@ -130,24 +154,45 @@ export const useVaultStore = create<VaultState>((set, get) => ({
   renameEntity: (id, name, kind) =>
     set((state) =>
       kind === "folder"
-        ? { folders: state.folders.map((f) => (f.id === id ? { ...f, name, updatedAt: new Date() } : f)) }
-        : { items: state.items.map((i) => (i.id === id ? { ...i, title: name, updatedAt: new Date() } : i)) }
+        ? {
+            folders: state.folders.map((f) =>
+              f.id === id ? { ...f, name, updatedAt: new Date() } : f,
+            ),
+          }
+        : {
+            items: state.items.map((i) =>
+              i.id === id ? { ...i, title: name, updatedAt: new Date() } : i,
+            ),
+          },
     ),
+
+  updateItem: (id, patch) =>
+    set((state) => ({
+      items: state.items.map((i) =>
+        i.id === id ? { ...i, ...patch, updatedAt: new Date() } : i,
+      ),
+    })),
 
   toggleFavorite: (id) =>
     set((state) => ({
-      items: state.items.map((i) => (i.id === id ? { ...i, isFavorite: !i.isFavorite } : i)),
+      items: state.items.map((i) =>
+        i.id === id ? { ...i, isFavorite: !i.isFavorite } : i,
+      ),
     })),
 
   toggleArchive: (id) =>
     set((state) => ({
-      items: state.items.map((i) => (i.id === id ? { ...i, isArchived: !i.isArchived } : i)),
+      items: state.items.map((i) =>
+        i.id === id ? { ...i, isArchived: !i.isArchived } : i,
+      ),
     })),
 
   softDelete: (ids) =>
     set((state) => ({
       items: state.items.map((i) =>
-        ids.includes(i.id) ? { ...i, isDeleted: true, deletedAt: new Date() } : i
+        ids.includes(i.id)
+          ? { ...i, isDeleted: true, deletedAt: new Date() }
+          : i,
       ),
       selectedIds: new Set(),
     })),
@@ -155,22 +200,46 @@ export const useVaultStore = create<VaultState>((set, get) => ({
   moveEntities: (itemIds, folderIds, destinationFolderId) =>
     set((state) => ({
       items: state.items.map((i) =>
-        itemIds.includes(i.id) ? { ...i, folderId: destinationFolderId, updatedAt: new Date() } : i
+        itemIds.includes(i.id)
+          ? { ...i, folderId: destinationFolderId, updatedAt: new Date() }
+          : i,
       ),
       folders: state.folders.map((f) =>
-        folderIds.includes(f.id) ? { ...f, parentId: destinationFolderId, updatedAt: new Date() } : f
+        folderIds.includes(f.id)
+          ? { ...f, parentId: destinationFolderId, updatedAt: new Date() }
+          : f,
       ),
       selectedIds: new Set(),
-      drag: { isDragging: false, draggedIds: [], draggedKind: null, hoveredDropTargetId: null },
+      drag: {
+        isDragging: false,
+        draggedIds: [],
+        draggedKind: null,
+        hoveredDropTargetId: null,
+      },
     })),
 
   startDrag: (ids, kind) =>
-    set({ drag: { isDragging: true, draggedIds: ids, draggedKind: kind, hoveredDropTargetId: null } }),
+    set({
+      drag: {
+        isDragging: true,
+        draggedIds: ids,
+        draggedKind: kind,
+        hoveredDropTargetId: null,
+      },
+    }),
 
-  setDropTarget: (id) => set((state) => ({ drag: { ...state.drag, hoveredDropTargetId: id } })),
+  setDropTarget: (id) =>
+    set((state) => ({ drag: { ...state.drag, hoveredDropTargetId: id } })),
 
   endDrag: () =>
-    set({ drag: { isDragging: false, draggedIds: [], draggedKind: null, hoveredDropTargetId: null } }),
+    set({
+      drag: {
+        isDragging: false,
+        draggedIds: [],
+        draggedKind: null,
+        hoveredDropTargetId: null,
+      },
+    }),
 }));
 
 // Seletores derivados -------------------------------------------------------
@@ -180,7 +249,9 @@ export function getFolderPath(folders: Folder[], folderId: string): Folder[] {
   let current = folders.find((f) => f.id === folderId);
   while (current) {
     path.unshift(current);
-    current = current.parentId ? folders.find((f) => f.id === current!.parentId) : undefined;
+    current = current.parentId
+      ? folders.find((f) => f.id === current!.parentId)
+      : undefined;
   }
   return path;
 }
@@ -189,6 +260,11 @@ export function getChildFolders(folders: Folder[], parentId: string): Folder[] {
   return folderChildren(folders, parentId);
 }
 
-export function getItemsInFolder(items: VaultItem[], folderId: string): VaultItem[] {
-  return items.filter((i) => i.folderId === folderId && !i.isDeleted && !i.isArchived);
+export function getItemsInFolder(
+  items: VaultItem[],
+  folderId: string,
+): VaultItem[] {
+  return items.filter(
+    (i) => i.folderId === folderId && !i.isDeleted && !i.isArchived,
+  );
 }
