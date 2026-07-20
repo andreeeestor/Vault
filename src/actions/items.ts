@@ -114,9 +114,8 @@ export async function toggleArchive(itemId: string) {
 
 export async function softDeleteItems(itemIds: string[]) {
   const userId = await requireUserId();
-  await db.item.updateMany({
+  await db.item.deleteMany({
     where: { id: { in: itemIds }, userId },
-    data: { isDeleted: true, deletedAt: new Date() },
   });
   revalidatePath("/vault");
 }
