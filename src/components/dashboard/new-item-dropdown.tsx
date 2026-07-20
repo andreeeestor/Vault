@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { Plus, Upload, StickyNote, Code2, Link2, KeyRound, FolderPlus } from "lucide-react";
+import { Plus, Upload, StickyNote, Code2, Link2, KeyRound, FolderPlus, Mic, FileText } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -14,6 +14,7 @@ import { toast } from "sonner";
 import { hasMasterPasswordSet } from "@/actions/vault-crypto";
 import { NewPasswordModal } from "@/components/vault/new-password-modal";
 import { NewEntityModal } from "@/components/vault/new-entity-modal";
+import { AudioRecorderModal } from "@/components/vault/audio-recorder-modal";
 import { useVaultStore } from "@/lib/vault-store";
 import { mapItem } from "@/lib/mappers";
 
@@ -21,6 +22,7 @@ export function NewItemDropdown() {
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
   const [hasMasterPass, setHasMasterPass] = useState(false);
   const [isEntityModalOpen, setIsEntityModalOpen] = useState(false);
+  const [isAudioModalOpen, setIsAudioModalOpen] = useState(false);
   const [entityKind, setEntityKind] = useState<"note" | "snippet" | "link" | "folder">("note");
 
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -106,9 +108,13 @@ export function NewItemDropdown() {
           <DropdownMenuItem onSelect={handleUploadClick}>
             <Upload className="h-4 w-4" /> Upload de arquivo
           </DropdownMenuItem>
+
+          <DropdownMenuItem onSelect={() => setIsAudioModalOpen(true)}>
+            <Mic className="h-4 w-4" /> Gravar novo áudio
+          </DropdownMenuItem>
           
           <DropdownMenuItem onSelect={() => openEntityModal("note")}>
-            <StickyNote className="h-4 w-4" /> Nova nota
+            <FileText className="h-4 w-4" /> Novo documento / nota
           </DropdownMenuItem>
           
           <DropdownMenuItem onSelect={() => openEntityModal("snippet")}>
@@ -137,6 +143,11 @@ export function NewItemDropdown() {
         onChange={handleFileChange}
         className="hidden"
         accept="image/*,application/pdf,audio/*"
+      />
+
+      <AudioRecorderModal
+        open={isAudioModalOpen}
+        onClose={() => setIsAudioModalOpen(false)}
       />
 
       {isPasswordModalOpen && (

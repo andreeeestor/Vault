@@ -42,6 +42,13 @@ import { useVaultStore } from "@/lib/vault-store";
 import { cn } from "@/lib/utils";
 import type { VaultItem } from "@/types";
 import { UnsavedChangesModal } from "@/components/vault/unsaved-changes-modal";
+import { exportToDocx, exportToPdf } from "@/lib/export-document";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 /* ─── Types ─────────────────────────────────────────────────── */
 
@@ -319,8 +326,8 @@ export function NoteEditor({ item }: { item: VaultItem }) {
     [handleInput]
   );
 
-  // Export as Markdown (basic HTML→MD conversion)
-  const handleExport = useCallback(() => {
+  // Export handlers
+  const handleExportMd = useCallback(() => {
     if (!editorRef.current) return;
     const html = editorRef.current.innerHTML;
     const md = htmlToMarkdown(html);
@@ -333,6 +340,17 @@ export function NoteEditor({ item }: { item: VaultItem }) {
     URL.revokeObjectURL(url);
   }, [item.title]);
 
+  const handleExportDocx = useCallback(() => {
+    if (!editorRef.current) return;
+    exportToDocx(item.title, editorRef.current.innerHTML);
+    toast.success("Documento exportado como Word (.docx)");
+  }, [item.title]);
+
+  const handleExportPdf = useCallback(() => {
+    if (!editorRef.current) return;
+    exportToPdf(item.title, editorRef.current.innerHTML);
+  }, [item.title]);
+
   return (
     <TooltipProvider delayDuration={400}>
       <div className="flex h-full flex-col bg-[var(--background)]">
@@ -343,7 +361,9 @@ export function NoteEditor({ item }: { item: VaultItem }) {
           isPending={isPending}
           wordCount={wordCount}
           onToggleReadOnly={() => setReadOnly((v) => !v)}
-          onExport={handleExport}
+          onExportMd={handleExportMd}
+          onExportDocx={handleExportDocx}
+          onExportPdf={handleExportPdf}
         />
 
         {/* ── Editable area ── */}
@@ -396,14 +416,18 @@ function StaticToolbar({
   isPending,
   wordCount,
   onToggleReadOnly,
-  onExport,
+  onExportMd,
+  onExportDocx,
+  onExportPdf,
 }: {
   readOnly: boolean;
   isDirty: boolean;
   isPending: boolean;
   wordCount: number;
   onToggleReadOnly: () => void;
-  onExport: () => void;
+  onExportMd: () => void;
+  onExportDocx: () => void;
+  onExportPdf: () => void;
 }) {
   return (
     <div className="flex items-center justify-between border-b border-border bg-surface px-5 py-2">
@@ -427,27 +451,32 @@ function StaticToolbar({
         <SaveIndicator isDirty={isDirty} isPending={isPending} />
       </div>
 
-      {/* Right: word count + export */}
+      {/* Right: word count + export dropdown */}
       <div className="flex items-center gap-3">
         <span className="flex items-center gap-1 text-xs text-[var(--foreground-subtle)]">
           <AlignLeft className="h-3 w-3" />
           {wordCount} {wordCount === 1 ? "palavra" : "palavras"}
         </span>
 
-        <TooltipProvider delayDuration={400}>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <button
-                onClick={onExport}
-                className="flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium text-[var(--foreground-muted)] transition-colors hover:bg-[var(--surface-hover)] hover:text-[var(--foreground)]"
-              >
-                <Download className="h-3.5 w-3.5" />
-                Exportar .md
-              </button>
-            </TooltipTrigger>
-            <TooltipContent side="bottom">Exportar como Markdown</TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button className="flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium text-[var(--foreground-muted)] transition-colors hover:bg-[var(--surface-hover)] hover:text-[var(--foreground)] outline-none border border-[var(--border)] cursor-pointer">
+              <Download className="h-3.5 w-3.5" />
+              Exportar
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="min-w-[180px]">
+            <DropdownMenuItem onSelect={onExportPdf}>
+              📄 Exportar em PDF (.pdf)
+            </DropdownMenuItem>
+            <DropdownMenuItem onSelect={onExportDocx}>
+              📝 Exportar em Word (.docx)
+            </DropdownMenuItem>
+            <DropdownMenuItem onSelect={onExportMd}>
+              📑 Exportar em Markdown (.md)
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </div>
   );
