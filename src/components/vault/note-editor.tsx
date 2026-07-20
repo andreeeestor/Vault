@@ -37,10 +37,11 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { useAutoSave } from "@/hooks/use-auto-save";
+import { useRouter } from "next/navigation";
 import { useVaultStore } from "@/lib/vault-store";
 import { cn } from "@/lib/utils";
 import type { VaultItem } from "@/types";
+import { UnsavedChangesModal } from "@/components/vault/unsaved-changes-modal";
 
 /* ─── Types ─────────────────────────────────────────────────── */
 
@@ -57,12 +58,18 @@ interface ToolbarState {
 /* ─── NoteEditor (root export) ───────────────────────────────── */
 
 export function NoteEditor({ item }: { item: VaultItem }) {
+  const router = useRouter();
   const updateItem = useVaultStore((s) => s.updateItem);
   const editorRef = useRef<HTMLDivElement>(null);
 
   const [readOnly, setReadOnly] = useState(false);
   const [content, setContent] = useState(item.noteContent ?? "");
   const [wordCount, setWordCount] = useState(0);
+
+  // Controle local para saber se foi salvo
+  const [lastSavedContent, setLastSavedContent] = useState(item.noteContent ?? "");
+  const [showExitModal, setShowExitModal] = useState(false);
+  const [pendingHref, setPendingHref] = useState<string | null>(null);
 
   // Toolbar floating state
   const [toolbarVisible, setToolbarVisible] = useState(false);
@@ -78,14 +85,31 @@ export function NoteEditor({ item }: { item: VaultItem }) {
   });
 
   const [isPending, startTransition] = useTransition();
+  const isDirty = content !== lastSavedContent;
 
-  // Auto-save: persists innerHTML to the database and store
-  const status = useAutoSave(content, async (value) => {
-    await updateNoteContent(item.id, value);
-    updateItem(item.id, { noteContent: value });
-  });
+  // Função de salvamento manual
+  const handleSave = useCallback(() => {
+    startTransition(async () => {
+      try {
+        await updateNoteContent(item.id, content);
+        updateItem(item.id, { noteContent: content });
+        setLastSavedContent(content);
+        toast.success("Nota salva com sucesso!");
+      } catch (err) {
+        console.error(err);
+        toast.error("Erro ao salvar nota.");
+      }
+    });
+  }, [content, item.id, updateItem]);
 
-  // Initialise editor content once
+  // Ouvir evento customizado da barra lateral
+  useEffect(() => {
+    const handleSaveEvent = () => handleSave();
+    document.addEventListener("vault-save-item", handleSaveEvent);
+    return () => document.removeEventListener("vault-save-item", handleSaveEvent);
+  }, [handleSave]);
+
+  // Inicializa conteúdo uma vez
   useEffect(() => {
     if (editorRef.current && item.noteContent) {
       editorRef.current.innerHTML = item.noteContent;
@@ -94,10 +118,9 @@ export function NoteEditor({ item }: { item: VaultItem }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Alert on closing if unsaved changes
+  // Bloquear fechamento de aba / recarregamento do browser
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-      const isDirty = content !== (item.noteContent ?? "");
       if (isDirty) {
         e.preventDefault();
         e.returnValue = "Você tem alterações não salvas. Tem certeza que deseja sair?";
@@ -106,7 +129,56 @@ export function NoteEditor({ item }: { item: VaultItem }) {
     };
     window.addEventListener("beforeunload", handleBeforeUnload);
     return () => window.removeEventListener("beforeunload", handleBeforeUnload);
-  }, [content, item.noteContent]);
+  }, [isDirty]);
+
+  // Interceptar cliques em links internos do Next.js
+  useEffect(() => {
+    if (!isDirty) return;
+
+    const handleAnchorClick = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      const anchor = target.closest("a");
+      if (anchor) {
+        const href = anchor.getAttribute("href");
+        if (href && href.startsWith("/") && !href.startsWith("#")) {
+          e.preventDefault();
+          e.stopPropagation();
+          setPendingHref(href);
+          setShowExitModal(true);
+        }
+      }
+    };
+
+    document.addEventListener("click", handleAnchorClick, true);
+    return () => document.removeEventListener("click", handleAnchorClick, true);
+  }, [isDirty]);
+
+  // Interceptar botão voltar/avançar do navegador
+  useEffect(() => {
+    if (!isDirty) return;
+
+    const handlePopState = () => {
+      window.history.pushState(null, "", window.location.href);
+      setPendingHref("back");
+      setShowExitModal(true);
+    };
+
+    window.history.pushState(null, "", window.location.href);
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, [isDirty]);
+
+  const handleConfirmExit = () => {
+    setShowExitModal(false);
+    // Zera o estado para permitir a navegação
+    setLastSavedContent(content);
+    
+    if (pendingHref === "back") {
+      router.back();
+    } else if (pendingHref) {
+      router.push(pendingHref);
+    }
+  };
 
   // Word count
   const recalcWordCount = (html: string) => {
@@ -267,7 +339,8 @@ export function NoteEditor({ item }: { item: VaultItem }) {
         {/* ── Static top bar ── */}
         <StaticToolbar
           readOnly={readOnly}
-          status={status}
+          isDirty={isDirty}
+          isPending={isPending}
           wordCount={wordCount}
           onToggleReadOnly={() => setReadOnly((v) => !v)}
           onExport={handleExport}
@@ -304,6 +377,12 @@ export function NoteEditor({ item }: { item: VaultItem }) {
             onClose={() => setToolbarVisible(false)}
           />
         )}
+        {/* ── Unsaved changes confirmation modal ── */}
+        <UnsavedChangesModal
+          open={showExitModal}
+          onClose={() => setShowExitModal(false)}
+          onConfirm={handleConfirmExit}
+        />
       </div>
     </TooltipProvider>
   );
@@ -313,13 +392,15 @@ export function NoteEditor({ item }: { item: VaultItem }) {
 
 function StaticToolbar({
   readOnly,
-  status,
+  isDirty,
+  isPending,
   wordCount,
   onToggleReadOnly,
   onExport,
 }: {
   readOnly: boolean;
-  status: "idle" | "saving" | "saved" | "error";
+  isDirty: boolean;
+  isPending: boolean;
   wordCount: number;
   onToggleReadOnly: () => void;
   onExport: () => void;
@@ -343,7 +424,7 @@ function StaticToolbar({
           )}
         </button>
 
-        <AutoSaveIndicator status={status} />
+        <SaveIndicator isDirty={isDirty} isPending={isPending} />
       </div>
 
       {/* Right: word count + export */}
@@ -601,21 +682,26 @@ function TBtn({
 
 /* ─── Auto-save indicator ────────────────────────────────────── */
 
-function AutoSaveIndicator({ status }: { status: "idle" | "saving" | "saved" | "error" }) {
-  if (status === "idle") return null;
-  if (status === "saving") {
+/* ─── Save indicator ────────────────────────────────────── */
+
+function SaveIndicator({ isDirty, isPending }: { isDirty: boolean; isPending: boolean }) {
+  if (isPending) {
     return (
       <span className="flex items-center gap-1.5 text-xs text-[var(--foreground-subtle)]">
-        <Loader2 className="h-3 w-3 animate-spin" /> Salvando…
+        <Loader2 className="h-3 w-3 animate-spin" /> Salvando alterações…
       </span>
     );
   }
-  if (status === "error") {
-    return <span className="text-xs text-[var(--danger)]">Erro ao salvar</span>;
+  if (isDirty) {
+    return (
+      <span className="flex items-center gap-1.5 text-xs text-amber-500">
+        <span className="h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse" /> Alterações pendentes
+      </span>
+    );
   }
   return (
     <span className="flex items-center gap-1.5 text-xs text-[var(--success)]">
-      <Check className="h-3 w-3" /> Salvo
+      <span className="h-1.5 w-1.5 rounded-full bg-[var(--success)]" /> Todas as alterações salvas
     </span>
   );
 }

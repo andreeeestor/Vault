@@ -33,6 +33,8 @@ export function NewEntityModal({ open, onClose, kind }: NewEntityModalProps) {
   const [title, setTitle] = useState("");
   const [url, setUrl] = useState("");
   const [language, setLanguage] = useState("javascript");
+  const [isTemporary, setIsTemporary] = useState(false);
+  const [expiryTime, setExpiryTime] = useState("24 horas");
   const [isPending, startTransition] = useTransition();
 
   const getFolderIdForDb = () => {
@@ -85,6 +87,8 @@ export function NewEntityModal({ open, onClose, kind }: NewEntityModalProps) {
     setTitle("");
     setUrl("");
     setLanguage("javascript");
+    setIsTemporary(false);
+    setExpiryTime("24 horas");
     onClose();
   };
 
@@ -205,6 +209,52 @@ export function NewEntityModal({ open, onClose, kind }: NewEntityModalProps) {
               </div>
             </div>
           )}
+
+          {/* Arquivo temporário (funcionalidade futura, apenas visual) */}
+          <div className="flex flex-col gap-2 rounded-lg border border-[var(--border)] bg-[var(--surface-hover)] p-3">
+            <label className="flex items-start gap-2.5 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={isTemporary}
+                onChange={(e) => setIsTemporary(e.target.checked)}
+                className="mt-1 h-4 w-4 rounded border-[var(--border)] text-[var(--primary)] focus:ring-[var(--primary)] bg-[var(--surface)] outline-none cursor-pointer"
+              />
+              <div className="flex-1 select-none">
+                <span className="text-sm font-medium text-[var(--foreground)]">Arquivo temporário</span>
+                <p className="text-xs text-[var(--foreground-subtle)] mt-0.5">
+                  Após passar o tempo configurado, o arquivo é apagado automaticamente.
+                </p>
+              </div>
+            </label>
+            {isTemporary && (
+              <div className="mt-2 pl-6">
+                <label className="text-xs font-medium text-[var(--foreground-subtle)]">Tempo de expiração</label>
+                <div className="mt-1 flex gap-2">
+                  <Input
+                    value={expiryTime.split(" ")[0] || "24"}
+                    onChange={(e) => {
+                      const suffix = expiryTime.split(" ")[1] || "horas";
+                      setExpiryTime(`${e.target.value} ${suffix}`);
+                    }}
+                    placeholder="Ex: 24, 7, 30"
+                    className="h-8 text-xs flex-1"
+                  />
+                  <select
+                    className="h-8 rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--surface)] px-2.5 text-xs text-[var(--foreground)] outline-none focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)]"
+                    value={expiryTime.split(" ")[1] || "horas"}
+                    onChange={(e) => {
+                      const num = expiryTime.split(" ")[0] || "24";
+                      setExpiryTime(`${num} ${e.target.value}`);
+                    }}
+                  >
+                    <option value="minutos">Minuto(s)</option>
+                    <option value="horas">Hora(s)</option>
+                    <option value="dias">Dia(s)</option>
+                  </select>
+                </div>
+              </div>
+            )}
+          </div>
 
           <Button onClick={handleCreate} disabled={isPending} className="w-full mt-2">
             <Plus className="h-4 w-4" />

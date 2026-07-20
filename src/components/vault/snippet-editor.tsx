@@ -6,7 +6,7 @@ import type { editor as MonacoEditorNS } from "monaco-editor";
 import { Check, ChevronDown, Copy, Loader2, Pencil, Eye } from "lucide-react";
 import { toast } from "sonner";
 import { useTheme } from "@/components/providers/theme-provider";
-import { useAutoSave } from "@/hooks/use-auto-save";
+import { useRouter } from "next/navigation";
 import { useVaultStore } from "@/lib/vault-store";
 import { languageLabel, defineVaultMonacoThemes, SNIPPET_LANGUAGES } from "@/lib/monaco-theme";
 import {
@@ -17,10 +17,12 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import type { VaultItem } from "@/types";
+import { UnsavedChangesModal } from "@/components/vault/unsaved-changes-modal";
 import { updateSnippetContent } from "@/actions/items";
 
 export function SnippetEditor({ item }: { item: VaultItem }) {
   const { theme } = useTheme();
+  const router = useRouter();
   const updateItem = useVaultStore((s) => s.updateItem);
   const [isPending, startTransition] = useTransition();
 
@@ -30,19 +32,43 @@ export function SnippetEditor({ item }: { item: VaultItem }) {
   const [copied, setCopied] = useState(false);
   const editorRef = useRef<MonacoEditorNS.IStandaloneCodeEditor | null>(null);
 
-  const status = useAutoSave(content, async (value) => {
-    await updateSnippetContent(item.id, value, language);
-    updateItem(item.id, { codeContent: value, codeLanguage: language });
-  });
+  // Controle local para saber se foi salvo
+  const [lastSavedContent, setLastSavedContent] = useState(item.codeContent ?? "");
+  const [showExitModal, setShowExitModal] = useState(false);
+  const [pendingHref, setPendingHref] = useState<string | null>(null);
+
+  const isDirty = content !== lastSavedContent;
+
+  // Função de salvamento manual
+  const handleSave = useCallback(() => {
+    const val = editorRef.current ? editorRef.current.getValue() : content;
+    startTransition(async () => {
+      try {
+        await updateSnippetContent(item.id, val, language);
+        updateItem(item.id, { codeContent: val, codeLanguage: language });
+        setLastSavedContent(val);
+        toast.success("Snippet salvo com sucesso!");
+      } catch (err) {
+        console.error(err);
+        toast.error("Erro ao salvar snippet.");
+      }
+    });
+  }, [content, language, item.id, updateItem]);
+
+  // Ouvir evento customizado da barra lateral
+  useEffect(() => {
+    const handleSaveEvent = () => handleSave();
+    document.addEventListener("vault-save-item", handleSaveEvent);
+    return () => document.removeEventListener("vault-save-item", handleSaveEvent);
+  }, [handleSave]);
 
   const handleBeforeMount = useCallback((monaco: Monaco) => {
     defineVaultMonacoThemes(monaco);
   }, []);
 
-  // Alert on closing if unsaved changes
+  // Bloquear fechamento de aba / recarregamento do browser
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-      const isDirty = content !== (item.codeContent ?? "");
       if (isDirty) {
         e.preventDefault();
         e.returnValue = "Você tem alterações não salvas. Tem certeza que deseja sair?";
@@ -51,19 +77,63 @@ export function SnippetEditor({ item }: { item: VaultItem }) {
     };
     window.addEventListener("beforeunload", handleBeforeUnload);
     return () => window.removeEventListener("beforeunload", handleBeforeUnload);
-  }, [content, item.codeContent]);
+  }, [isDirty]);
+
+  // Interceptar cliques em links internos do Next.js
+  useEffect(() => {
+    if (!isDirty) return;
+
+    const handleAnchorClick = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      const anchor = target.closest("a");
+      if (anchor) {
+        const href = anchor.getAttribute("href");
+        if (href && href.startsWith("/") && !href.startsWith("#")) {
+          e.preventDefault();
+          e.stopPropagation();
+          setPendingHref(href);
+          setShowExitModal(true);
+        }
+      }
+    };
+
+    document.addEventListener("click", handleAnchorClick, true);
+    return () => document.removeEventListener("click", handleAnchorClick, true);
+  }, [isDirty]);
+
+  // Interceptar botão voltar/avançar do navegador
+  useEffect(() => {
+    if (!isDirty) return;
+
+    const handlePopState = () => {
+      window.history.pushState(null, "", window.location.href);
+      setPendingHref("back");
+      setShowExitModal(true);
+    };
+
+    window.history.pushState(null, "", window.location.href);
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, [isDirty]);
+
+  const handleConfirmExit = () => {
+    setShowExitModal(false);
+    // Zera o estado para permitir a navegação
+    setLastSavedContent(content);
+    
+    if (pendingHref === "back") {
+      router.back();
+    } else if (pendingHref) {
+      router.push(pendingHref);
+    }
+  };
 
   const handleMount: OnMount = (editorInstance, monacoInstance) => {
     editorRef.current = editorInstance;
     editorInstance.addCommand(
       monacoInstance.KeyMod.CtrlCmd | monacoInstance.KeyCode.KeyS,
       () => {
-        const val = editorInstance.getValue();
-        startTransition(async () => {
-          await updateSnippetContent(item.id, val, language);
-          updateItem(item.id, { codeContent: val, codeLanguage: language });
-          toast.success("Snippet salvo");
-        });
+        handleSave();
       }
     );
   };
@@ -98,7 +168,7 @@ export function SnippetEditor({ item }: { item: VaultItem }) {
             </DropdownMenuContent>
           </DropdownMenu>
 
-          <AutoSaveIndicator status={status} />
+          <SaveIndicator isDirty={isDirty} isPending={isPending} />
         </div>
 
         <div className="flex items-center gap-1">
@@ -152,28 +222,34 @@ export function SnippetEditor({ item }: { item: VaultItem }) {
           }
         />
       </div>
+
+      <UnsavedChangesModal
+        open={showExitModal}
+        onClose={() => setShowExitModal(false)}
+        onConfirm={handleConfirmExit}
+      />
     </div>
   );
 }
 
-function AutoSaveIndicator({ status }: { status: "idle" | "saving" | "saved" | "error" }) {
-  if (status === "idle") return null;
-
-  if (status === "saving") {
+function SaveIndicator({ isDirty, isPending }: { isDirty: boolean; isPending: boolean }) {
+  if (isPending) {
     return (
-      <span className="flex items-center gap-1.5 text-xs text-foreground-subtle">
-        <Loader2 className="h-3 w-3 animate-spin" /> Salvando…
+      <span className="flex items-center gap-1.5 text-xs text-white/50">
+        <Loader2 className="h-3 w-3 animate-spin text-violet-400" /> Salvando alterações…
       </span>
     );
   }
-
-  if (status === "error") {
-    return <span className="text-xs text-danger">Erro ao salvar</span>;
+  if (isDirty) {
+    return (
+      <span className="flex items-center gap-1.5 text-xs text-amber-400">
+        <span className="h-1.5 w-1.5 rounded-full bg-amber-400 animate-pulse" /> Alterações pendentes
+      </span>
+    );
   }
-
   return (
-    <span className="flex items-center gap-1.5 text-xs text-success">
-      <Check className="h-3 w-3" /> Salvo
+    <span className="flex items-center gap-1.5 text-xs text-emerald-400">
+      <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" /> Todas as alterações salvas
     </span>
   );
 }

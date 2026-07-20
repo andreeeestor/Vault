@@ -1,6 +1,6 @@
 "use client";
 
-import { Star, Archive, Trash2, FolderInput, Share2, Pencil } from "lucide-react";
+import { Star, Archive, Trash2, FolderInput, Share2, Pencil, Save } from "lucide-react";
 import type { VaultItem } from "@/types";
 import { ITEM_TYPE_META } from "@/lib/item-meta";
 import { formatBytes, formatRelativeDate, labelColorHex } from "@/lib/utils";
@@ -18,6 +18,9 @@ export function ItemDetailSidebar({ item }: { item: VaultItem }) {
   const folders = useVaultStore((s) => s.folders);
   const meta = ITEM_TYPE_META[item.type];
   const folder = folders.find((f) => f.id === item.folderId);
+
+  // Somente exibe botão Salvar para tipos editáveis (NOTE, SNIPPET)
+  const isEditable = item.type === "NOTE" || item.type === "SNIPPET";
 
   return (
     <aside className="flex w-[300px] shrink-0 flex-col gap-6 border-l border-[var(--border)] bg-[var(--background-elevated)] p-5">
@@ -57,22 +60,16 @@ export function ItemDetailSidebar({ item }: { item: VaultItem }) {
       )}
 
       <div className="mt-auto flex flex-col gap-2">
-        <Button
-          variant="secondary"
-          onClick={() => {
-            // Tenta focar o editor de texto/código na página
-            const editor =
-              document.querySelector<HTMLElement>("[data-vault-editor]") ??
-              document.querySelector<HTMLElement>("div[contenteditable='true']") ??
-              document.querySelector<HTMLElement>("textarea");
-            if (editor) {
-              editor.scrollIntoView({ behavior: "smooth", block: "center" });
-              editor.focus();
-            }
-          }}
-        >
-          <Pencil className="h-4 w-4" /> Editar conteúdo
-        </Button>
+        {isEditable && (
+          <Button
+            onClick={() => {
+              document.dispatchEvent(new CustomEvent("vault-save-item"));
+            }}
+            className="bg-[var(--primary)] text-white hover:bg-[var(--primary-hover)]"
+          >
+            <Save className="h-4 w-4" /> Salvar alterações
+          </Button>
+        )}
         <Button variant="secondary" onClick={() => toggleFavorite(item.id)}>
           <Star className="h-4 w-4" fill={item.isFavorite ? "currentColor" : "none"} />
           {item.isFavorite ? "Remover dos favoritos" : "Favoritar"}
