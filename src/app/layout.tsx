@@ -31,7 +31,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="pt-BR" suppressHydrationWarning>
-      <body className={`${inter.variable} ${playfairDisplay.variable} font-sans antialiased`}>
+      <body suppressHydrationWarning className={`${inter.variable} ${playfairDisplay.variable} font-sans antialiased`}>
         <ThemeProvider>
           {children}
           <Toaster
