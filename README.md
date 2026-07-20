@@ -51,22 +51,15 @@ contexto e busca instantânea).
 
 ## Status atual do projeto
 
-O projeto está estruturado como um SaaS completo e pronto para produção, mas hoje **roda
-com dados de demonstração** (`src/lib/mock-data.ts` orquestrado por um store Zustand em
-`src/lib/vault-store.ts`), para permitir testar toda a experiência de UI sem precisar
-configurar banco, Cloudinary, Stripe ou Resend antes.
+O projeto está estruturado como um SaaS completo, com **integração real com o banco de dados PostgreSQL (via Prisma)** e sincronização de estado com o cliente utilizando **Zustand**. 
 
-Isso significa que:
-
-- ✅ Toda a navegação, drag & drop, seleção múltipla, criação de pastas, favoritos,
-  arquivamento, lixeira (soft delete) e os 7 tipos de item **funcionam de ponta a ponta**
-  no navegador, com estado em memória.
-- ✅ O schema Prisma, as Server Actions (`src/actions/`) e as rotas de API
-  (`src/app/api/`) já estão implementadas contra o modelo de dados real e prontas para
-  uso — elas só precisam de um banco Postgres conectado.
-- ⚠️ Ainda não há uma etapa de integração automática ligando o store Zustand ao banco —
-  isso é feito manualmente, tela por tela, trocando a leitura do mock pela chamada de
-  Server Action equivalente (veja [Do mock ao banco real](#do-mock-ao-banco-real)).
+Principais fluxos integrados e funcionais:
+- ✅ **Persistência Completa no Banco:** Criação, renomeação, exclusão (soft delete/lixeira), arquivamento e favoritos para pastas e todos os tipos de itens salvos em tempo real no banco de dados.
+- ✅ **Cofre de Senhas Criptografado:** Criptografia AES-256-GCM em tempo real com derivação de chave PBKDF2. Inclui criação da senha mestra inicial, cadastro de segredos criptografados, revelação segura e troca de senha mestra (com re-criptografia automática dos itens).
+- ✅ **Configurações Dinâmicas:** Perfil do usuário e dados de segurança lidos e salvos diretamente no banco de dados e sincronizados no Zustand.
+- ✅ **Salvamento Manual e Alerta de Saída:** Editores de Notas e Snippets com salvamento manual (botão e atalhos), indicadores de alterações pendentes, e modal personalizado de confirmação de saída (`UnsavedChangesModal`) para evitar perda de dados.
+- ✅ **Personalização de Pastas:** Definição e alteração de cores das pastas de forma dinâmica no banco.
+- ✅ **Interface de Autenticação Premium:** Telas de Login e Registro com layout moderno em duas colunas, toggles de visualização de senha e layouts responsivos de alta fidelidade.
 
 ---
 
@@ -291,27 +284,15 @@ Todas documentadas em `.env.example`:
 
 ---
 
-## Do mock ao banco real
+## Integração de Dados
 
-O `useVaultStore` (`src/lib/vault-store.ts`) foi desenhado como uma **fachada**: os
-componentes de UI chamam `useVaultStore((s) => s.algumaAção)` sem saber se os dados vêm
-de memória ou de um banco. Para conectar uma tela ao Postgres:
-
-1. Confirme que a Server Action equivalente já existe em `src/actions/` (a maioria já
-   está implementada: `createFolder`, `moveEntities`, `toggleFavorite`,
-   `softDeleteItems`, `createNote`, `createSnippet`, `createPasswordItem`,
-   `revealPassword` etc.).
-2. Troque a leitura inicial (hoje `MOCK_FOLDERS`/`MOCK_ITEMS`) por uma busca via
-   Server Component (`db.folder.findMany(...)`) e passe como estado inicial do store.
-2. Substitua a action correspondente no store por uma chamada à Server Action, mantendo
-   a atualização otimista do estado local para a UI continuar instantânea.
-4. Repita tela por tela — não é necessário migrar tudo de uma vez.
+A persistência do app é totalmente dinâmica. O front-end utiliza **Zustand** para o estado reativo síncrono e dispara **Server Actions** em segundo plano para persistir as operações diretamente no banco PostgreSQL. O `DashboardLayout` é o responsável por buscar os dados reais via Server Components na montagem inicial e injetar no Zustand no client.
 
 ---
 
 ## Roadmap
 
-- [ ] Conectar todas as telas ao Postgres via Prisma (hoje roda 100% em mock)
+- [x] Conectar todas as telas principais ao Postgres via Prisma (pastas, itens, notas, snippets, senhas e configurações)
 - [ ] Upload real de arquivos para Cloudinary com barra de progresso
 - [ ] Preview OG automático ao colar um link (scraping de metadados)
 - [ ] Histórico de versões para notas e snippets (plano Pro)
