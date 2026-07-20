@@ -6,9 +6,11 @@ import { signIn } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
+import { Eye, EyeOff } from "lucide-react";
 
 export default function LoginPage() {
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -29,42 +31,100 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-6 w-full max-w-[340px] mx-auto">
       <div className="text-center">
-        <h1 className="text-heading text-lg font-semibold text-[var(--foreground)]">Bem-vindo de volta</h1>
-        <p className="text-body mt-1 text-sm text-[var(--foreground-muted)]">
+        <h1 className="text-[26px] font-semibold text-[var(--foreground)] tracking-tight">
+          Bem-vindo de volta
+        </h1>
+        <p className="mt-2 text-sm text-[var(--foreground-muted)]">
           Entre para acessar seu cofre.
         </p>
       </div>
 
-      <button
-        type="button"
-        onClick={() => signIn("google", { callbackUrl: "/vault" })}
-        className="flex h-10 items-center justify-center gap-2 rounded-[var(--radius-md)] border border-[var(--border-strong)] bg-[var(--surface)] text-sm font-medium text-[var(--foreground)] transition-colors hover:bg-[var(--surface-hover)]"
-      >
-        <GoogleIcon /> Continuar com Google
-      </button>
+      <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+        <div>
+          <label className="block text-xs font-medium text-[var(--foreground-muted)] mb-2 pl-1">
+            E-mail
+          </label>
+          <Input
+            name="email"
+            type="email"
+            placeholder="seu@email.com"
+            required
+            className="h-[52px] rounded-full border-[1.5px] border-[var(--border)] px-5 text-sm focus:border-[var(--primary-light)] focus:ring-[3px] focus:ring-[rgba(124,58,237,0.1)] transition-all"
+          />
+        </div>
 
-      <div className="flex items-center gap-3">
-        <div className="h-px flex-1 bg-[var(--border)]" />
-        <span className="text-xs text-[var(--foreground-subtle)]">ou</span>
-        <div className="h-px flex-1 bg-[var(--border)]" />
-      </div>
+        <div>
+          <label className="block text-xs font-medium text-[var(--foreground-muted)] mb-2 pl-1">
+            Senha
+          </label>
+          <div className="relative">
+            <Input
+              name="password"
+              type={showPassword ? "text" : "password"}
+              placeholder="••••••••"
+              required
+              className="h-[52px] rounded-full border-[1.5px] border-[var(--border)] px-5 pr-12 text-sm focus:border-[var(--primary-light)] focus:ring-[3px] focus:ring-[rgba(124,58,237,0.1)] transition-all"
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-4 top-1/2 -translate-y-1/2 text-[var(--foreground-subtle)] hover:text-[var(--foreground)] transition-colors"
+            >
+              {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+            </button>
+          </div>
+        </div>
 
-      <form onSubmit={handleSubmit} className="flex flex-col gap-3">
-        <Input name="email" type="email" placeholder="E-mail" required />
-        <Input name="password" type="password" placeholder="Senha" required />
-        <Button type="submit" disabled={loading}>
+        <Button
+          type="submit"
+          disabled={loading}
+          className="h-[52px] rounded-full bg-[var(--gradient-brand)] text-white font-semibold text-[15px] shadow-[0_4px_14px_rgba(124,58,237,0.35)] hover:shadow-[0_6px_20px_rgba(124,58,237,0.45)] hover:-translate-y-0.5 active:translate-y-0 transition-all"
+        >
           {loading ? "Entrando…" : "Entrar"}
         </Button>
       </form>
 
-      <div className="flex items-center justify-between text-xs">
-        <Link href="/reset-password" className="font-medium text-[var(--primary)] hover:underline">
-          Esqueci minha senha
-        </Link>
-        <Link href="/register" className="text-[var(--foreground-muted)] hover:underline">
-          Criar conta
+      <div className="flex items-center gap-3">
+        <div className="h-px flex-1 bg-[var(--border)]" />
+        <span className="text-xs font-medium text-[var(--foreground-subtle)]">
+          ou
+        </span>
+        <div className="h-px flex-1 bg-[var(--border)]" />
+      </div>
+
+      <div className="flex gap-3">
+        <button
+          type="button"
+          onClick={() => signIn("google", { callbackUrl: "/vault" })}
+          className="flex h-12 flex-1 items-center justify-center gap-2 rounded-full border-[1.5px] border-[var(--border)] bg-[var(--surface)] text-sm font-medium text-[var(--foreground)] transition-colors hover:bg-[var(--surface-hover)] hover:border-[var(--border-strong)]"
+        >
+          <GoogleIcon /> Google
+        </button>
+        <button
+          type="button"
+          className="flex h-12 flex-1 items-center justify-center gap-2 rounded-full border-[1.5px] border-[var(--border)] bg-[var(--surface)] text-sm font-medium text-[var(--foreground)] transition-colors hover:bg-[var(--surface-hover)] hover:border-[var(--border-strong)]"
+        >
+          <AppleIcon /> Apple
+        </button>
+      </div>
+
+      <div className="flex items-center justify-between text-xs mt-2">
+        <span className="text-[var(--foreground-muted)]">
+          Não tem conta?{" "}
+          <Link
+            href="/register"
+            className="font-medium text-[var(--primary)] underline underline-offset-2 hover:text-[var(--primary-dark)] transition-colors"
+          >
+            Criar conta
+          </Link>
+        </span>
+        <Link
+          href="/reset-password"
+          className="text-[var(--foreground-muted)] hover:text-[var(--primary)] transition-colors"
+        >
+          Esqueci a senha
         </Link>
       </div>
     </div>
@@ -90,6 +150,14 @@ function GoogleIcon() {
         fill="#EA4335"
         d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
       />
+    </svg>
+  );
+}
+
+function AppleIcon() {
+  return (
+    <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
+      <path d="M12.152 6.896c-.948 0-2.415-1.078-3.96-1.04-2.04.027-3.91 1.183-4.961 3.014-2.117 3.675-.546 9.103 1.519 12.09 1.013 1.454 2.208 3.09 3.792 3.039 1.52-.065 2.09-.987 3.935-.987 1.831 0 2.35.987 3.96.948 1.637-.026 2.676-1.48 3.676-2.948 1.156-1.688 1.636-3.325 1.662-3.415-.039-.013-3.182-1.221-3.22-4.857-.026-3.04 2.48-4.494 2.597-4.559-1.429-2.09-3.623-2.324-4.39-2.376-2-.156-3.675 1.09-4.61 1.09zM15.53 3.83c.843-1.012 1.4-2.427 1.245-3.83-1.207.052-2.662.805-3.532 1.818-.78.896-1.454 2.338-1.273 3.714 1.338.104 2.715-.688 3.559-1.701" />
     </svg>
   );
 }
