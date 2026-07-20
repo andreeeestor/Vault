@@ -5,7 +5,9 @@ import {
   useEffect,
   useRef,
   useState,
+  useTransition,
 } from "react";
+import { updateNoteContent } from "@/actions/items";
 import {
   Bold,
   Italic,
@@ -75,9 +77,11 @@ export function NoteEditor({ item }: { item: VaultItem }) {
     inOrderedList: false,
   });
 
-  // Auto-save: persists innerHTML to the store
+  const [isPending, startTransition] = useTransition();
+
+  // Auto-save: persists innerHTML to the database and store
   const status = useAutoSave(content, async (value) => {
-    // TODO(produção): trocar por Server Action `updateItemContent(item.id, value)`
+    await updateNoteContent(item.id, value);
     updateItem(item.id, { noteContent: value });
   });
 
@@ -89,6 +93,20 @@ export function NoteEditor({ item }: { item: VaultItem }) {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Alert on closing if unsaved changes
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      const isDirty = content !== (item.noteContent ?? "");
+      if (isDirty) {
+        e.preventDefault();
+        e.returnValue = "Você tem alterações não salvas. Tem certeza que deseja sair?";
+        return e.returnValue;
+      }
+    };
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, [content, item.noteContent]);
 
   // Word count
   const recalcWordCount = (html: string) => {
@@ -185,11 +203,14 @@ export function NoteEditor({ item }: { item: VaultItem }) {
       if (e.key === "`") saved(() => wrapCode());
       if (e.key === "s") {
         e.preventDefault();
-        updateItem(item.id, { noteContent: content });
-        toast.success("Nota salva");
+        startTransition(async () => {
+          await updateNoteContent(item.id, content);
+          updateItem(item.id, { noteContent: content });
+          toast.success("Nota salva");
+        });
       }
     },
-    [content, item.id, updateItem]
+    [content, item.id, updateItem, startTransition]
   );
 
   // Execute a formatting command (keeps focus in editor)
@@ -304,22 +325,21 @@ function StaticToolbar({
   onExport: () => void;
 }) {
   return (
-    <div className="flex items-center justify-between border-b border-[var(--border)] bg-[var(--surface)] px-5 py-2">
-      {/* Left: mode + auto-save */}
+    <div className="flex items-center justify-between border-b border-border bg-surface px-5 py-2">
       <div className="flex items-center gap-3">
         <button
           onClick={onToggleReadOnly}
           className={cn(
             "flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-semibold transition-colors",
-            readOnly
-              ? "text-[var(--foreground-muted)] hover:bg-[var(--surface-hover)]"
-              : "bg-[var(--primary)]/10 text-[var(--primary)]"
+            !readOnly
+              ? "text-foreground-muted hover:bg-surface-hover"
+              : "bg-(--primary)/10 text-primary"
           )}
         >
-          {readOnly ? (
-            <><Pencil className="h-3.5 w-3.5" /> Editar</>
+          {!readOnly ? (
+            <><Pencil className="h-3.5 w-3.5" /> Modo de Edição</>
           ) : (
-            <><Eye className="h-3.5 w-3.5" /> Leitura</>
+            <><Eye className="h-3.5 w-3.5" /> Modo Leitura</>
           )}
         </button>
 

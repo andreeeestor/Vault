@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import Editor, { type Monaco, type OnMount } from "@monaco-editor/react";
 import type { editor as MonacoEditorNS } from "monaco-editor";
 import { Check, ChevronDown, Copy, Loader2, Pencil, Eye } from "lucide-react";
@@ -17,10 +17,12 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import type { VaultItem } from "@/types";
+import { updateSnippetContent } from "@/actions/items";
 
 export function SnippetEditor({ item }: { item: VaultItem }) {
   const { theme } = useTheme();
   const updateItem = useVaultStore((s) => s.updateItem);
+  const [isPending, startTransition] = useTransition();
 
   const [content, setContent] = useState(item.codeContent ?? "");
   const [language, setLanguage] = useState(item.codeLanguage ?? "plaintext");
@@ -29,7 +31,7 @@ export function SnippetEditor({ item }: { item: VaultItem }) {
   const editorRef = useRef<MonacoEditorNS.IStandaloneCodeEditor | null>(null);
 
   const status = useAutoSave(content, async (value) => {
-    // TODO(produção): trocar por Server Action `updateItemContent(item.id, value)` (src/actions/items.ts)
+    await updateSnippetContent(item.id, value, language);
     updateItem(item.id, { codeContent: value, codeLanguage: language });
   });
 
@@ -37,13 +39,31 @@ export function SnippetEditor({ item }: { item: VaultItem }) {
     defineVaultMonacoThemes(monaco);
   }, []);
 
+  // Alert on closing if unsaved changes
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      const isDirty = content !== (item.codeContent ?? "");
+      if (isDirty) {
+        e.preventDefault();
+        e.returnValue = "Você tem alterações não salvas. Tem certeza que deseja sair?";
+        return e.returnValue;
+      }
+    };
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, [content, item.codeContent]);
+
   const handleMount: OnMount = (editorInstance, monacoInstance) => {
     editorRef.current = editorInstance;
     editorInstance.addCommand(
       monacoInstance.KeyMod.CtrlCmd | monacoInstance.KeyCode.KeyS,
       () => {
-        updateItem(item.id, { codeContent: editorInstance.getValue(), codeLanguage: language });
-        toast.success("Snippet salvo");
+        const val = editorInstance.getValue();
+        startTransition(async () => {
+          await updateSnippetContent(item.id, val, language);
+          updateItem(item.id, { codeContent: val, codeLanguage: language });
+          toast.success("Snippet salvo");
+        });
       }
     );
   };

@@ -43,6 +43,14 @@ export async function updateNoteContent(itemId: string, noteContent: string) {
   });
 }
 
+export async function updateSnippetContent(itemId: string, codeContent: string, codeLanguage: string) {
+  const userId = await requireUserId();
+  await db.item.update({
+    where: { id: itemId, userId },
+    data: { codeContent, codeLanguage },
+  });
+}
+
 export async function createSnippet(input: unknown) {
   const userId = await requireUserId();
   const data = createSnippetSchema.parse(input);
