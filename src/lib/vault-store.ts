@@ -76,6 +76,7 @@ interface VaultState {
   deleteFolder: (id: string) => Promise<void>;
   updateFolderColor: (id: string, color: LabelColor) => Promise<void>;
   updateItem: (id: string, patch: Partial<VaultItem>) => void;
+  addItem: (item: VaultItem) => void;
   toggleFavorite: (id: string) => Promise<void>;
   toggleArchive: (id: string) => Promise<void>;
   softDelete: (ids: string[]) => Promise<void>;
@@ -227,6 +228,11 @@ export const useVaultStore = create<VaultState>((set, get) => ({
       items: state.items.map((i) =>
         i.id === id ? { ...i, ...patch, updatedAt: new Date() } : i,
       ),
+    })),
+
+  addItem: (item) =>
+    set((state) => ({
+      items: [item, ...state.items],
     })),
 
   toggleFavorite: async (id) => {

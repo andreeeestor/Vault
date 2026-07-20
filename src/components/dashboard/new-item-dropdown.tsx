@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Plus, Upload, StickyNote, Code2, Link2, KeyRound, FolderPlus } from "lucide-react";
 import {
   DropdownMenu,
@@ -14,13 +14,18 @@ import { toast } from "sonner";
 import { hasMasterPasswordSet } from "@/actions/vault-crypto";
 import { NewPasswordModal } from "@/components/vault/new-password-modal";
 import { NewEntityModal } from "@/components/vault/new-entity-modal";
+import { useVaultStore } from "@/lib/vault-store";
+import { mapItem } from "@/lib/mappers";
 
 export function NewItemDropdown() {
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
   const [hasMasterPass, setHasMasterPass] = useState(false);
-
   const [isEntityModalOpen, setIsEntityModalOpen] = useState(false);
   const [entityKind, setEntityKind] = useState<"note" | "snippet" | "link" | "folder">("note");
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const currentFolderId = useVaultStore((s) => s.currentFolderId);
+  const addItem = useVaultStore((s) => s.addItem);
 
   const openEntityModal = (kind: "note" | "snippet" | "link" | "folder") => {
     setEntityKind(kind);
@@ -38,6 +43,57 @@ export function NewItemDropdown() {
     }
   };
 
+  const handleUploadClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    let type: "IMAGE" | "PDF" | "AUDIO" = "IMAGE";
+    if (file.type.startsWith("image/")) {
+      type = "IMAGE";
+    } else if (file.type.startsWith("audio/")) {
+      type = "AUDIO";
+    } else if (file.type === "application/pdf") {
+      type = "PDF";
+    } else {
+      toast.error("Formato de arquivo não suportado. Escolha imagens, PDFs ou áudios.");
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("type", type);
+    if (currentFolderId && currentFolderId !== "root") {
+      formData.append("folderId", currentFolderId);
+    }
+
+    toast.promise(
+      (async () => {
+        const res = await fetch("/api/upload", {
+          method: "POST",
+          body: formData,
+        });
+        if (!res.ok) {
+          throw new Error("Falha no upload");
+        }
+        const data = await res.json();
+        const item = mapItem(data.item);
+        addItem(item);
+        return item;
+      })(),
+      {
+        loading: "Fazendo upload do arquivo para o cofre...",
+        success: (item) => `Arquivo "${item.title}" enviado com sucesso!`,
+        error: "Erro ao enviar arquivo. Verifique sua conexão.",
+      }
+    );
+
+    e.target.value = "";
+  };
+
   return (
     <>
       <DropdownMenu>
@@ -47,7 +103,7 @@ export function NewItemDropdown() {
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="min-w-[220px]">
-          <DropdownMenuItem onSelect={() => toast("Upload em breve. Configure o Cloudinary primeiro!")}>
+          <DropdownMenuItem onSelect={handleUploadClick}>
             <Upload className="h-4 w-4" /> Upload de arquivo
           </DropdownMenuItem>
           
@@ -74,6 +130,14 @@ export function NewItemDropdown() {
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
+
+      <input
+        type="file"
+        ref={fileInputRef}
+        onChange={handleFileChange}
+        className="hidden"
+        accept="image/*,application/pdf,audio/*"
+      />
 
       {isPasswordModalOpen && (
         <NewPasswordModal
