@@ -80,11 +80,23 @@ export async function moveEntities(input: unknown) {
 }
 
 export async function listFolderTree(userId: string) {
-  return db.folder.findMany({
+  const folders = await db.folder.findMany({
     where: { userId },
     orderBy: { order: "asc" },
     include: {
-      _count: { select: { items: true, children: true } },
+      items: {
+        where: { isDeleted: false, isArchived: false },
+        select: { id: true },
+      },
+      _count: { select: { children: true } },
     },
   });
+
+  return folders.map((f) => ({
+    ...f,
+    _count: {
+      children: f._count.children,
+      items: f.items.length,
+    },
+  }));
 }

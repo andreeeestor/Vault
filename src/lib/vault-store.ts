@@ -172,21 +172,36 @@ export const useVaultStore = create<VaultState>((set, get) => ({
   createNote: async (title, folderId) => {
     const rawItem = await apiCreateNote({ title, folderId });
     const item = mapItem(rawItem);
-    set((state) => ({ items: [item, ...state.items] }));
+    set((state) => ({
+      items: [item, ...state.items],
+      folders: state.folders.map((f) =>
+        f.id === folderId ? { ...f, itemCount: f.itemCount + 1 } : f
+      ),
+    }));
     return item;
   },
 
   createSnippet: async (title, folderId, codeLanguage) => {
     const rawItem = await apiCreateSnippet({ title, folderId, codeLanguage });
     const item = mapItem(rawItem);
-    set((state) => ({ items: [item, ...state.items] }));
+    set((state) => ({
+      items: [item, ...state.items],
+      folders: state.folders.map((f) =>
+        f.id === folderId ? { ...f, itemCount: f.itemCount + 1 } : f
+      ),
+    }));
     return item;
   },
 
   createLink: async (title, folderId, url) => {
     const rawItem = await apiCreateLink({ title, folderId, url });
     const item = mapItem(rawItem);
-    set((state) => ({ items: [item, ...state.items] }));
+    set((state) => ({
+      items: [item, ...state.items],
+      folders: state.folders.map((f) =>
+        f.id === folderId ? { ...f, itemCount: f.itemCount + 1 } : f
+      ),
+    }));
     return item;
   },
 
@@ -233,6 +248,9 @@ export const useVaultStore = create<VaultState>((set, get) => ({
   addItem: (item) =>
     set((state) => ({
       items: [item, ...state.items],
+      folders: state.folders.map((f) =>
+        f.id === item.folderId ? { ...f, itemCount: f.itemCount + 1 } : f
+      ),
     })),
 
   toggleFavorite: async (id) => {
@@ -281,25 +299,46 @@ export const useVaultStore = create<VaultState>((set, get) => ({
 
   moveEntities: async (itemIds, folderIds, destinationFolderId) => {
     await apiMoveEntities({ itemIds, folderIds, destinationFolderId });
-    set((state) => ({
-      items: state.items.map((i) =>
-        itemIds.includes(i.id)
-          ? { ...i, folderId: destinationFolderId, updatedAt: new Date() }
-          : i,
-      ),
-      folders: state.folders.map((f) =>
-        folderIds.includes(f.id)
-          ? { ...f, parentId: destinationFolderId, updatedAt: new Date() }
-          : f,
-      ),
-      selectedIds: new Set(),
-      drag: {
-        isDragging: false,
-        draggedIds: [],
-        draggedKind: null,
-        hoveredDropTargetId: null,
-      },
-    }));
+    set((state) => {
+      const folderDecrements = new Map<string, number>();
+      let incrementCount = 0;
+      for (const item of state.items) {
+        if (itemIds.includes(item.id)) {
+          if (item.folderId) {
+            folderDecrements.set(item.folderId, (folderDecrements.get(item.folderId) ?? 0) + 1);
+          }
+          incrementCount++;
+        }
+      }
+
+      return {
+        items: state.items.map((i) =>
+          itemIds.includes(i.id)
+            ? { ...i, folderId: destinationFolderId, updatedAt: new Date() }
+            : i,
+        ),
+        folders: state.folders.map((f) => {
+          let nextCount = f.itemCount;
+          if (folderDecrements.has(f.id)) {
+            nextCount = Math.max(0, nextCount - (folderDecrements.get(f.id) ?? 0));
+          }
+          if (f.id === destinationFolderId) {
+            nextCount += incrementCount;
+          }
+          const isTargetFolder = folderIds.includes(f.id);
+          return isTargetFolder
+            ? { ...f, parentId: destinationFolderId, itemCount: nextCount, updatedAt: new Date() }
+            : { ...f, itemCount: nextCount };
+        }),
+        selectedIds: new Set(),
+        drag: {
+          isDragging: false,
+          draggedIds: [],
+          draggedKind: null,
+          hoveredDropTargetId: null,
+        },
+      };
+    });
   },
 
   startDrag: (ids, kind) =>
