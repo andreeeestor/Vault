@@ -45,6 +45,15 @@ export async function renameFolder(input: unknown) {
   revalidatePath("/vault");
 }
 
+export async function updateFolderColor(folderId: string, color: string) {
+  const userId = await requireUserId();
+  await db.folder.update({
+    where: { id: folderId, userId },
+    data: { color },
+  });
+  revalidatePath("/vault");
+}
+
 export async function deleteFolder(folderId: string) {
   const userId = await requireUserId();
   // onDelete: Cascade no schema remove subpastas; itens ficam com folderId = null (SetNull)

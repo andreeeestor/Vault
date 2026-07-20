@@ -6,7 +6,7 @@ import { motion } from "motion/react";
 import type { Folder, VaultItem } from "@/types";
 import { cn, labelColorHex } from "@/lib/utils";
 import { useVaultStore } from "@/lib/vault-store";
-import { ItemContextMenu } from "./item-context-menu";
+import { ItemContextMenu, ItemDropdownMenu } from "./item-context-menu";
 import { ItemCard } from "./item-card";
 import { EmptyState } from "./empty-state";
 
@@ -93,12 +93,14 @@ function FolderCard({ folder }: { folder: Folder }) {
             fillOpacity={0.18}
             strokeWidth={1.5}
           />
-          <button
-            onClick={(e) => e.stopPropagation()}
-            className="rounded-md p-1 text-[var(--foreground-subtle)] opacity-0 hover:bg-[var(--surface-hover)] group-hover:opacity-100"
-          >
-            <MoreHorizontal className="h-4 w-4" />
-          </button>
+          <ItemDropdownMenu
+            id={folder.id}
+            kind="folder"
+            onOpen={() => {
+              setCurrentFolder(folder.id);
+              router.push(`/vault/folder/${folder.id}`);
+            }}
+          />
         </div>
         <div>
           <h3 className="truncate text-sm font-medium text-[var(--foreground)]">{folder.name}</h3>

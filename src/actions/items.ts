@@ -41,6 +41,7 @@ export async function updateNoteContent(itemId: string, noteContent: string) {
     where: { id: itemId, userId },
     data: { noteContent },
   });
+  revalidatePath("/vault");
 }
 
 export async function updateSnippetContent(itemId: string, codeContent: string, codeLanguage: string) {
@@ -49,6 +50,7 @@ export async function updateSnippetContent(itemId: string, codeContent: string, 
     where: { id: itemId, userId },
     data: { codeContent, codeLanguage },
   });
+  revalidatePath("/vault");
 }
 
 export async function createSnippet(input: unknown) {

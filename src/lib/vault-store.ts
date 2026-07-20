@@ -7,6 +7,7 @@ import type {
   SortField,
   VaultItem,
   ViewMode,
+  LabelColor,
 } from "@/types";
 
 // Importa as server actions reais para conectar o estado ao banco
@@ -15,6 +16,7 @@ import {
   renameFolder as apiRenameFolder,
   deleteFolder as apiDeleteFolder,
   moveEntities as apiMoveEntities,
+  updateFolderColor as apiUpdateFolderColor,
 } from "@/actions/folders";
 
 import {
@@ -71,6 +73,8 @@ interface VaultState {
   createLink: (title: string, folderId: string | null, url: string) => Promise<VaultItem>;
   
   renameEntity: (id: string, name: string, kind: "item" | "folder") => Promise<void>;
+  deleteFolder: (id: string) => Promise<void>;
+  updateFolderColor: (id: string, color: LabelColor) => Promise<void>;
   updateItem: (id: string, patch: Partial<VaultItem>) => void;
   toggleFavorite: (id: string) => Promise<void>;
   toggleArchive: (id: string) => Promise<void>;
@@ -201,6 +205,21 @@ export const useVaultStore = create<VaultState>((set, get) => ({
         ),
       }));
     }
+  },
+
+  deleteFolder: async (id) => {
+    await apiDeleteFolder(id);
+    set((state) => ({
+      folders: state.folders.filter((f) => f.id !== id),
+      selectedIds: new Set(),
+    }));
+  },
+
+  updateFolderColor: async (id, color) => {
+    await apiUpdateFolderColor(id, color);
+    set((state) => ({
+      folders: state.folders.map((f) => (f.id === id ? { ...f, color: color as LabelColor } : f)),
+    }));
   },
 
   updateItem: (id, patch) =>

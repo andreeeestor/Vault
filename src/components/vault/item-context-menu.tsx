@@ -7,7 +7,20 @@ import {
   ContextMenuItem,
   ContextMenuSeparator,
   ContextMenuTrigger,
+  ContextMenuSub,
+  ContextMenuSubTrigger,
+  ContextMenuSubContent,
 } from "@/components/ui/context-menu";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+  DropdownMenuSub,
+  DropdownMenuSubTrigger,
+  DropdownMenuSubContent,
+} from "@/components/ui/dropdown-menu";
 import {
   ExternalLink,
   Pencil,
@@ -17,9 +30,22 @@ import {
   Archive,
   Trash2,
   FolderPlus,
+  Palette,
+  MoreVertical,
 } from "lucide-react";
 import { useVaultStore } from "@/lib/vault-store";
 import { toast } from "sonner";
+import { labelColorHex } from "@/lib/utils";
+import type { LabelColor } from "@/types";
+
+const FOLDER_COLORS: { id: LabelColor; label: string }[] = [
+  { id: "violet", label: "Violeta" },
+  { id: "rose", label: "Rosa" },
+  { id: "amber", label: "Âmbar" },
+  { id: "emerald", label: "Esmeralda" },
+  { id: "sky", label: "Azul Céu" },
+  { id: "stone", label: "Pedra" },
+];
 
 export function ItemContextMenu({
   id,
@@ -35,6 +61,8 @@ export function ItemContextMenu({
   const toggleFavorite = useVaultStore((s) => s.toggleFavorite);
   const toggleArchive = useVaultStore((s) => s.toggleArchive);
   const softDelete = useVaultStore((s) => s.softDelete);
+  const deleteFolder = useVaultStore((s) => s.deleteFolder);
+  const updateFolderColor = useVaultStore((s) => s.updateFolderColor);
   const createFolder = useVaultStore((s) => s.createFolder);
 
   return (
@@ -61,17 +89,46 @@ export function ItemContextMenu({
         </ContextMenuItem>
 
         {kind === "folder" && (
-          <ContextMenuItem
-            onSelect={() => {
-              const name = window.prompt("Nome da subpasta:");
-              if (name?.trim()) {
-                createFolder(name.trim(), id);
-                toast.success("Subpasta criada!");
-              }
-            }}
-          >
-            <FolderPlus className="h-4 w-4" /> Nova subpasta
-          </ContextMenuItem>
+          <>
+            <ContextMenuItem
+              onSelect={() => {
+                const name = window.prompt("Nome da subpasta:");
+                if (name?.trim()) {
+                  createFolder(name.trim(), id);
+                  toast.success("Subpasta criada!");
+                }
+              }}
+            >
+              <FolderPlus className="h-4 w-4" /> Nova subpasta
+            </ContextMenuItem>
+
+            {/* Marcador de cor da pasta */}
+            <ContextMenuSub>
+              <ContextMenuSubTrigger>
+                <div className="flex items-center gap-2">
+                  <Palette className="h-4 w-4" />
+                  <span>Cor da pasta</span>
+                </div>
+              </ContextMenuSubTrigger>
+              <ContextMenuSubContent>
+                {FOLDER_COLORS.map((c) => (
+                  <ContextMenuItem
+                    key={c.id}
+                    onSelect={() => {
+                      updateFolderColor(id, c.id);
+                      toast.success(`Cor da pasta alterada para ${c.label}`);
+                    }}
+                  >
+                    <span
+                      className="h-3 w-3 rounded-full shrink-0"
+                      style={{ backgroundColor: labelColorHex(c.id) }}
+                    />
+                    <span>{c.label}</span>
+                  </ContextMenuItem>
+                ))}
+              </ContextMenuSubContent>
+            </ContextMenuSub>
+          </>
         )}
 
         <ContextMenuItem onSelect={() => toast("Mover funcionalidade em breve!")}>
@@ -102,8 +159,13 @@ export function ItemContextMenu({
         <ContextMenuItem
           destructive
           onSelect={() => {
-            softDelete([id]);
-            toast.success("Movido para a lixeira");
+            if (kind === "folder") {
+              deleteFolder(id);
+              toast.success("Pasta excluída com sucesso");
+            } else {
+              softDelete([id]);
+              toast.success("Movido para a lixeira");
+            }
           }}
         >
           <Trash2 className="h-4 w-4" /> Excluir
@@ -112,15 +174,6 @@ export function ItemContextMenu({
     </ContextMenu>
   );
 }
-
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { MoreVertical } from "lucide-react";
 
 export function ItemDropdownMenu({
   id,
@@ -136,6 +189,8 @@ export function ItemDropdownMenu({
   const toggleFavorite = useVaultStore((s) => s.toggleFavorite);
   const toggleArchive = useVaultStore((s) => s.toggleArchive);
   const softDelete = useVaultStore((s) => s.softDelete);
+  const deleteFolder = useVaultStore((s) => s.deleteFolder);
+  const updateFolderColor = useVaultStore((s) => s.updateFolderColor);
   const createFolder = useVaultStore((s) => s.createFolder);
 
   return (
@@ -148,7 +203,7 @@ export function ItemDropdownMenu({
           <MoreVertical className="h-4 w-4" />
         </button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="min-w-[160px]">
+      <DropdownMenuContent align="end" className="min-w-[170px]">
         <DropdownMenuItem
           onSelect={(e) => {
             e.stopPropagation();
@@ -172,18 +227,48 @@ export function ItemDropdownMenu({
         </DropdownMenuItem>
 
         {kind === "folder" && (
-          <DropdownMenuItem
-            onSelect={(e) => {
-              e.stopPropagation();
-              const name = window.prompt("Nome da subpasta:");
-              if (name?.trim()) {
-                createFolder(name.trim(), id);
-                toast.success("Subpasta criada!");
-              }
-            }}
-          >
-            <FolderPlus className="h-4 w-4" /> Nova subpasta
-          </DropdownMenuItem>
+          <>
+            <DropdownMenuItem
+              onSelect={(e) => {
+                e.stopPropagation();
+                const name = window.prompt("Nome da subpasta:");
+                if (name?.trim()) {
+                  createFolder(name.trim(), id);
+                  toast.success("Subpasta criada!");
+                }
+              }}
+            >
+              <FolderPlus className="h-4 w-4" /> Nova subpasta
+            </DropdownMenuItem>
+
+            {/* Marcador de cor da pasta */}
+            <DropdownMenuSub>
+              <DropdownMenuSubTrigger onClick={(e) => e.stopPropagation()}>
+                <div className="flex items-center gap-2">
+                  <Palette className="h-4 w-4" />
+                  <span>Cor da pasta</span>
+                </div>
+              </DropdownMenuSubTrigger>
+              <DropdownMenuSubContent>
+                {FOLDER_COLORS.map((c) => (
+                  <DropdownMenuItem
+                    key={c.id}
+                    onSelect={(e) => {
+                      e.stopPropagation();
+                      updateFolderColor(id, c.id);
+                      toast.success(`Cor da pasta alterada para ${c.label}`);
+                    }}
+                  >
+                    <span
+                      className="h-3 w-3 rounded-full shrink-0"
+                      style={{ backgroundColor: labelColorHex(c.id) }}
+                    />
+                    <span>{c.label}</span>
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuSubContent>
+            </DropdownMenuSub>
+          </>
         )}
 
         <DropdownMenuItem
@@ -231,8 +316,13 @@ export function ItemDropdownMenu({
           destructive
           onSelect={(e) => {
             e.stopPropagation();
-            softDelete([id]);
-            toast.success("Movido para a lixeira");
+            if (kind === "folder") {
+              deleteFolder(id);
+              toast.success("Pasta excluída com sucesso");
+            } else {
+              softDelete([id]);
+              toast.success("Movido para a lixeira");
+            }
           }}
         >
           <Trash2 className="h-4 w-4" /> Excluir
