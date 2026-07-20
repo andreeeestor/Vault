@@ -41,20 +41,40 @@ export function ItemContextMenu({
     <ContextMenu>
       <ContextMenuTrigger asChild>{children}</ContextMenuTrigger>
       <ContextMenuContent>
-        <ContextMenuItem onSelect={() => toast("Abrindo…")}>
+        <ContextMenuItem
+          onSelect={() => {
+            toast.success("Item aberto!");
+          }}
+        >
           <ExternalLink className="h-4 w-4" /> Abrir
         </ContextMenuItem>
-        <ContextMenuItem onSelect={() => toast("Renomear — edição inline")}>
+        <ContextMenuItem
+          onSelect={() => {
+            const name = window.prompt("Digite o novo nome:");
+            if (name?.trim()) {
+              useVaultStore.getState().renameEntity(id, name.trim(), kind);
+              toast.success("Renomeado com sucesso!");
+            }
+          }}
+        >
           <Pencil className="h-4 w-4" /> Renomear
         </ContextMenuItem>
 
         {kind === "folder" && (
-          <ContextMenuItem onSelect={() => createFolder("Nova subpasta", id)}>
+          <ContextMenuItem
+            onSelect={() => {
+              const name = window.prompt("Nome da subpasta:");
+              if (name?.trim()) {
+                createFolder(name.trim(), id);
+                toast.success("Subpasta criada!");
+              }
+            }}
+          >
             <FolderPlus className="h-4 w-4" /> Nova subpasta
           </ContextMenuItem>
         )}
 
-        <ContextMenuItem onSelect={() => toast("Escolha a pasta de destino")}>
+        <ContextMenuItem onSelect={() => toast("Mover funcionalidade em breve!")}>
           <FolderInput className="h-4 w-4" /> Mover para…
         </ContextMenuItem>
 
@@ -90,5 +110,134 @@ export function ItemContextMenu({
         </ContextMenuItem>
       </ContextMenuContent>
     </ContextMenu>
+  );
+}
+
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { MoreVertical } from "lucide-react";
+
+export function ItemDropdownMenu({
+  id,
+  kind,
+  isFavorite,
+  onOpen,
+}: {
+  id: string;
+  kind: "item" | "folder";
+  isFavorite?: boolean;
+  onOpen?: () => void;
+}) {
+  const toggleFavorite = useVaultStore((s) => s.toggleFavorite);
+  const toggleArchive = useVaultStore((s) => s.toggleArchive);
+  const softDelete = useVaultStore((s) => s.softDelete);
+  const createFolder = useVaultStore((s) => s.createFolder);
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <button
+          onClick={(e) => e.stopPropagation()} // impede clique no card/linha
+          className="flex h-7 w-7 items-center justify-center rounded-lg hover:bg-[var(--surface-hover)] text-[var(--foreground-muted)] hover:text-[var(--foreground)] transition-colors outline-none"
+        >
+          <MoreVertical className="h-4 w-4" />
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="min-w-[160px]">
+        <DropdownMenuItem
+          onSelect={(e) => {
+            e.stopPropagation();
+            if (onOpen) onOpen();
+          }}
+        >
+          <ExternalLink className="h-4 w-4" /> Abrir
+        </DropdownMenuItem>
+        
+        <DropdownMenuItem
+          onSelect={(e) => {
+            e.stopPropagation();
+            const name = window.prompt("Digite o novo nome:");
+            if (name?.trim()) {
+              useVaultStore.getState().renameEntity(id, name.trim(), kind);
+              toast.success("Renomeado com sucesso!");
+            }
+          }}
+        >
+          <Pencil className="h-4 w-4" /> Renomear
+        </DropdownMenuItem>
+
+        {kind === "folder" && (
+          <DropdownMenuItem
+            onSelect={(e) => {
+              e.stopPropagation();
+              const name = window.prompt("Nome da subpasta:");
+              if (name?.trim()) {
+                createFolder(name.trim(), id);
+                toast.success("Subpasta criada!");
+              }
+            }}
+          >
+            <FolderPlus className="h-4 w-4" /> Nova subpasta
+          </DropdownMenuItem>
+        )}
+
+        <DropdownMenuItem
+          onSelect={(e) => {
+            e.stopPropagation();
+            toast("Mover funcionalidade em breve!");
+          }}
+        >
+          <FolderInput className="h-4 w-4" /> Mover para…
+        </DropdownMenuItem>
+
+        {kind === "item" && (
+          <>
+            <DropdownMenuItem
+              onSelect={(e) => {
+                e.stopPropagation();
+                navigator.clipboard?.writeText(`${window.location.origin}/vault/item/${id}`);
+                toast.success("Link copiado");
+              }}
+            >
+              <LinkIcon className="h-4 w-4" /> Copiar link
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onSelect={(e) => {
+                e.stopPropagation();
+                toggleFavorite(id);
+              }}
+            >
+              <Star className="h-4 w-4" /> {isFavorite ? "Remover dos favoritos" : "Favoritar"}
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onSelect={(e) => {
+                e.stopPropagation();
+                toggleArchive(id);
+              }}
+            >
+              <Archive className="h-4 w-4" /> Arquivar
+            </DropdownMenuItem>
+          </>
+        )}
+
+        <DropdownMenuSeparator />
+
+        <DropdownMenuItem
+          destructive
+          onSelect={(e) => {
+            e.stopPropagation();
+            softDelete([id]);
+            toast.success("Movido para a lixeira");
+          }}
+        >
+          <Trash2 className="h-4 w-4" /> Excluir
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }

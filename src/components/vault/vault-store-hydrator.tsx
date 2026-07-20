@@ -17,7 +17,7 @@ export function VaultStoreHydrator({
 }) {
   useEffect(() => {
     useVaultStore.setState({ folders, items });
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [folders, items]);
 
   return null;
 }

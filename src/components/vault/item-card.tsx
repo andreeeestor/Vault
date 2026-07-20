@@ -8,7 +8,7 @@ import type { VaultItem } from "@/types";
 import { ITEM_TYPE_META } from "@/lib/item-meta";
 import { cn, formatRelativeDate, labelColorHex } from "@/lib/utils";
 import { useVaultStore } from "@/lib/vault-store";
-import { ItemContextMenu } from "./item-context-menu";
+import { ItemContextMenu, ItemDropdownMenu } from "./item-context-menu";
 import { Badge } from "@/components/ui/badge";
 
 export function ItemCard({ item, orderedIds }: { item: VaultItem; orderedIds: string[] }) {
@@ -60,22 +60,36 @@ export function ItemCard({ item, orderedIds }: { item: VaultItem; orderedIds: st
           isBeingDragged && "opacity-40"
         )}
       >
-        <button
-          aria-label={item.isFavorite ? "Remover dos favoritos" : "Favoritar"}
-          onClick={(e) => {
-            e.stopPropagation();
-            toggleFavorite(item.id);
-          }}
-          className={cn(
-            "absolute right-2 top-2 z-10 flex h-7 w-7 items-center justify-center rounded-full bg-black/30 backdrop-blur-sm transition-opacity",
-            item.isFavorite ? "opacity-100" : "opacity-0 group-hover:opacity-100"
-          )}
-        >
-          <Star
-            className="h-3.5 w-3.5 text-white"
-            fill={item.isFavorite ? "white" : "none"}
-          />
-        </button>
+        <div className="absolute right-2 top-2 z-10 flex items-center gap-1">
+          <button
+            aria-label={item.isFavorite ? "Remover dos favoritos" : "Favoritar"}
+            onClick={(e) => {
+              e.stopPropagation();
+              toggleFavorite(item.id);
+            }}
+            className={cn(
+              "flex h-7 w-7 items-center justify-center rounded-lg bg-black/35 backdrop-blur-sm text-white transition-opacity",
+              item.isFavorite ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+            )}
+          >
+            <Star
+              className="h-3.5 w-3.5"
+              fill={item.isFavorite ? "white" : "none"}
+            />
+          </button>
+
+          <div className={cn(
+            "flex h-7 w-7 items-center justify-center rounded-lg bg-black/35 backdrop-blur-sm text-white transition-opacity",
+            "opacity-0 group-hover:opacity-100"
+          )}>
+            <ItemDropdownMenu
+              id={item.id}
+              kind="item"
+              isFavorite={item.isFavorite}
+              onOpen={() => router.push(`/vault/item/${item.id}`)}
+            />
+          </div>
+        </div>
 
         <ItemPreview item={item} />
 

@@ -7,7 +7,7 @@ import type { Folder, VaultItem } from "@/types";
 import { ITEM_TYPE_META } from "@/lib/item-meta";
 import { cn, formatBytes, formatRelativeDate, labelColorHex } from "@/lib/utils";
 import { useVaultStore } from "@/lib/vault-store";
-import { ItemContextMenu } from "./item-context-menu";
+import { ItemContextMenu, ItemDropdownMenu } from "./item-context-menu";
 
 export function FolderListRow({ folder }: { folder: Folder }) {
   const router = useRouter();
@@ -44,7 +44,7 @@ export function FolderListRow({ folder }: { folder: Folder }) {
           router.push(`/vault/folder/${folder.id}`);
         }}
         className={cn(
-          "grid cursor-pointer grid-cols-[1fr_100px_90px_160px_120px] items-center gap-4 border-b border-[var(--border)] px-4 py-2.5 text-sm transition-colors hover:bg-[var(--surface-hover)]",
+          "group grid cursor-pointer grid-cols-[1fr_100px_90px_160px_120px] items-center gap-4 border-b border-[var(--border)] px-4 py-2.5 text-sm transition-colors hover:bg-[var(--surface-hover)]",
           isDropTarget && "drop-target-active"
         )}
       >
@@ -62,7 +62,16 @@ export function FolderListRow({ folder }: { folder: Folder }) {
           {folder.itemCount} {folder.itemCount === 1 ? "item" : "itens"}
         </span>
         <span className="text-[var(--foreground-subtle)]">{formatRelativeDate(folder.updatedAt)}</span>
-        <span />
+        <div className="flex justify-end pr-1 opacity-0 group-hover:opacity-100 transition-opacity">
+          <ItemDropdownMenu
+            id={folder.id}
+            kind="folder"
+            onOpen={() => {
+              setCurrentFolder(folder.id);
+              router.push(`/vault/folder/${folder.id}`);
+            }}
+          />
+        </div>
       </div>
     </ItemContextMenu>
   );
@@ -128,15 +137,25 @@ export function ItemListRow({ item, orderedIds }: { item: VaultItem; orderedIds:
           {item.fileSize ? formatBytes(item.fileSize) : "—"}
         </span>
         <span className="text-[var(--foreground-subtle)]">{formatRelativeDate(item.updatedAt)}</span>
-        <div className="flex items-center gap-1">
-          {item.tags.slice(0, 1).map((tag) => (
-            <span
-              key={tag}
-              className="truncate rounded-full bg-[var(--surface-hover)] px-2 py-0.5 text-[11px] text-[var(--foreground-muted)]"
-            >
-              {tag}
-            </span>
-          ))}
+        <div className="flex items-center justify-between gap-1 pr-1">
+          <div className="flex items-center gap-1 min-w-0 flex-1">
+            {item.tags.slice(0, 1).map((tag) => (
+              <span
+                key={tag}
+                className="truncate rounded-full bg-[var(--surface-hover)] px-2 py-0.5 text-[11px] text-[var(--foreground-muted)]"
+              >
+                {tag}
+              </span>
+            ))}
+          </div>
+          <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+            <ItemDropdownMenu
+              id={item.id}
+              kind="item"
+              isFavorite={item.isFavorite}
+              onOpen={() => router.push(`/vault/item/${item.id}`)}
+            />
+          </div>
         </div>
       </div>
     </ItemContextMenu>

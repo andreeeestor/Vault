@@ -9,6 +9,26 @@ import type {
   ViewMode,
 } from "@/types";
 
+// Importa as server actions reais para conectar o estado ao banco
+import {
+  createFolder as apiCreateFolder,
+  renameFolder as apiRenameFolder,
+  deleteFolder as apiDeleteFolder,
+  moveEntities as apiMoveEntities,
+} from "@/actions/folders";
+
+import {
+  createNote as apiCreateNote,
+  createSnippet as apiCreateSnippet,
+  createLink as apiCreateLink,
+  renameItem as apiRenameItem,
+  toggleFavorite as apiToggleFavorite,
+  toggleArchive as apiToggleArchive,
+  softDeleteItems as apiSoftDeleteItems,
+} from "@/actions/items";
+
+import { mapFolder, mapItem } from "@/lib/mappers";
+
 interface DragState {
   isDragging: boolean;
   draggedIds: string[];
@@ -44,18 +64,22 @@ interface VaultState {
   selectAll: (ids: string[]) => void;
   clearSelection: () => void;
 
-  // CRUD básico (client-side, otimista — plugar em server actions depois)
-  createFolder: (name: string, parentId: string) => Folder;
-  renameEntity: (id: string, name: string, kind: "item" | "folder") => void;
+  // CRUD real conectado ao banco de dados via Server Actions
+  createFolder: (name: string, parentId: string) => Promise<Folder>;
+  createNote: (title: string, folderId: string | null) => Promise<VaultItem>;
+  createSnippet: (title: string, folderId: string | null, codeLanguage?: string) => Promise<VaultItem>;
+  createLink: (title: string, folderId: string | null, url: string) => Promise<VaultItem>;
+  
+  renameEntity: (id: string, name: string, kind: "item" | "folder") => Promise<void>;
   updateItem: (id: string, patch: Partial<VaultItem>) => void;
-  toggleFavorite: (id: string) => void;
-  toggleArchive: (id: string) => void;
-  softDelete: (ids: string[]) => void;
+  toggleFavorite: (id: string) => Promise<void>;
+  toggleArchive: (id: string) => Promise<void>;
+  softDelete: (ids: string[]) => Promise<void>;
   moveEntities: (
     itemIds: string[],
     folderIds: string[],
-    destinationFolderId: string,
-  ) => void;
+    destinationFolderId: string | null,
+  ) => Promise<void>;
 
   // drag & drop
   startDrag: (ids: string[], kind: "item" | "folder") => void;
@@ -130,40 +154,51 @@ export const useVaultStore = create<VaultState>((set, get) => ({
 
   clearSelection: () => set({ selectedIds: new Set(), lastSelectedId: null }),
 
-  createFolder: (name, parentId) => {
-    const folder: Folder = {
-      id: `folder-${crypto.randomUUID()}`,
-      userId: "demo-user",
-      name,
-      description: null,
-      color: "violet",
-      icon: "folder",
-      parentId,
-      order: folderChildren(get().folders, parentId).length,
-      isRoot: false,
-      itemCount: 0,
-      folderCount: 0,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
+  createFolder: async (name, parentId) => {
+    const rawFolder = await apiCreateFolder({ name, parentId });
+    const folder = mapFolder(rawFolder);
     set((state) => ({ folders: [...state.folders, folder] }));
     return folder;
   },
 
-  renameEntity: (id, name, kind) =>
-    set((state) =>
-      kind === "folder"
-        ? {
-            folders: state.folders.map((f) =>
-              f.id === id ? { ...f, name, updatedAt: new Date() } : f,
-            ),
-          }
-        : {
-            items: state.items.map((i) =>
-              i.id === id ? { ...i, title: name, updatedAt: new Date() } : i,
-            ),
-          },
-    ),
+  createNote: async (title, folderId) => {
+    const rawItem = await apiCreateNote({ title, folderId });
+    const item = mapItem(rawItem);
+    set((state) => ({ items: [item, ...state.items] }));
+    return item;
+  },
+
+  createSnippet: async (title, folderId, codeLanguage) => {
+    const rawItem = await apiCreateSnippet({ title, folderId, codeLanguage });
+    const item = mapItem(rawItem);
+    set((state) => ({ items: [item, ...state.items] }));
+    return item;
+  },
+
+  createLink: async (title, folderId, url) => {
+    const rawItem = await apiCreateLink({ title, folderId, url });
+    const item = mapItem(rawItem);
+    set((state) => ({ items: [item, ...state.items] }));
+    return item;
+  },
+
+  renameEntity: async (id, name, kind) => {
+    if (kind === "folder") {
+      await apiRenameFolder({ id, name });
+      set((state) => ({
+        folders: state.folders.map((f) =>
+          f.id === id ? { ...f, name, updatedAt: new Date() } : f,
+        ),
+      }));
+    } else {
+      await apiRenameItem({ id, name });
+      set((state) => ({
+        items: state.items.map((i) =>
+          i.id === id ? { ...i, title: name, updatedAt: new Date() } : i,
+        ),
+      }));
+    }
+  },
 
   updateItem: (id, patch) =>
     set((state) => ({
@@ -172,21 +207,26 @@ export const useVaultStore = create<VaultState>((set, get) => ({
       ),
     })),
 
-  toggleFavorite: (id) =>
+  toggleFavorite: async (id) => {
+    await apiToggleFavorite(id);
     set((state) => ({
       items: state.items.map((i) =>
         i.id === id ? { ...i, isFavorite: !i.isFavorite } : i,
       ),
-    })),
+    }));
+  },
 
-  toggleArchive: (id) =>
+  toggleArchive: async (id) => {
+    await apiToggleArchive(id);
     set((state) => ({
       items: state.items.map((i) =>
         i.id === id ? { ...i, isArchived: !i.isArchived } : i,
       ),
-    })),
+    }));
+  },
 
-  softDelete: (ids) =>
+  softDelete: async (ids) => {
+    await apiSoftDeleteItems(ids);
     set((state) => ({
       items: state.items.map((i) =>
         ids.includes(i.id)
@@ -194,9 +234,11 @@ export const useVaultStore = create<VaultState>((set, get) => ({
           : i,
       ),
       selectedIds: new Set(),
-    })),
+    }));
+  },
 
-  moveEntities: (itemIds, folderIds, destinationFolderId) =>
+  moveEntities: async (itemIds, folderIds, destinationFolderId) => {
+    await apiMoveEntities({ itemIds, folderIds, destinationFolderId });
     set((state) => ({
       items: state.items.map((i) =>
         itemIds.includes(i.id)
@@ -215,7 +257,8 @@ export const useVaultStore = create<VaultState>((set, get) => ({
         draggedKind: null,
         hoveredDropTargetId: null,
       },
-    })),
+    }));
+  },
 
   startDrag: (ids, kind) =>
     set({

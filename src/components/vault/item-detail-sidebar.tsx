@@ -8,8 +8,10 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useVaultStore } from "@/lib/vault-store";
 import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 
 export function ItemDetailSidebar({ item }: { item: VaultItem }) {
+  const router = useRouter();
   const toggleFavorite = useVaultStore((s) => s.toggleFavorite);
   const toggleArchive = useVaultStore((s) => s.toggleArchive);
   const softDelete = useVaultStore((s) => s.softDelete);
@@ -55,7 +57,7 @@ export function ItemDetailSidebar({ item }: { item: VaultItem }) {
       )}
 
       <div className="mt-auto flex flex-col gap-2">
-        <Button variant="secondary" onClick={() => toast("Editor aberto")}>
+        <Button variant="secondary" onClick={() => router.push(`/vault/item/${item.id}`)}>
           <Pencil className="h-4 w-4" /> Editar
         </Button>
         <Button variant="secondary" onClick={() => toggleFavorite(item.id)}>
