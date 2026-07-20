@@ -24,9 +24,17 @@ export default async function VaultRootPage() {
   const rootFolder = folders.find((f) => f.isRoot);
   const rootId = rootFolder?.id ?? "root";
 
+  const user = session.user
+    ? {
+        name: session.user.name ?? "Usuário",
+        email: session.user.email ?? "",
+        image: session.user.image ?? null,
+      }
+    : null;
+
   return (
     <>
-      <VaultStoreHydrator folders={folders} items={items} />
+      <VaultStoreHydrator folders={folders} items={items} user={user} />
       <VaultFolderView folderId={rootId} />
     </>
   );

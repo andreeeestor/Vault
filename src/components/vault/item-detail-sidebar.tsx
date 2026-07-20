@@ -57,8 +57,21 @@ export function ItemDetailSidebar({ item }: { item: VaultItem }) {
       )}
 
       <div className="mt-auto flex flex-col gap-2">
-        <Button variant="secondary" onClick={() => router.push(`/vault/item/${item.id}`)}>
-          <Pencil className="h-4 w-4" /> Editar
+        <Button
+          variant="secondary"
+          onClick={() => {
+            // Tenta focar o editor de texto/código na página
+            const editor =
+              document.querySelector<HTMLElement>("[data-vault-editor]") ??
+              document.querySelector<HTMLElement>("div[contenteditable='true']") ??
+              document.querySelector<HTMLElement>("textarea");
+            if (editor) {
+              editor.scrollIntoView({ behavior: "smooth", block: "center" });
+              editor.focus();
+            }
+          }}
+        >
+          <Pencil className="h-4 w-4" /> Editar conteúdo
         </Button>
         <Button variant="secondary" onClick={() => toggleFavorite(item.id)}>
           <Star className="h-4 w-4" fill={item.isFavorite ? "currentColor" : "none"} />

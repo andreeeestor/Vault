@@ -29,9 +29,17 @@ export default async function VaultFolderPage({
   const folder = folders.find((f) => f.id === folderId);
   if (!folder) redirect("/vault");
 
+  const user = session.user
+    ? {
+        name: session.user.name ?? "Usuário",
+        email: session.user.email ?? "",
+        image: session.user.image ?? null,
+      }
+    : null;
+
   return (
     <>
-      <VaultStoreHydrator folders={folders} items={items} />
+      <VaultStoreHydrator folders={folders} items={items} user={user} />
       <VaultFolderView folderId={folderId} />
     </>
   );

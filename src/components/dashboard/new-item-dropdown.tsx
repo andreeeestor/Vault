@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { Plus, Upload, StickyNote, Code2, Link2, KeyRound, FolderPlus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import {
@@ -12,9 +13,13 @@ import {
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { useVaultStore } from "@/lib/vault-store";
+import { hasMasterPasswordSet } from "@/actions/vault-crypto";
+import { NewPasswordModal } from "@/components/vault/new-password-modal";
 
 export function NewItemDropdown() {
   const router = useRouter();
+  const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
+  const [hasMasterPass, setHasMasterPass] = useState(false);
   
   // Pegamos o ID da pasta aberta e as ações de criação do Zustand
   const currentFolderId = useVaultStore((s) => s.currentFolderId);
@@ -106,40 +111,61 @@ export function NewItemDropdown() {
     }
   };
 
+  const handleOpenPasswordModal = async () => {
+    try {
+      const isConfigured = await hasMasterPasswordSet();
+      setHasMasterPass(isConfigured);
+      setIsPasswordModalOpen(true);
+    } catch (err) {
+      console.error(err);
+      toast.error("Erro ao verificar senha mestra.");
+    }
+  };
+
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button size="sm">
-          <Plus className="h-4 w-4" /> Novo
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="min-w-[220px]">
-        <DropdownMenuItem onSelect={() => toast("Upload em breve. Configure o Cloudinary primeiro!")}>
-          <Upload className="h-4 w-4" /> Upload de arquivo
-        </DropdownMenuItem>
-        
-        <DropdownMenuItem onSelect={handleCreateNote}>
-          <StickyNote className="h-4 w-4" /> Nova nota
-        </DropdownMenuItem>
-        
-        <DropdownMenuItem onSelect={handleCreateSnippet}>
-          <Code2 className="h-4 w-4" /> Novo snippet
-        </DropdownMenuItem>
-        
-        <DropdownMenuItem onSelect={handleCreateLink}>
-          <Link2 className="h-4 w-4" /> Novo link
-        </DropdownMenuItem>
-        
-        <DropdownMenuItem onSelect={() => toast("Informe sua senha mestra para continuar")}>
-          <KeyRound className="h-4 w-4" /> Nova senha
-        </DropdownMenuItem>
-        
-        <DropdownMenuSeparator />
-        
-        <DropdownMenuItem onSelect={handleCreateFolder}>
-          <FolderPlus className="h-4 w-4" /> Nova pasta
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
+    <>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button size="sm">
+            <Plus className="h-4 w-4" /> Novo
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="min-w-[220px]">
+          <DropdownMenuItem onSelect={() => toast("Upload em breve. Configure o Cloudinary primeiro!")}>
+            <Upload className="h-4 w-4" /> Upload de arquivo
+          </DropdownMenuItem>
+          
+          <DropdownMenuItem onSelect={handleCreateNote}>
+            <StickyNote className="h-4 w-4" /> Nova nota
+          </DropdownMenuItem>
+          
+          <DropdownMenuItem onSelect={handleCreateSnippet}>
+            <Code2 className="h-4 w-4" /> Novo snippet
+          </DropdownMenuItem>
+          
+          <DropdownMenuItem onSelect={handleCreateLink}>
+            <Link2 className="h-4 w-4" /> Novo link
+          </DropdownMenuItem>
+          
+          <DropdownMenuItem onSelect={handleOpenPasswordModal}>
+            <KeyRound className="h-4 w-4" /> Nova senha
+          </DropdownMenuItem>
+          
+          <DropdownMenuSeparator />
+          
+          <DropdownMenuItem onSelect={handleCreateFolder}>
+            <FolderPlus className="h-4 w-4" /> Nova pasta
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+
+      {isPasswordModalOpen && (
+        <NewPasswordModal
+          open={isPasswordModalOpen}
+          onClose={() => setIsPasswordModalOpen(false)}
+          hasMasterPassword={hasMasterPass}
+        />
+      )}
+    </>
   );
 }

@@ -11,13 +11,15 @@ import type { Folder, VaultItem } from "@/types";
 export function VaultStoreHydrator({
   folders,
   items,
+  user,
 }: {
   folders: Folder[];
   items: VaultItem[];
+  user: { name: string; email: string; image: string | null } | null;
 }) {
   useEffect(() => {
-    useVaultStore.setState({ folders, items });
-  }, [folders, items]);
+    useVaultStore.setState({ folders, items, user });
+  }, [folders, items, user]);
 
   return null;
 }

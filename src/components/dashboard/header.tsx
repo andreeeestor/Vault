@@ -6,10 +6,18 @@ import { NewItemDropdown } from "./new-item-dropdown";
 import { UserDropdown } from "./user-dropdown";
 import { useTheme } from "@/components/providers/theme-provider";
 import { MOCK_USER } from "@/lib/mock-data";
+import { useVaultStore } from "@/lib/vault-store";
 import type { ReactNode } from "react";
 
 export function DashboardHeader({ breadcrumb }: { breadcrumb: ReactNode }) {
   const { theme, toggleTheme } = useTheme();
+  const storeUser = useVaultStore((s) => s.user);
+
+  const user = storeUser || {
+    name: MOCK_USER.name,
+    email: MOCK_USER.email,
+    image: MOCK_USER.image,
+  };
 
   return (
     <header className="glass sticky top-0 z-30 flex h-16 items-center gap-4 border-b border-[var(--border)] px-6">
@@ -38,7 +46,7 @@ export function DashboardHeader({ breadcrumb }: { breadcrumb: ReactNode }) {
         </button>
 
         <NewItemDropdown />
-        <UserDropdown name={MOCK_USER.name} email={MOCK_USER.email} image={MOCK_USER.image} />
+        <UserDropdown name={user.name} email={user.email} image={user.image} />
       </div>
     </header>
   );

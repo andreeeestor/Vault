@@ -85,6 +85,8 @@ interface VaultState {
   startDrag: (ids: string[], kind: "item" | "folder") => void;
   setDropTarget: (id: string | null) => void;
   endDrag: () => void;
+
+  user: { name: string; email: string; image: string | null } | null;
 }
 
 function folderChildren(folders: Folder[], parentId: string): Folder[] {
@@ -96,6 +98,7 @@ function folderChildren(folders: Folder[], parentId: string): Folder[] {
 export const useVaultStore = create<VaultState>((set, get) => ({
   folders: [],
   items: [],
+  user: null,
 
   currentFolderId: "root",
   viewMode: "grid",
@@ -227,14 +230,28 @@ export const useVaultStore = create<VaultState>((set, get) => ({
 
   softDelete: async (ids) => {
     await apiSoftDeleteItems(ids);
-    set((state) => ({
-      items: state.items.map((i) =>
-        ids.includes(i.id)
-          ? { ...i, isDeleted: true, deletedAt: new Date() }
-          : i,
-      ),
-      selectedIds: new Set(),
-    }));
+    set((state) => {
+      // Calcula quantos itens por folderId estão sendo deletados
+      const folderDecrements = new Map<string, number>();
+      for (const item of state.items) {
+        if (ids.includes(item.id) && !item.isDeleted && item.folderId) {
+          folderDecrements.set(item.folderId, (folderDecrements.get(item.folderId) ?? 0) + 1);
+        }
+      }
+      return {
+        items: state.items.map((i) =>
+          ids.includes(i.id)
+            ? { ...i, isDeleted: true, deletedAt: new Date() }
+            : i,
+        ),
+        folders: state.folders.map((f) =>
+          folderDecrements.has(f.id)
+            ? { ...f, itemCount: Math.max(0, f.itemCount - (folderDecrements.get(f.id) ?? 0)) }
+            : f,
+        ),
+        selectedIds: new Set(),
+      };
+    });
   },
 
   moveEntities: async (itemIds, folderIds, destinationFolderId) => {

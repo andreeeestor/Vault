@@ -19,6 +19,15 @@ async function requireUserId(): Promise<string> {
   return session.user.id;
 }
 
+export async function hasMasterPasswordSet(): Promise<boolean> {
+  const userId = await requireUserId();
+  const user = await db.user.findUnique({
+    where: { id: userId },
+    select: { vaultMasterKeyHash: true },
+  });
+  return !!user?.vaultMasterKeyHash;
+}
+
 /** Define a senha mestra na primeira vez que o usuário usa o cofre de senhas. */
 export async function setupMasterPassword(masterPassword: string) {
   const userId = await requireUserId();
@@ -29,6 +38,74 @@ export async function setupMasterPassword(masterPassword: string) {
     where: { id: userId },
     data: { vaultSalt: salt, vaultMasterKeyHash: hash },
   });
+}
+
+/** Altera a senha mestra e re-criptografa todas as senhas armazenadas do usuário. */
+export async function changeMasterPassword(currentMaster: string, newMaster: string) {
+  const userId = await requireUserId();
+  const user = await db.user.findUniqueOrThrow({ where: { id: userId } });
+
+  if (!user.vaultSalt || !user.vaultMasterKeyHash) {
+    throw new Error("Senha mestra não configurada.");
+  }
+
+  // Verifica a senha atual
+  if (!verifyMasterPassword(currentMaster, user.vaultSalt, user.vaultMasterKeyHash)) {
+    throw new Error("Senha mestra atual incorreta.");
+  }
+
+  // Gera novos valores para a nova senha mestra
+  const newSalt = generateSalt();
+  const newHash = hashMasterPassword(newMaster, newSalt);
+
+  // Buscar todas as senhas para re-criptografar
+  const items = await db.item.findMany({
+    where: { userId, type: "PASSWORD" },
+  });
+
+  // Re-criptografar cada item
+  const updatePromises = items.map(async (item) => {
+    let decryptedUsername: string | null = null;
+    let decryptedPassword = "";
+    let decryptedNotes: string | null = null;
+
+    if (item.encryptedUsername) {
+      decryptedUsername = decryptSecret(item.encryptedUsername, currentMaster, user.vaultSalt!);
+    }
+    if (item.encryptedPassword) {
+      decryptedPassword = decryptSecret(item.encryptedPassword, currentMaster, user.vaultSalt!);
+    }
+    if (item.encryptedNotes) {
+      decryptedNotes = decryptSecret(item.encryptedNotes, currentMaster, user.vaultSalt!);
+    }
+
+    // Criptografar com a nova chave
+    const encUsername = decryptedUsername ? encryptSecret(decryptedUsername, newMaster, newSalt) : null;
+    const encPassword = encryptSecret(decryptedPassword, newMaster, newSalt);
+    const encNotes = decryptedNotes ? encryptSecret(decryptedNotes, newMaster, newSalt) : null;
+
+    return db.item.update({
+      where: { id: item.id },
+      data: {
+        encryptedUsername: encUsername,
+        encryptedPassword: encPassword,
+        encryptedNotes: encNotes,
+      },
+    });
+  });
+
+  await Promise.all(updatePromises);
+
+  // Atualizar usuário com a nova senha mestra
+  await db.user.update({
+    where: { id: userId },
+    data: {
+      vaultSalt: newSalt,
+      vaultMasterKeyHash: newHash,
+    },
+  });
+
+  revalidatePath("/vault/passwords");
 }
 
 export async function createPasswordItem(input: unknown) {

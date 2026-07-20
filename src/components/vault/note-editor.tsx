@@ -257,6 +257,7 @@ export function NoteEditor({ item }: { item: VaultItem }) {
           <div
             ref={editorRef}
             id="note-editor-content"
+            data-vault-editor
             contentEditable={!readOnly}
             suppressContentEditableWarning
             onInput={handleInput}
