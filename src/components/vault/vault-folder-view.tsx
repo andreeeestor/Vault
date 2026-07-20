@@ -12,7 +12,7 @@ import type { Folder, SortField, VaultItem } from "@/types";
 function sortFolders(folders: Folder[], field: SortField, dir: "asc" | "desc"): Folder[] {
   const sorted = [...folders].sort((a, b) => {
     if (field === "name") return a.name.localeCompare(b.name);
-    if (field === "updatedAt") return a.updatedAt.getTime() - b.updatedAt.getTime();
+    if (field === "updatedAt") return new Date(a.updatedAt).getTime() - new Date(b.updatedAt).getTime();
     return 0;
   });
   return dir === "asc" ? sorted : sorted.reverse();
@@ -21,7 +21,7 @@ function sortFolders(folders: Folder[], field: SortField, dir: "asc" | "desc"): 
 function sortItems(items: VaultItem[], field: SortField, dir: "asc" | "desc"): VaultItem[] {
   const sorted = [...items].sort((a, b) => {
     if (field === "name") return a.title.localeCompare(b.title);
-    if (field === "updatedAt") return a.updatedAt.getTime() - b.updatedAt.getTime();
+    if (field === "updatedAt") return new Date(a.updatedAt).getTime() - new Date(b.updatedAt).getTime();
     if (field === "type") return a.type.localeCompare(b.type);
     if (field === "fileSize") return (a.fileSize ?? 0) - (b.fileSize ?? 0);
     return 0;

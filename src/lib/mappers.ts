@@ -24,8 +24,8 @@ export function mapFolder(
     isRoot: f.isRoot,
     itemCount: f._count?.items ?? 0,
     folderCount: f._count?.children ?? 0,
-    createdAt: f.createdAt,
-    updatedAt: f.updatedAt,
+    createdAt: new Date(f.createdAt),
+    updatedAt: new Date(f.updatedAt),
   };
 }
 
@@ -42,7 +42,7 @@ export function mapItem(i: PrismaItem): VaultItem {
     isFavorite: i.isFavorite,
     isArchived: i.isArchived,
     isDeleted: i.isDeleted,
-    deletedAt: i.deletedAt,
+    deletedAt: i.deletedAt ? new Date(i.deletedAt) : null,
     url: i.url,
     fileKey: i.fileKey,
     fileSize: i.fileSize !== null ? Number(i.fileSize) : null,
@@ -54,10 +54,10 @@ export function mapItem(i: PrismaItem): VaultItem {
     linkOgDescription: i.linkOgDescription,
     linkOgImage: i.linkOgImage,
     linkFavicon: i.linkFavicon,
-    hasPassword: !!i.encryptedPassword,
+    hasPassword: !!(i as any).encryptedPassword,
     passwordStrength: (i.passwordStrength as VaultItem["passwordStrength"]) ?? null,
-    createdAt: i.createdAt,
-    updatedAt: i.updatedAt,
+    createdAt: new Date(i.createdAt),
+    updatedAt: new Date(i.updatedAt),
   };
 }
 

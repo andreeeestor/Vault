@@ -114,7 +114,7 @@ export function NewItemDropdown() {
           </DropdownMenuItem>
           
           <DropdownMenuItem onSelect={() => openEntityModal("note")}>
-            <FileText className="h-4 w-4" /> Novo documento / nota
+            <FileText className="h-4 w-4" /> Nova Nota
           </DropdownMenuItem>
           
           <DropdownMenuItem onSelect={() => openEntityModal("snippet")}>

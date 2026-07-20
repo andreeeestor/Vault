@@ -14,7 +14,8 @@ export function formatBytes(bytes: number | bigint): string {
   return `${value.toFixed(i === 0 ? 0 : 1)} ${units[i]}`;
 }
 
-export function formatRelativeDate(date: Date): string {
+export function formatRelativeDate(dateInput: Date | string): string {
+  const date = new Date(dateInput);
   const diffMs = Date.now() - date.getTime();
   const diffSec = Math.round(diffMs / 1000);
   const diffMin = Math.round(diffSec / 60);
