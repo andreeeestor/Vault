@@ -36,7 +36,8 @@ export async function POST(request: Request) {
       uploadResult = await uploadToCloudinary(
         buffer,
         session.user.id,
-        resourceTypeForItem(itemType)
+        resourceTypeForItem(itemType),
+        file.type
       );
     } catch (err) {
       console.error("Cloudinary upload failed:", err);

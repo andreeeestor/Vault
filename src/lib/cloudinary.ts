@@ -32,10 +32,11 @@ export interface UploadResult {
 export async function uploadToCloudinary(
   fileBuffer: Buffer,
   folder: string,
-  resourceType: CloudinaryResourceType
+  resourceType: CloudinaryResourceType,
+  mimeType: string
 ): Promise<UploadResult> {
   const base64 = fileBuffer.toString("base64");
-  const result = await cloudinary.uploader.upload(`data:*/*;base64,${base64}`, {
+  const result = await cloudinary.uploader.upload(`data:${mimeType};base64,${base64}`, {
     folder: `vault/${folder}`,
     resource_type: resourceType,
   });
