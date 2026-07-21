@@ -23,7 +23,13 @@ export function mapFolder(
   };
 }
 
-export function mapItem(i: PrismaItem): VaultItem {
+export function mapItem(
+  i: PrismaItem & {
+    encryptedPassword?: string | null;
+    reminderAt?: Date | string | null;
+    reminderSent?: boolean | null;
+  }
+): VaultItem {
   return {
     id: i.id,
     userId: i.userId,
@@ -48,10 +54,10 @@ export function mapItem(i: PrismaItem): VaultItem {
     linkOgDescription: i.linkOgDescription,
     linkOgImage: i.linkOgImage,
     linkFavicon: i.linkFavicon,
-    hasPassword: !!(i as any).encryptedPassword,
+    hasPassword: !!i.encryptedPassword,
     passwordStrength: (i.passwordStrength as VaultItem["passwordStrength"]) ?? null,
-    reminderAt: (i as any).reminderAt ? new Date((i as any).reminderAt) : null,
-    reminderSent: !!(i as any).reminderSent,
+    reminderAt: i.reminderAt ? new Date(i.reminderAt) : null,
+    reminderSent: !!i.reminderSent,
     createdAt: new Date(i.createdAt),
     updatedAt: new Date(i.updatedAt),
   };

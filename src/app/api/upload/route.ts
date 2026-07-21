@@ -38,7 +38,7 @@ export async function POST(request: Request) {
         session.user.id,
         resourceTypeForItem(itemType)
       );
-    } catch (err: any) {
+    } catch (err) {
       console.error("Cloudinary upload failed, falling back to mock:", err);
       uploadResult = {
         url: itemType === "IMAGE"

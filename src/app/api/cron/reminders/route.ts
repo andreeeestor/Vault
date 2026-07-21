@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { resend, EMAIL_FROM } from "@/lib/email";
 
+export const dynamic = "force-dynamic";
+
 export async function GET(request: Request) {
   const authHeader = request.headers.get("authorization");
   if (
@@ -34,8 +36,9 @@ export async function GET(request: Request) {
 
     for (const item of reminders) {
       try {
-        const userEmail = item.user.email;
-        const userName = item.user.name ?? "Usuário";
+        const itemWithUser = item as typeof item & { user: { email: string; name: string | null } };
+        const userEmail = itemWithUser.user.email;
+        const userName = itemWithUser.user.name ?? "Usuário";
 
         await resend.emails.send({
           from: process.env.RESEND_FROM_EMAIL || EMAIL_FROM || "onboarding@resend.dev",
@@ -74,8 +77,9 @@ export async function GET(request: Request) {
       message: `Sucesso: ${sentIds.length} lembrete(s) enviado(s)`,
       sentIds,
     });
-  } catch (err: any) {
+  } catch (err) {
     console.error("Erro na cron de lembretes:", err);
-    return NextResponse.json({ error: err.message }, { status: 500 });
+    const msg = err instanceof Error ? err.message : "Erro desconhecido";
+    return NextResponse.json({ error: msg }, { status: 500 });
   }
 }
