@@ -141,3 +141,20 @@ export async function listAllItems(userId: string) {
     orderBy: { updatedAt: "desc" },
   });
 }
+
+export async function createReminder(title: string, noteContent: string | null, reminderAt: Date, folderId: string | null) {
+  const userId = await requireUserId();
+  const item = await db.item.create({
+    data: {
+      userId,
+      type: "REMINDER",
+      title,
+      folderId,
+      noteContent,
+      reminderAt,
+    },
+  });
+
+  revalidatePath("/vault");
+  return item;
+}

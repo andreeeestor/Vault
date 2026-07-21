@@ -26,6 +26,7 @@ import {
   toggleFavorite as apiToggleFavorite,
   toggleArchive as apiToggleArchive,
   softDeleteItems as apiSoftDeleteItems,
+  createReminder as apiCreateReminder,
 } from "@/actions/items";
 
 import { mapFolder, mapItem } from "@/lib/mappers";
@@ -66,6 +67,7 @@ interface VaultState {
   createNote: (title: string, folderId: string | null) => Promise<VaultItem>;
   createSnippet: (title: string, folderId: string | null, codeLanguage?: string) => Promise<VaultItem>;
   createLink: (title: string, folderId: string | null, url: string) => Promise<VaultItem>;
+  createReminder: (title: string, noteContent: string | null, reminderAt: Date, folderId: string | null) => Promise<VaultItem>;
   
   renameEntity: (id: string, name: string, kind: "item" | "folder") => Promise<void>;
   deleteFolder: (id: string) => Promise<void>;
@@ -193,6 +195,18 @@ export const useVaultStore = create<VaultState>((set, get) => ({
 
   createLink: async (title, folderId, url) => {
     const rawItem = await apiCreateLink({ title, folderId, url });
+    const item = mapItem(rawItem);
+    set((state) => ({
+      items: [item, ...state.items],
+      folders: state.folders.map((f) =>
+        f.id === folderId ? { ...f, itemCount: f.itemCount + 1 } : f
+      ),
+    }));
+    return item;
+  },
+
+  createReminder: async (title, noteContent, reminderAt, folderId) => {
+    const rawItem = await apiCreateReminder(title, noteContent, reminderAt, folderId);
     const item = mapItem(rawItem);
     set((state) => ({
       items: [item, ...state.items],

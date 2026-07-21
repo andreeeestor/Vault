@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { FolderPlus, StickyNote, Code2, Link2, Plus } from "lucide-react";
+import { FolderPlus, StickyNote, Code2, Link2, Plus, Bell } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,7 +19,7 @@ import {
 interface NewEntityModalProps {
   open: boolean;
   onClose: () => void;
-  kind: "note" | "snippet" | "link" | "folder";
+  kind: "note" | "snippet" | "link" | "folder" | "reminder";
 }
 
 export function NewEntityModal({ open, onClose, kind }: NewEntityModalProps) {
@@ -29,10 +29,13 @@ export function NewEntityModal({ open, onClose, kind }: NewEntityModalProps) {
   const createSnippet = useVaultStore((s) => s.createSnippet);
   const createLink = useVaultStore((s) => s.createLink);
   const createFolder = useVaultStore((s) => s.createFolder);
+  const createReminder = useVaultStore((s) => s.createReminder);
 
   const [title, setTitle] = useState("");
   const [url, setUrl] = useState("");
   const [language, setLanguage] = useState("javascript");
+  const [reminderContent, setReminderContent] = useState("");
+  const [reminderAtStr, setReminderAtStr] = useState("");
   const [isTemporary, setIsTemporary] = useState(false);
   const [expiryTime, setExpiryTime] = useState("24 horas");
   const [isPending, startTransition] = useTransition();
@@ -75,6 +78,14 @@ export function NewEntityModal({ open, onClose, kind }: NewEntityModalProps) {
           toast.success(`Pasta "${folder.name}" criada!`);
           router.push(`/vault/folder/${folder.id}`);
           handleClose();
+        } else if (kind === "reminder") {
+          if (!reminderAtStr) {
+            toast.error("Informe a data e hora para o envio.");
+            return;
+          }
+          await createReminder(trimmedTitle, reminderContent.trim() || null, new Date(reminderAtStr), getFolderIdForDb());
+          toast.success("Lembrete agendado com sucesso!");
+          handleClose();
         }
       } catch (err) {
         console.error(err);
@@ -87,6 +98,8 @@ export function NewEntityModal({ open, onClose, kind }: NewEntityModalProps) {
     setTitle("");
     setUrl("");
     setLanguage("javascript");
+    setReminderContent("");
+    setReminderAtStr("");
     setIsTemporary(false);
     setExpiryTime("24 horas");
     onClose();
@@ -97,6 +110,7 @@ export function NewEntityModal({ open, onClose, kind }: NewEntityModalProps) {
     snippet: Code2,
     link: Link2,
     folder: FolderPlus,
+    reminder: Bell,
   };
 
   const Icon = icons[kind];
@@ -126,6 +140,12 @@ export function NewEntityModal({ open, onClose, kind }: NewEntityModalProps) {
       inputLabel: "Nome da pasta",
       placeholder: "Trabalho, Projetos, Estudos...",
     },
+    reminder: {
+      title: "Novo lembrete por e-mail",
+      desc: "Agende uma notificação para ser enviada diretamente ao seu e-mail",
+      inputLabel: "Assunto do lembrete",
+      placeholder: "Renovar assinatura, Encontro com cliente...",
+    },
   };
 
   const config = labels[kind];
@@ -133,7 +153,6 @@ export function NewEntityModal({ open, onClose, kind }: NewEntityModalProps) {
   return (
     <Dialog open={open} onOpenChange={(v) => !v && handleClose()}>
       <DialogContent showClose={false} className="p-0 overflow-hidden max-w-md">
-        {}
         <div className="flex items-center gap-3 border-b border-[var(--border)] px-5 py-4">
           <div
             className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl"
@@ -187,6 +206,35 @@ export function NewEntityModal({ open, onClose, kind }: NewEntityModalProps) {
             </div>
           )}
 
+          {kind === "reminder" && (
+            <>
+              <div>
+                <label className="text-sm font-medium text-[var(--foreground)]">
+                  Mensagem do e-mail
+                </label>
+                <textarea
+                  value={reminderContent}
+                  onChange={(e) => setReminderContent(e.target.value)}
+                  placeholder="Digite aqui o texto que será enviado no corpo do e-mail..."
+                  rows={3}
+                  className="mt-1.5 w-full rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-sm text-[var(--foreground)] outline-none focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)] resize-none"
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium text-[var(--foreground)]">
+                  Data e hora do envio <span className="text-[var(--danger)]">*</span>
+                </label>
+                <input
+                  type="datetime-local"
+                  value={reminderAtStr}
+                  onChange={(e) => setReminderAtStr(e.target.value)}
+                  required
+                  className="mt-1.5 w-full rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-sm text-[var(--foreground)] outline-none focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)]"
+                />
+              </div>
+            </>
+          )}
+
           {kind === "snippet" && (
             <div>
               <label className="text-sm font-medium text-[var(--foreground)]">
@@ -210,7 +258,6 @@ export function NewEntityModal({ open, onClose, kind }: NewEntityModalProps) {
             </div>
           )}
 
-          {}
           <div className="flex flex-col gap-2 rounded-lg border border-[var(--border)] bg-[var(--surface-hover)] p-3">
             <label className="flex items-start gap-2.5 cursor-pointer">
               <input

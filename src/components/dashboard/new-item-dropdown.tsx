@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { Plus, Upload, StickyNote, Code2, Link2, KeyRound, FolderPlus, Mic, FileText } from "lucide-react";
+import { Plus, Upload, StickyNote, Code2, Link2, KeyRound, FolderPlus, Mic, FileText, Bell } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -23,13 +23,13 @@ export function NewItemDropdown() {
   const [hasMasterPass, setHasMasterPass] = useState(false);
   const [isEntityModalOpen, setIsEntityModalOpen] = useState(false);
   const [isAudioModalOpen, setIsAudioModalOpen] = useState(false);
-  const [entityKind, setEntityKind] = useState<"note" | "snippet" | "link" | "folder">("note");
+  const [entityKind, setEntityKind] = useState<"note" | "snippet" | "link" | "folder" | "reminder">("note");
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const currentFolderId = useVaultStore((s) => s.currentFolderId);
   const addItem = useVaultStore((s) => s.addItem);
 
-  const openEntityModal = (kind: "note" | "snippet" | "link" | "folder") => {
+  const openEntityModal = (kind: "note" | "snippet" | "link" | "folder" | "reminder") => {
     setEntityKind(kind);
     setIsEntityModalOpen(true);
   };
@@ -127,6 +127,10 @@ export function NewItemDropdown() {
           
           <DropdownMenuItem onSelect={handleOpenPasswordModal}>
             <KeyRound className="h-4 w-4" /> Nova senha
+          </DropdownMenuItem>
+
+          <DropdownMenuItem onSelect={() => openEntityModal("reminder")}>
+            <Bell className="h-4 w-4" /> Novo lembrete
           </DropdownMenuItem>
           
           <DropdownMenuSeparator />

@@ -5,7 +5,8 @@ export type ItemType =
   | "NOTE"
   | "SNIPPET"
   | "LINK"
-  | "PASSWORD";
+  | "PASSWORD"
+  | "REMINDER";
 
 export type LabelColor =
   | "violet"
@@ -74,6 +75,9 @@ export interface VaultItem {
 
   hasPassword: boolean;
   passwordStrength: PasswordStrength | null;
+
+  reminderAt?: Date | null;
+  reminderSent?: boolean;
 
   createdAt: Date;
   updatedAt: Date;

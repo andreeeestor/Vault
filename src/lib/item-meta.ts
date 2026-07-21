@@ -6,6 +6,7 @@ import {
   Code2,
   Link2,
   KeyRound,
+  Bell,
   type LucideIcon,
 } from "lucide-react";
 import type { ItemType } from "@/types";
@@ -24,4 +25,5 @@ export const ITEM_TYPE_META: Record<ItemType, ItemTypeMeta> = {
   SNIPPET: { label: "Snippet", icon: Code2, accent: "#059669" },
   LINK: { label: "Link", icon: Link2, accent: "#7C3AED" },
   PASSWORD: { label: "Senha", icon: KeyRound, accent: "#E11D48" },
+  REMINDER: { label: "Lembrete", icon: Bell, accent: "#D97706" },
 };

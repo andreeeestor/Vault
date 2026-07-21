@@ -109,7 +109,9 @@ model Item {
   encryptedUsername String?
   encryptedPassword String?
   encryptedNotes    String?
-  passwordStrength  String? // weak | medium | strong
+  passwordStrength  String?
+  reminderAt        DateTime?
+  reminderSent      Boolean   @default(false)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

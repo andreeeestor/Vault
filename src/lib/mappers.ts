@@ -50,6 +50,8 @@ export function mapItem(i: PrismaItem): VaultItem {
     linkFavicon: i.linkFavicon,
     hasPassword: !!(i as any).encryptedPassword,
     passwordStrength: (i.passwordStrength as VaultItem["passwordStrength"]) ?? null,
+    reminderAt: (i as any).reminderAt ? new Date((i as any).reminderAt) : null,
+    reminderSent: !!(i as any).reminderSent,
     createdAt: new Date(i.createdAt),
     updatedAt: new Date(i.updatedAt),
   };
