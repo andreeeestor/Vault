@@ -39,17 +39,12 @@ export async function POST(request: Request) {
         resourceTypeForItem(itemType)
       );
     } catch (err) {
-      console.error("Cloudinary upload failed, falling back to mock:", err);
-      uploadResult = {
-        url: itemType === "IMAGE"
-          ? "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800"
-          : itemType === "AUDIO"
-          ? "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3"
-          : "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf-test.pdf",
-        publicId: `mock_${Date.now()}`,
-        bytes: file.size,
-        format: file.name.split(".").pop() || "raw",
-      };
+      console.error("Cloudinary upload failed:", err);
+      const msg = err instanceof Error ? err.message : "Erro desconhecido";
+      return NextResponse.json(
+        { error: `Falha no upload para o Cloudinary: ${msg}` },
+        { status: 500 }
+      );
     }
   }
 
