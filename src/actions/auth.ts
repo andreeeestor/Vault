@@ -1,5 +1,6 @@
 "use server";
 
+import { Prisma } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import { db } from "@/lib/db";
 import { registerSchema } from "@/lib/validators";
@@ -26,7 +27,7 @@ export async function registerUser(formData: FormData) {
 
   const passwordHash = await bcrypt.hash(password, 12);
 
-  await db.$transaction(async (tx) => {
+  await db.$transaction(async (tx: Prisma.TransactionClient) => {
     const user = await tx.user.create({
       data: { name, email, passwordHash },
     });
