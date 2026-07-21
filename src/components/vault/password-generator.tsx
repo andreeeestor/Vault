@@ -17,7 +17,6 @@ const UPPER = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 const NUMBERS = "0123456789";
 const SYMBOLS = "!@#$%^&*()_+-=[]{}|;:,.<>?";
 
-/** Gerador client-side (usa Web Crypto) para pré-visualização; a versão persistida usa lib/crypto.ts no servidor. */
 function generateClientSide(options: GeneratorOptions): string {
   let charset = LOWER;
   if (options.uppercase) charset += UPPER;

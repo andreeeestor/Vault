@@ -2,10 +2,6 @@
 
 import { useVaultStore } from "@/lib/vault-store";
 
-/**
- * Fachada sobre o store do Vault para drag & drop nativo do HTML5
- * (arrastar itens/pastas para outras pastas ou para o breadcrumb).
- */
 export function useDragAndDrop() {
   const drag = useVaultStore((s) => s.drag);
   const startDrag = useVaultStore((s) => s.startDrag);

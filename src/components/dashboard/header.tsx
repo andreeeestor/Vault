@@ -1,6 +1,6 @@
 "use client";
 
-import { Search, Sun, Moon } from "lucide-react";
+import { Search, Sun, Moon, Menu } from "lucide-react";
 import { ViewToggle } from "@/components/vault/view-toggle";
 import { NewItemDropdown } from "./new-item-dropdown";
 import { UserDropdown } from "./user-dropdown";
@@ -12,6 +12,7 @@ import type { ReactNode } from "react";
 export function DashboardHeader({ breadcrumb }: { breadcrumb: ReactNode }) {
   const { theme, toggleTheme } = useTheme();
   const storeUser = useVaultStore((s) => s.user);
+  const setSidebarOpen = useVaultStore((s) => s.setSidebarOpen);
 
   const user = storeUser || {
     name: MOCK_USER.name,
@@ -20,7 +21,14 @@ export function DashboardHeader({ breadcrumb }: { breadcrumb: ReactNode }) {
   };
 
   return (
-    <header className="glass sticky top-0 z-30 flex h-16 items-center gap-4 border-b border-[var(--border)] px-6">
+    <header className="glass sticky top-0 z-30 flex h-16 items-center gap-4 border-b border-[var(--border)] px-4 md:px-6">
+      <button
+        onClick={() => setSidebarOpen(true)}
+        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[var(--radius-md)] border border-[var(--border-strong)] bg-[var(--surface)] text-[var(--foreground-muted)] transition-colors hover:bg-[var(--surface-hover)] md:hidden"
+      >
+        <Menu className="h-5 w-5" />
+      </button>
+
       <div className="min-w-0 flex-1">{breadcrumb}</div>
 
       <button

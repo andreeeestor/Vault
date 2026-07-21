@@ -2,13 +2,6 @@ import { PrismaClient } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { Pool } from "pg";
 
-/**
- * Singleton do Prisma Client — evita esgotar conexões em dev (hot reload)
- * e em ambientes serverless com múltiplas invocações.
- *
- * MOCK: Pool/Client criado de forma lazy para não quebrar quando
- * DATABASE_URL ainda não está configurado.
- */
 const globalForPrisma = globalThis as unknown as {
   prisma?: PrismaClient;
   pool?: Pool;

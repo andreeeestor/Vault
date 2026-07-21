@@ -4,10 +4,6 @@ import { useEffect, useRef, useState } from "react";
 
 export type AutoSaveStatus = "idle" | "saving" | "saved" | "error";
 
-/**
- * Salva automaticamente `value` após `delayMs` de inatividade.
- * Usado pelo editor de notas (auto-save com debounce de 1.5s).
- */
 export function useAutoSave(
   value: string,
   onSave: (value: string) => Promise<void>,
@@ -36,7 +32,7 @@ export function useAutoSave(
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    
   }, [value, delayMs]);
 
   return status;

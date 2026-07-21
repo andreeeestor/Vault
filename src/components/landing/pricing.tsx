@@ -6,7 +6,6 @@ import { cn } from "@/lib/utils";
 import { useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
 
-
 const PLANS = [
   {
     id: "free",
@@ -76,7 +75,7 @@ export function Pricing() {
             Comece de graça. Faça upgrade quando o Vault se tornar essencial no seu dia a dia.
           </p>
 
-          {/* Toggle */}
+          {}
           <div className="mt-6 inline-flex items-center gap-1 rounded-full border-2 border-[#1E1B2E] bg-white p-1">
             <button
               onClick={() => setYearly(false)}

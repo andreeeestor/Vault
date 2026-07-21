@@ -2,10 +2,6 @@
 
 import { useVaultStore } from "@/lib/vault-store";
 
-/**
- * Fachada sobre o store do Vault para a lógica de seleção múltipla
- * (shift+click intervalo, ctrl/cmd+click individual, ctrl/cmd+A todos).
- */
 export function useSelection() {
   const selectedIds = useVaultStore((s) => s.selectedIds);
   const selectOnly = useVaultStore((s) => s.selectOnly);

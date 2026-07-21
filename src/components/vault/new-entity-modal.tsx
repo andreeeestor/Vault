@@ -133,7 +133,7 @@ export function NewEntityModal({ open, onClose, kind }: NewEntityModalProps) {
   return (
     <Dialog open={open} onOpenChange={(v) => !v && handleClose()}>
       <DialogContent showClose={false} className="p-0 overflow-hidden max-w-md">
-        {/* Header */}
+        {}
         <div className="flex items-center gap-3 border-b border-[var(--border)] px-5 py-4">
           <div
             className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl"
@@ -210,7 +210,7 @@ export function NewEntityModal({ open, onClose, kind }: NewEntityModalProps) {
             </div>
           )}
 
-          {/* Arquivo temporário (funcionalidade futura, apenas visual) */}
+          {}
           <div className="flex flex-col gap-2 rounded-lg border border-[var(--border)] bg-[var(--surface-hover)] p-3">
             <label className="flex items-start gap-2.5 cursor-pointer">
               <input

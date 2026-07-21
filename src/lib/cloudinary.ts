@@ -11,15 +11,14 @@ export { cloudinary };
 
 export type CloudinaryResourceType = "image" | "video" | "raw";
 
-/** Mapeia o tipo de item do Vault para o resource_type esperado pelo Cloudinary. */
 export function resourceTypeForItem(itemType: "IMAGE" | "PDF" | "AUDIO"): CloudinaryResourceType {
   switch (itemType) {
     case "IMAGE":
       return "image";
     case "AUDIO":
-      return "video"; // Cloudinary trata áudio dentro do pipeline de "video"
+      return "video"; 
     case "PDF":
-      return "image"; // PDFs são versionados como "image" para habilitar o viewer de páginas
+      return "image"; 
   }
 }
 

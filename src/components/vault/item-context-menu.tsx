@@ -102,7 +102,7 @@ export function ItemContextMenu({
               <FolderPlus className="h-4 w-4" /> Nova subpasta
             </ContextMenuItem>
 
-            {/* Marcador de cor da pasta */}
+            {}
             <ContextMenuSub>
               <ContextMenuSubTrigger>
                 <div className="flex items-center gap-2">
@@ -197,7 +197,7 @@ export function ItemDropdownMenu({
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <button
-          onClick={(e) => e.stopPropagation()} // impede clique no card/linha
+          onClick={(e) => e.stopPropagation()} 
           className="flex h-7 w-7 items-center justify-center rounded-lg hover:bg-[var(--surface-hover)] text-[var(--foreground-muted)] hover:text-[var(--foreground)] transition-colors outline-none"
         >
           <MoreVertical className="h-4 w-4" />
@@ -241,7 +241,7 @@ export function ItemDropdownMenu({
               <FolderPlus className="h-4 w-4" /> Nova subpasta
             </DropdownMenuItem>
 
-            {/* Marcador de cor da pasta */}
+            {}
             <DropdownMenuSub>
               <DropdownMenuSubTrigger onClick={(e) => e.stopPropagation()}>
                 <div className="flex items-center gap-2">

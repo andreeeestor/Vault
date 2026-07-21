@@ -37,7 +37,7 @@ function ImageViewer({ item }: { item: VaultItem }) {
     <div className="flex h-full flex-col">
       <div className="flex flex-1 items-center justify-center overflow-auto bg-[#0C0A0F] p-6">
         {item.url && (
-          // eslint-disable-next-line @next/next/no-img-element
+          
           <img
             src={item.url}
             alt={item.title}
@@ -133,7 +133,7 @@ function LinkViewer({ item }: { item: VaultItem }) {
         )}
       >
         {item.linkOgImage && (
-          // eslint-disable-next-line @next/next/no-img-element
+          
           <img
             src={item.linkOgImage}
             alt={item.title}

@@ -20,7 +20,6 @@ export default async function VaultRootPage() {
   const folders = rawFolders.map(mapFolder);
   const items = rawItems.map(mapItem);
 
-  // Encontrar id da pasta raiz (isRoot = true)
   const rootFolder = folders.find((f) => f.isRoot);
   const rootId = rootFolder?.id ?? "root";
 

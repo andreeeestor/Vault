@@ -32,14 +32,15 @@ export function ItemList({ folders, items }: { folders: Folder[]; items: VaultIt
 
   return (
     <div className="overflow-hidden rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface)]">
-      <div className="grid grid-cols-[1fr_100px_90px_160px_120px] gap-4 border-b border-[var(--border)] bg-[var(--background-elevated)] px-4 py-2 text-xs font-medium text-[var(--foreground-subtle)]">
+      <div className="grid grid-cols-[1fr_40px] md:grid-cols-[1fr_100px_90px_160px_120px] gap-4 border-b border-[var(--border)] bg-[var(--background-elevated)] px-4 py-2 text-xs font-medium text-[var(--foreground-subtle)]">
         {COLUMNS.map(({ field, label }) => (
           <button
             key={field}
             onClick={() => toggleSort(field)}
             className={cn(
-              "flex items-center gap-1 text-left uppercase tracking-wide transition-colors hover:text-[var(--foreground)]",
-              field === "type" && "col-start-2"
+              "items-center gap-1 text-left uppercase tracking-wide transition-colors hover:text-[var(--foreground)]",
+              field === "name" ? "flex" : "hidden md:flex",
+              field === "type" && "md:col-start-2"
             )}
           >
             {label}
@@ -51,7 +52,8 @@ export function ItemList({ folders, items }: { folders: Folder[]; items: VaultIt
               ))}
           </button>
         ))}
-        <span className="uppercase tracking-wide">Tags</span>
+        <span className="uppercase tracking-wide hidden md:block">Tags</span>
+        <span className="uppercase tracking-wide md:hidden text-right">Ações</span>
       </div>
 
       <div>

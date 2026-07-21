@@ -53,7 +53,7 @@ export function Features() {
   return (
     <section id="features" className="px-6 py-24 lg:px-10" style={{ background: "#F4EFE8" }}>
       <div className="mx-auto max-w-5xl">
-        {/* Section header */}
+        {}
         <div className="mx-auto max-w-xl">
           <span className="text-xs font-bold uppercase tracking-widest text-[#7C3AED]">
             Funcionalidades
@@ -67,14 +67,14 @@ export function Features() {
           </p>
         </div>
 
-        {/* Cards grid — neo-brutalist */}
+        {}
         <div className="mt-14 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {FEATURES.map(({ icon: Icon, title, description, accent }) => (
             <div
               key={title}
               className="nb-shadow group cursor-default rounded-2xl border-2 border-[#1E1B2E] bg-white p-6"
             >
-              {/* Icon bubble */}
+              {}
               <div
                 className="flex h-11 w-11 items-center justify-center rounded-xl border-2 border-[#1E1B2E]"
                 style={{ background: `${accent}18` }}

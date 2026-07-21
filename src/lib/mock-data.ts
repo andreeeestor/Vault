@@ -1,11 +1,5 @@
 import type { Folder, VaultItem } from "@/types";
 
-/**
- * Dados de demonstração. Usados apenas para o protótipo de interface
- * funcionar de ponta a ponta antes da conexão com Supabase/Prisma.
- * Substituir por chamadas reais em src/actions/*.
- */
-
 const now = new Date();
 const daysAgo = (d: number) => new Date(now.getTime() - d * 86_400_000);
 

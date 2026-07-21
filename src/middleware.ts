@@ -1,11 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-/**
- * Protege as rotas de (dashboard). Usa o cookie de sessão do NextAuth
- * como verificação leve no edge; a validação completa acontece em
- * `auth()` dentro de cada Server Component/Action.
- */
 const PROTECTED_PREFIXES = ["/vault", "/settings"];
 const SESSION_COOKIE_NAMES = ["authjs.session-token", "__Secure-authjs.session-token"];
 

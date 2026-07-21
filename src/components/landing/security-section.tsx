@@ -31,7 +31,7 @@ export function SecuritySection() {
       style={{ background: "#EDE9F5" }}
     >
       <div className="mx-auto grid max-w-5xl items-center gap-12 lg:grid-cols-2">
-        {/* Copy */}
+        {}
         <div>
           <span className="text-xs font-bold uppercase tracking-widest text-[#7C3AED]">
             Segurança em primeiro lugar
@@ -59,7 +59,7 @@ export function SecuritySection() {
           </div>
         </div>
 
-        {/* Code block — neo-brutal style */}
+        {}
         <div className="nb-shadow rounded-2xl border-2 border-[#1E1B2E] bg-[#0C0A0F] p-6">
           <div className="flex items-center gap-2 text-xs font-semibold text-violet-400">
             <Lock className="h-3.5 w-3.5" />
@@ -74,7 +74,7 @@ const { ciphertext, iv, authTag } =
 // A chave nunca é salva — só derivada em memória.`}</code>
           </pre>
 
-          {/* Dots */}
+          {}
           <div className="mt-5 flex items-center gap-1.5 border-t border-white/8 pt-4">
             <span className="h-2 w-2 rounded-full bg-red-500/70" />
             <span className="h-2 w-2 rounded-full bg-amber-500/70" />

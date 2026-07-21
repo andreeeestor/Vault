@@ -130,7 +130,7 @@ function ItemPreview({ item }: { item: VaultItem }) {
 
   if (item.type === "IMAGE" && item.url) {
     return (
-      // eslint-disable-next-line @next/next/no-img-element
+      
       <img
         src={item.url}
         alt={item.title}
@@ -142,7 +142,7 @@ function ItemPreview({ item }: { item: VaultItem }) {
 
   if (item.type === "LINK" && item.linkOgImage) {
     return (
-      // eslint-disable-next-line @next/next/no-img-element
+      
       <img src={item.linkOgImage} alt={item.title} className="h-32 w-full object-cover" loading="lazy" />
     );
   }

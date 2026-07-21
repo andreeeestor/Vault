@@ -25,7 +25,6 @@ export default async function VaultFolderPage({
   const folders = rawFolders.map(mapFolder);
   const items = rawItems.map(mapItem);
 
-  // Verificar se pasta pertence ao usuário
   const folder = folders.find((f) => f.id === folderId);
   if (!folder) redirect("/vault");
 

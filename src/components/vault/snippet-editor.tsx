@@ -32,14 +32,12 @@ export function SnippetEditor({ item }: { item: VaultItem }) {
   const [copied, setCopied] = useState(false);
   const editorRef = useRef<MonacoEditorNS.IStandaloneCodeEditor | null>(null);
 
-  // Controle local para saber se foi salvo
   const [lastSavedContent, setLastSavedContent] = useState(item.codeContent ?? "");
   const [showExitModal, setShowExitModal] = useState(false);
   const [pendingHref, setPendingHref] = useState<string | null>(null);
 
   const isDirty = content !== lastSavedContent;
 
-  // Função de salvamento manual
   const handleSave = useCallback(() => {
     const val = editorRef.current ? editorRef.current.getValue() : content;
     startTransition(async () => {
@@ -55,7 +53,6 @@ export function SnippetEditor({ item }: { item: VaultItem }) {
     });
   }, [content, language, item.id, updateItem]);
 
-  // Ouvir evento customizado da barra lateral
   useEffect(() => {
     const handleSaveEvent = () => handleSave();
     document.addEventListener("vault-save-item", handleSaveEvent);
@@ -66,7 +63,6 @@ export function SnippetEditor({ item }: { item: VaultItem }) {
     defineVaultMonacoThemes(monaco);
   }, []);
 
-  // Bloquear fechamento de aba / recarregamento do browser
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
       if (isDirty) {
@@ -79,7 +75,6 @@ export function SnippetEditor({ item }: { item: VaultItem }) {
     return () => window.removeEventListener("beforeunload", handleBeforeUnload);
   }, [isDirty]);
 
-  // Interceptar cliques em links internos do Next.js
   useEffect(() => {
     if (!isDirty) return;
 
@@ -101,7 +96,6 @@ export function SnippetEditor({ item }: { item: VaultItem }) {
     return () => document.removeEventListener("click", handleAnchorClick, true);
   }, [isDirty]);
 
-  // Interceptar botão voltar/avançar do navegador
   useEffect(() => {
     if (!isDirty) return;
 
@@ -118,7 +112,7 @@ export function SnippetEditor({ item }: { item: VaultItem }) {
 
   const handleConfirmExit = () => {
     setShowExitModal(false);
-    // Zera o estado para permitir a navegação
+    
     setLastSavedContent(content);
     
     if (pendingHref === "back") {

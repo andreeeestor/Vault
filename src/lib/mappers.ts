@@ -1,10 +1,4 @@
-/**
- * Mappers: converte os tipos do Prisma para os tipos do frontend.
- *
- * O Prisma retorna BigInt para campos como fileSize/storageUsed,
- * que não são serializáveis via JSON (Next.js Server → Client).
- * Aqui convertemos para number e preenchemos campos computados.
- */
+
 
 import type { Folder as PrismaFolder, Item as PrismaItem, User as PrismaUser } from "@prisma/client";
 import type { Folder, VaultItem, StorageUsage } from "@/types";

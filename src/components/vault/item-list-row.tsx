@@ -44,7 +44,7 @@ export function FolderListRow({ folder }: { folder: Folder }) {
           router.push(`/vault/folder/${folder.id}`);
         }}
         className={cn(
-          "group grid cursor-pointer grid-cols-[1fr_100px_90px_160px_120px] items-center gap-4 border-b border-[var(--border)] px-4 py-2.5 text-sm transition-colors hover:bg-[var(--surface-hover)]",
+          "group grid cursor-pointer grid-cols-[1fr_40px] md:grid-cols-[1fr_100px_90px_160px_120px] items-center gap-4 border-b border-[var(--border)] px-4 py-2.5 text-sm transition-colors hover:bg-[var(--surface-hover)]",
           isDropTarget && "drop-target-active"
         )}
       >
@@ -57,12 +57,12 @@ export function FolderListRow({ folder }: { folder: Folder }) {
           />
           <span className="truncate font-medium text-[var(--foreground)]">{folder.name}</span>
         </div>
-        <span className="text-[var(--foreground-subtle)]">Pasta</span>
-        <span className="text-[var(--foreground-subtle)]">
+        <span className="text-[var(--foreground-subtle)] hidden md:block">Pasta</span>
+        <span className="text-[var(--foreground-subtle)] hidden md:block">
           {folder.itemCount} {folder.itemCount === 1 ? "item" : "itens"}
         </span>
-        <span className="text-[var(--foreground-subtle)]">{formatRelativeDate(folder.updatedAt)}</span>
-        <div className="flex justify-end pr-1 opacity-0 group-hover:opacity-100 transition-opacity">
+        <span className="text-[var(--foreground-subtle)] hidden md:block">{formatRelativeDate(folder.updatedAt)}</span>
+        <div className="flex justify-end pr-1 col-start-2 md:col-start-5 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
           <ItemDropdownMenu
             id={folder.id}
             kind="folder"
@@ -108,7 +108,7 @@ export function ItemListRow({ item, orderedIds }: { item: VaultItem; orderedIds:
         onDragEnd={() => useVaultStore.getState().endDrag()}
         onClick={handleClick}
         className={cn(
-          "group grid cursor-pointer grid-cols-[1fr_100px_90px_160px_120px] items-center gap-4 border-b border-[var(--border)] px-4 py-2.5 text-sm transition-colors",
+          "group grid cursor-pointer grid-cols-[1fr_40px] md:grid-cols-[1fr_100px_90px_160px_120px] items-center gap-4 border-b border-[var(--border)] px-4 py-2.5 text-sm transition-colors",
           isSelected ? "bg-[var(--surface-hover)]" : "hover:bg-[var(--surface-hover)]",
           isBeingDragged && "opacity-40"
         )}
@@ -132,13 +132,13 @@ export function ItemListRow({ item, orderedIds }: { item: VaultItem; orderedIds:
             />
           </button>
         </div>
-        <span className="text-[var(--foreground-subtle)]">{meta.label}</span>
-        <span className="text-[var(--foreground-subtle)]">
+        <span className="text-[var(--foreground-subtle)] hidden md:block">{meta.label}</span>
+        <span className="text-[var(--foreground-subtle)] hidden md:block">
           {item.fileSize ? formatBytes(item.fileSize) : "—"}
         </span>
-        <span className="text-[var(--foreground-subtle)]">{formatRelativeDate(item.updatedAt)}</span>
-        <div className="flex items-center justify-between gap-1 pr-1">
-          <div className="flex items-center gap-1 min-w-0 flex-1">
+        <span className="text-[var(--foreground-subtle)] hidden md:block">{formatRelativeDate(item.updatedAt)}</span>
+        <div className="flex items-center justify-end md:justify-between gap-1 pr-1 col-start-2 md:col-start-5">
+          <div className="hidden md:flex items-center gap-1 min-w-0 flex-1">
             {item.tags.slice(0, 1).map((tag) => (
               <span
                 key={tag}
@@ -148,7 +148,7 @@ export function ItemListRow({ item, orderedIds }: { item: VaultItem; orderedIds:
               </span>
             ))}
           </div>
-          <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+          <div className="opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
             <ItemDropdownMenu
               id={item.id}
               kind="item"

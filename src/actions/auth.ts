@@ -19,7 +19,6 @@ export async function registerUser(formData: FormData) {
 
   const { name, email, password } = parsed.data;
 
-  // Verificar se e-mail já existe
   const existing = await db.user.findUnique({ where: { email } });
   if (existing) {
     return { ok: false, error: "Este e-mail já está em uso." };
@@ -27,13 +26,11 @@ export async function registerUser(formData: FormData) {
 
   const passwordHash = await bcrypt.hash(password, 12);
 
-  // Criar usuário e pasta raiz em uma transação
   await db.$transaction(async (tx) => {
     const user = await tx.user.create({
       data: { name, email, passwordHash },
     });
 
-    // Criar pasta raiz do usuário
     await tx.folder.create({
       data: {
         userId: user.id,

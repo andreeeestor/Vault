@@ -16,10 +16,6 @@ function normalizeCombo(event: KeyboardEvent): string {
   return parts.join("+");
 }
 
-/**
- * Registra atalhos de teclado globais. Ex.: useKeyboardShortcuts({ "mod+a": selectAll, "escape": clearSelection })
- * Ignora eventos disparados dentro de <input>/<textarea> para não conflitar com digitação.
- */
 export function useKeyboardShortcuts(shortcuts: ShortcutMap, deps: unknown[] = []) {
   useEffect(() => {
     const handler = (event: KeyboardEvent) => {
@@ -36,6 +32,6 @@ export function useKeyboardShortcuts(shortcuts: ShortcutMap, deps: unknown[] = [
 
     document.addEventListener("keydown", handler);
     return () => document.removeEventListener("keydown", handler);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    
   }, deps);
 }

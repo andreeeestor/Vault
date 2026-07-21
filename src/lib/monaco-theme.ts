@@ -1,7 +1,7 @@
 import type { Monaco } from "@monaco-editor/react";
 
 export interface SnippetLanguage {
-  id: string; // id de linguagem do Monaco
+  id: string; 
   label: string;
 }
 

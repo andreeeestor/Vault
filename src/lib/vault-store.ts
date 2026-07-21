@@ -10,7 +10,6 @@ import type {
   LabelColor,
 } from "@/types";
 
-// Importa as server actions reais para conectar o estado ao banco
 import {
   createFolder as apiCreateFolder,
   renameFolder as apiRenameFolder,
@@ -35,14 +34,14 @@ interface DragState {
   isDragging: boolean;
   draggedIds: string[];
   draggedKind: "item" | "folder" | null;
-  hoveredDropTargetId: string | null; // folderId ou "breadcrumb:<id>"
+  hoveredDropTargetId: string | null; 
 }
 
 interface VaultState {
   folders: Folder[];
   items: VaultItem[];
 
-  currentFolderId: string; // "root" por padrão
+  currentFolderId: string; 
   viewMode: ViewMode;
   sortField: SortField;
   sortDirection: SortDirection;
@@ -52,21 +51,17 @@ interface VaultState {
 
   drag: DragState;
 
-  // navegação
   setCurrentFolder: (id: string) => void;
 
-  // visão
   setViewMode: (mode: ViewMode) => void;
   toggleSort: (field: SortField) => void;
 
-  // seleção
   selectOnly: (id: string) => void;
   toggleSelect: (id: string) => void;
   selectRange: (id: string, orderedIds: string[]) => void;
   selectAll: (ids: string[]) => void;
   clearSelection: () => void;
 
-  // CRUD real conectado ao banco de dados via Server Actions
   createFolder: (name: string, parentId: string) => Promise<Folder>;
   createNote: (title: string, folderId: string | null) => Promise<VaultItem>;
   createSnippet: (title: string, folderId: string | null, codeLanguage?: string) => Promise<VaultItem>;
@@ -86,12 +81,13 @@ interface VaultState {
     destinationFolderId: string | null,
   ) => Promise<void>;
 
-  // drag & drop
   startDrag: (ids: string[], kind: "item" | "folder") => void;
   setDropTarget: (id: string | null) => void;
   endDrag: () => void;
 
   user: { name: string; email: string; image: string | null } | null;
+  isSidebarOpen: boolean;
+  setSidebarOpen: (open: boolean) => void;
 }
 
 function folderChildren(folders: Folder[], parentId: string): Folder[] {
@@ -112,6 +108,8 @@ export const useVaultStore = create<VaultState>((set, get) => ({
 
   selectedIds: new Set(),
   lastSelectedId: null,
+  isSidebarOpen: false,
+  setSidebarOpen: (open) => set({ isSidebarOpen: open }),
 
   drag: {
     isDragging: false,
@@ -274,7 +272,7 @@ export const useVaultStore = create<VaultState>((set, get) => ({
   softDelete: async (ids) => {
     await apiSoftDeleteItems(ids);
     set((state) => {
-      // Calcula quantos itens por folderId estão sendo deletados
+      
       const folderDecrements = new Map<string, number>();
       for (const item of state.items) {
         if (ids.includes(item.id) && item.folderId) {
@@ -360,8 +358,6 @@ export const useVaultStore = create<VaultState>((set, get) => ({
       },
     }),
 }));
-
-// Seletores derivados -------------------------------------------------------
 
 export function getFolderPath(folders: Folder[], folderId: string): Folder[] {
   const path: Folder[] = [];

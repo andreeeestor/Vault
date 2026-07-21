@@ -32,7 +32,7 @@ export function UserDropdown({
     <DropdownMenu>
       <DropdownMenuTrigger className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full outline-none ring-offset-2 focus-visible:ring-2 focus-visible:ring-[var(--ring)]">
         {image ? (
-          // eslint-disable-next-line @next/next/no-img-element
+          
           <img src={image} alt={name} className="h-full w-full object-cover" />
         ) : (
           <div

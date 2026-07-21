@@ -8,7 +8,6 @@ interface ContextMenuState {
   targetId: string;
 }
 
-/** Estado de posição para menus de contexto customizados (fallback quando não se usa Radix ContextMenu). */
 export function useContextMenu() {
   const [menu, setMenu] = useState<ContextMenuState | null>(null);
 

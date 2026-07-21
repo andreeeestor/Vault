@@ -12,7 +12,7 @@ import { useVaultStore } from "@/lib/vault-store";
 interface NewPasswordModalProps {
   open: boolean;
   onClose: () => void;
-  /** Se false, o usuário ainda não configurou a senha mestra */
+  
   hasMasterPassword: boolean;
 }
 
@@ -27,12 +27,10 @@ export function NewPasswordModal({
 
   const [step, setStep] = useState<Step>(hasMasterPassword ? "create" : "setup");
 
-  // Campos setup
   const [newMaster, setNewMaster] = useState("");
   const [confirmMaster, setConfirmMaster] = useState("");
   const [showNewMaster, setShowNewMaster] = useState(false);
 
-  // Campos criação
   const [master, setMaster] = useState("");
   const [title, setTitle] = useState("");
   const [username, setUsername] = useState("");
@@ -108,7 +106,7 @@ export function NewPasswordModal({
   return (
     <Dialog open={open} onOpenChange={(v) => !v && handleClose()}>
       <DialogContent showClose={false} className="p-0 overflow-hidden max-w-md">
-        {/* Header */}
+        {}
         <div className="flex items-center gap-3 border-b border-[var(--border)] px-5 py-4">
           <div
             className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl"

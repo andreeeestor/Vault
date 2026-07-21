@@ -19,7 +19,6 @@ export function ItemDetailSidebar({ item }: { item: VaultItem }) {
   const meta = ITEM_TYPE_META[item.type];
   const folder = folders.find((f) => f.id === item.folderId);
 
-  // Somente exibe botão Salvar para tipos editáveis (NOTE, SNIPPET)
   const isEditable = item.type === "NOTE" || item.type === "SNIPPET";
 
   return (

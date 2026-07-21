@@ -3,10 +3,6 @@ import { auth } from "@/lib/auth";
 import { uploadToCloudinary, resourceTypeForItem } from "@/lib/cloudinary";
 import { db } from "@/lib/db";
 
-/**
- * Recebe multipart/form-data com um arquivo + metadados (folderId, type)
- * e cria o Item correspondente no banco após o upload no Cloudinary.
- */
 export async function POST(request: Request) {
   const session = await auth();
   if (!session?.user?.id) {
@@ -75,7 +71,6 @@ export async function POST(request: Request) {
     data: { storageUsed: { increment: uploadResult.bytes } },
   });
 
-  // Mapeia BigInt para strings ou números no retorno do JSON para evitar erros de serialização de BigInt
   const sanitizedItem = {
     ...item,
     fileSize: Number(item.fileSize),

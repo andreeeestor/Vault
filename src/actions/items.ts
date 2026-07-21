@@ -76,7 +76,6 @@ export async function createLink(input: unknown) {
   const userId = await requireUserId();
   const data = createLinkSchema.parse(input);
 
-  // TODO(produção): buscar metadados OG do link (título, descrição, imagem) via um serviço de scraping
   const item = await db.item.create({
     data: {
       userId,
@@ -129,7 +128,6 @@ export async function restoreItems(itemIds: string[]) {
   revalidatePath("/vault");
 }
 
-/** Excluído há mais de 30 dias — chamado por um cron job (ex.: Vercel Cron). */
 export async function purgeExpiredTrash() {
   const cutoff = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
   await db.item.deleteMany({
@@ -137,10 +135,6 @@ export async function purgeExpiredTrash() {
   });
 }
 
-/**
- * Lista todos os itens não deletados e não arquivados de um usuário.
- * Usado pelos Server Components para hidratar o store Zustand.
- */
 export async function listAllItems(userId: string) {
   return db.item.findMany({
     where: { userId, isDeleted: false },

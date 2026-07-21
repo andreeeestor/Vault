@@ -50,8 +50,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     },
   },
   events: {
-    // Quando usuário faz login via Google pela primeira vez,
-    // criar pasta raiz se não existir
+
     createUser: async ({ user }) => {
       if (!user.id) return;
       const existing = await db.folder.findFirst({

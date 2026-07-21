@@ -57,26 +57,21 @@ export interface VaultItem {
   isDeleted: boolean;
   deletedAt: Date | null;
 
-  // Arquivo (Cloudinary)
   url: string | null;
   fileKey: string | null;
   fileSize: number | null;
   mimeType: string | null;
 
-  // Snippet
   codeLanguage: string | null;
   codeContent: string | null;
 
-  // Nota
   noteContent: string | null;
 
-  // Link
   linkOgTitle: string | null;
   linkOgDescription: string | null;
   linkOgImage: string | null;
   linkFavicon: string | null;
 
-  // Senha — apenas metadados no client; valores reais nunca chegam sem senha mestra
   hasPassword: boolean;
   passwordStrength: PasswordStrength | null;
 
@@ -85,7 +80,7 @@ export interface VaultItem {
 }
 
 export interface BreadcrumbEntry {
-  id: string | null; // null = raiz
+  id: string | null; 
   name: string;
 }
 
@@ -97,7 +92,7 @@ export interface SelectionState {
 export interface DragPayload {
   kind: "item" | "folder";
   id: string;
-  ids?: string[]; // quando arrastando seleção múltipla
+  ids?: string[]; 
 }
 
 export interface StorageUsage {

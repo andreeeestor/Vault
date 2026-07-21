@@ -26,7 +26,7 @@ export function ItemGrid({ folders, items }: { folders: Folder[]; items: VaultIt
   return (
     <div
       className="grid gap-4"
-      style={{ gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))" }}
+      style={{ gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))" }}
     >
       {folders.map((folder) => (
         <FolderCard key={folder.id} folder={folder} />

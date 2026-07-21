@@ -35,7 +35,7 @@ export default function RootLayout({
       <body suppressHydrationWarning className={`${inter.variable} ${playfairDisplay.variable} font-sans antialiased`}>
         <ThemeProvider>
           <NextTopLoader
-            color="#7C3AED" // Fallback to violet-600/primary color
+            color="#7C3AED" 
             initialPosition={0.08}
             crawlSpeed={200}
             height={3}

@@ -7,13 +7,6 @@ import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { toast } from "sonner";
 
-/**
- * Demonstração de UI. Em produção, "Revelar" chama uma Server Action que:
- *  1. Recebe a senha mestra (nunca fica em estado global do client)
- *  2. Valida contra vaultMasterKeyHash (lib/crypto.ts → verifyMasterPassword)
- *  3. Decifra encryptedPassword com a senha mestra + vaultSalt
- *  4. Retorna o texto plano apenas nesta resposta — nunca é persistido no client
- */
 export function PasswordField({
   label,
   username,
@@ -27,7 +20,7 @@ export function PasswordField({
   const [copied, setCopied] = useState(false);
 
   const handleReveal = () => {
-    // TODO(produção): substituir por chamada a Server Action `revealPassword(itemId, masterPassword)`
+    
     if (masterPassword.length < 1) return;
     setRevealed("S3nh4-D3m0nstr4ção!");
     setDialogOpen(false);

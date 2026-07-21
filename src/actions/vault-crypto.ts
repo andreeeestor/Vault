@@ -28,7 +28,6 @@ export async function hasMasterPasswordSet(): Promise<boolean> {
   return !!user?.vaultMasterKeyHash;
 }
 
-/** Define a senha mestra na primeira vez que o usuário usa o cofre de senhas. */
 export async function setupMasterPassword(masterPassword: string) {
   const userId = await requireUserId();
   const salt = generateSalt();
@@ -40,7 +39,6 @@ export async function setupMasterPassword(masterPassword: string) {
   });
 }
 
-/** Altera a senha mestra e re-criptografa todas as senhas armazenadas do usuário. */
 export async function changeMasterPassword(currentMaster: string, newMaster: string) {
   const userId = await requireUserId();
   const user = await db.user.findUniqueOrThrow({ where: { id: userId } });
@@ -49,21 +47,17 @@ export async function changeMasterPassword(currentMaster: string, newMaster: str
     throw new Error("Senha mestra não configurada.");
   }
 
-  // Verifica a senha atual
   if (!verifyMasterPassword(currentMaster, user.vaultSalt, user.vaultMasterKeyHash)) {
     throw new Error("Senha mestra atual incorreta.");
   }
 
-  // Gera novos valores para a nova senha mestra
   const newSalt = generateSalt();
   const newHash = hashMasterPassword(newMaster, newSalt);
 
-  // Buscar todas as senhas para re-criptografar
   const items = await db.item.findMany({
     where: { userId, type: "PASSWORD" },
   });
 
-  // Re-criptografar cada item
   const updatePromises = items.map(async (item) => {
     let decryptedUsername: string | null = null;
     let decryptedPassword = "";
@@ -79,7 +73,6 @@ export async function changeMasterPassword(currentMaster: string, newMaster: str
       decryptedNotes = decryptSecret(item.encryptedNotes, currentMaster, user.vaultSalt!);
     }
 
-    // Criptografar com a nova chave
     const encUsername = decryptedUsername ? encryptSecret(decryptedUsername, newMaster, newSalt) : null;
     const encPassword = encryptSecret(decryptedPassword, newMaster, newSalt);
     const encNotes = decryptedNotes ? encryptSecret(decryptedNotes, newMaster, newSalt) : null;
@@ -96,7 +89,6 @@ export async function changeMasterPassword(currentMaster: string, newMaster: str
 
   await Promise.all(updatePromises);
 
-  // Atualizar usuário com a nova senha mestra
   await db.user.update({
     where: { id: userId },
     data: {
@@ -141,7 +133,6 @@ export async function createPasswordItem(input: unknown) {
   return { id: item.id, passwordStrength: strength };
 }
 
-/** Decifra e retorna a senha em texto puro — só nesta resposta, nunca persistida no client. */
 export async function revealPassword(itemId: string, masterPassword: string) {
   const userId = await requireUserId();
   const user = await db.user.findUniqueOrThrow({ where: { id: userId } });

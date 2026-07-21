@@ -54,7 +54,6 @@ export function AudioRecorderModal({ open, onClose }: AudioRecorderModalProps) {
         setAudioBlob(blob);
         setAudioUrl(url);
 
-        // Desliga o microfone
         stream.getTracks().forEach((track) => track.stop());
       };
 
@@ -147,7 +146,7 @@ export function AudioRecorderModal({ open, onClose }: AudioRecorderModalProps) {
           </div>
         </div>
 
-        {/* Gravador principal */}
+        {}
         <div className="flex flex-col items-center justify-center py-6 rounded-2xl bg-[var(--surface-hover)] border border-[var(--border)] gap-4">
           <span className="text-3xl font-mono font-bold tracking-wider text-[var(--foreground)]">
             {formatTimer(duration)}

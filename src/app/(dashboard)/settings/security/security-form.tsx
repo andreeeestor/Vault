@@ -19,7 +19,7 @@ export function SecurityForm({ hasMasterPassword }: SecurityFormProps) {
 
   const handleAction = () => {
     if (!hasMasterPassword) {
-      // Configurar pela primeira vez
+      
       if (next.length < 8) {
         toast.error("A senha mestra precisa de pelo menos 8 caracteres.");
         return;
@@ -34,7 +34,7 @@ export function SecurityForm({ hasMasterPassword }: SecurityFormProps) {
           toast.success("Senha mestra configurada com sucesso!");
           setNext("");
           setConfirm("");
-          // Forçar recarga da página para atualizar o status
+          
           window.location.reload();
         } catch (e) {
           toast.error("Erro ao configurar senha mestra.");
@@ -42,7 +42,7 @@ export function SecurityForm({ hasMasterPassword }: SecurityFormProps) {
         }
       });
     } else {
-      // Atualizar a senha mestra
+      
       if (!current) {
         toast.error("Informe a senha mestra atual.");
         return;

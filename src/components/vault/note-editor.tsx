@@ -50,19 +50,15 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-/* ─── Types ─────────────────────────────────────────────────── */
-
 interface ToolbarState {
   bold: boolean;
   italic: boolean;
   underline: boolean;
   strikeThrough: boolean;
-  blockTag: string; // "P" | "H1" | "H2" | "H3" | "BLOCKQUOTE" | "PRE"
+  blockTag: string; 
   inList: boolean;
   inOrderedList: boolean;
 }
-
-/* ─── NoteEditor (root export) ───────────────────────────────── */
 
 export function NoteEditor({ item }: { item: VaultItem }) {
   const router = useRouter();
@@ -73,12 +69,10 @@ export function NoteEditor({ item }: { item: VaultItem }) {
   const [content, setContent] = useState(item.noteContent ?? "");
   const [wordCount, setWordCount] = useState(0);
 
-  // Controle local para saber se foi salvo
   const [lastSavedContent, setLastSavedContent] = useState(item.noteContent ?? "");
   const [showExitModal, setShowExitModal] = useState(false);
   const [pendingHref, setPendingHref] = useState<string | null>(null);
 
-  // Toolbar floating state
   const [toolbarVisible, setToolbarVisible] = useState(false);
   const [toolbarPos, setToolbarPos] = useState({ x: 0, y: 0 });
   const [toolbarState, setToolbarState] = useState<ToolbarState>({
@@ -94,7 +88,6 @@ export function NoteEditor({ item }: { item: VaultItem }) {
   const [isPending, startTransition] = useTransition();
   const isDirty = content !== lastSavedContent;
 
-  // Função de salvamento manual
   const handleSave = useCallback(() => {
     startTransition(async () => {
       try {
@@ -109,23 +102,20 @@ export function NoteEditor({ item }: { item: VaultItem }) {
     });
   }, [content, item.id, updateItem]);
 
-  // Ouvir evento customizado da barra lateral
   useEffect(() => {
     const handleSaveEvent = () => handleSave();
     document.addEventListener("vault-save-item", handleSaveEvent);
     return () => document.removeEventListener("vault-save-item", handleSaveEvent);
   }, [handleSave]);
 
-  // Inicializa conteúdo uma vez
   useEffect(() => {
     if (editorRef.current && item.noteContent) {
       editorRef.current.innerHTML = item.noteContent;
       recalcWordCount(item.noteContent);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    
   }, []);
 
-  // Bloquear fechamento de aba / recarregamento do browser
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
       if (isDirty) {
@@ -138,7 +128,6 @@ export function NoteEditor({ item }: { item: VaultItem }) {
     return () => window.removeEventListener("beforeunload", handleBeforeUnload);
   }, [isDirty]);
 
-  // Interceptar cliques em links internos do Next.js
   useEffect(() => {
     if (!isDirty) return;
 
@@ -160,7 +149,6 @@ export function NoteEditor({ item }: { item: VaultItem }) {
     return () => document.removeEventListener("click", handleAnchorClick, true);
   }, [isDirty]);
 
-  // Interceptar botão voltar/avançar do navegador
   useEffect(() => {
     if (!isDirty) return;
 
@@ -177,7 +165,7 @@ export function NoteEditor({ item }: { item: VaultItem }) {
 
   const handleConfirmExit = () => {
     setShowExitModal(false);
-    // Zera o estado para permitir a navegação
+    
     setLastSavedContent(content);
     
     if (pendingHref === "back") {
@@ -187,14 +175,12 @@ export function NoteEditor({ item }: { item: VaultItem }) {
     }
   };
 
-  // Word count
   const recalcWordCount = (html: string) => {
     const text = html.replace(/<[^>]*>/g, " ").trim();
     const words = text ? text.split(/\s+/).filter(Boolean).length : 0;
     setWordCount(words);
   };
 
-  // Handle content changes inside contenteditable
   const handleInput = useCallback(() => {
     if (!editorRef.current) return;
     const html = editorRef.current.innerHTML;
@@ -202,7 +188,6 @@ export function NoteEditor({ item }: { item: VaultItem }) {
     recalcWordCount(html);
   }, []);
 
-  // Selection change → update toolbar visibility + state
   const handleSelectionChange = useCallback(() => {
     if (readOnly) return;
     const sel = window.getSelection();
@@ -211,21 +196,18 @@ export function NoteEditor({ item }: { item: VaultItem }) {
       return;
     }
 
-    // Check selection is inside the editor
     const range = sel.getRangeAt(0);
     if (!editorRef.current?.contains(range.commonAncestorContainer)) {
       setToolbarVisible(false);
       return;
     }
 
-    // Position toolbar above the selection
     const rect = range.getBoundingClientRect();
     setToolbarPos({
       x: rect.left + rect.width / 2,
-      y: rect.top - 12, // 12px gap above selection
+      y: rect.top - 12, 
     });
 
-    // Detect current formatting state
     setToolbarState({
       bold: document.queryCommandState("bold"),
       italic: document.queryCommandState("italic"),
@@ -239,7 +221,6 @@ export function NoteEditor({ item }: { item: VaultItem }) {
     setToolbarVisible(true);
   }, [readOnly]);
 
-  // Detect current block element tag
   const detectBlockTag = (): string => {
     const sel = window.getSelection();
     if (!sel || sel.rangeCount === 0) return "P";
@@ -261,7 +242,6 @@ export function NoteEditor({ item }: { item: VaultItem }) {
     };
   }, [handleSelectionChange]);
 
-  // Keyboard shortcuts
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
       if (e.key === "Escape") {
@@ -292,14 +272,12 @@ export function NoteEditor({ item }: { item: VaultItem }) {
     [content, item.id, updateItem, startTransition]
   );
 
-  // Execute a formatting command (keeps focus in editor)
   const execFormat = useCallback((command: string, value?: string) => {
     editorRef.current?.focus();
     document.execCommand(command, false, value);
     handleInput();
   }, [handleInput]);
 
-  // Wrap selection in <code>
   const wrapCode = useCallback(() => {
     const sel = window.getSelection();
     if (!sel || sel.rangeCount === 0) return;
@@ -313,12 +291,11 @@ export function NoteEditor({ item }: { item: VaultItem }) {
     handleInput();
   }, [handleInput]);
 
-  // Toggle block element (heading / blockquote / paragraph)
   const execBlock = useCallback(
     (tag: string) => {
       editorRef.current?.focus();
       const current = detectBlockTag();
-      // Toggle off if already the same tag
+      
       const next = current === tag ? "p" : tag.toLowerCase();
       document.execCommand("formatBlock", false, next);
       handleInput();
@@ -326,7 +303,6 @@ export function NoteEditor({ item }: { item: VaultItem }) {
     [handleInput]
   );
 
-  // Export handlers
   const handleExportMd = useCallback(() => {
     if (!editorRef.current) return;
     const html = editorRef.current.innerHTML;
@@ -354,7 +330,7 @@ export function NoteEditor({ item }: { item: VaultItem }) {
   return (
     <TooltipProvider delayDuration={400}>
       <div className="flex h-full flex-col bg-[var(--background)]">
-        {/* ── Static top bar ── */}
+        {}
         <StaticToolbar
           readOnly={readOnly}
           isDirty={isDirty}
@@ -366,7 +342,7 @@ export function NoteEditor({ item }: { item: VaultItem }) {
           onExportPdf={handleExportPdf}
         />
 
-        {/* ── Editable area ── */}
+        {}
         <div className="flex-1 overflow-y-auto">
           <div
             ref={editorRef}
@@ -386,7 +362,7 @@ export function NoteEditor({ item }: { item: VaultItem }) {
           />
         </div>
 
-        {/* ── Floating toolbar (portal-like, fixed positioning) ── */}
+        {}
         {toolbarVisible && !readOnly && (
           <FloatingToolbar
             pos={toolbarPos}
@@ -397,7 +373,7 @@ export function NoteEditor({ item }: { item: VaultItem }) {
             onClose={() => setToolbarVisible(false)}
           />
         )}
-        {/* ── Unsaved changes confirmation modal ── */}
+        {}
         <UnsavedChangesModal
           open={showExitModal}
           onClose={() => setShowExitModal(false)}
@@ -407,8 +383,6 @@ export function NoteEditor({ item }: { item: VaultItem }) {
     </TooltipProvider>
   );
 }
-
-/* ─── Static top bar ─────────────────────────────────────────── */
 
 function StaticToolbar({
   readOnly,
@@ -451,7 +425,7 @@ function StaticToolbar({
         <SaveIndicator isDirty={isDirty} isPending={isPending} />
       </div>
 
-      {/* Right: word count + export dropdown */}
+      {}
       <div className="flex items-center gap-3">
         <span className="flex items-center gap-1 text-xs text-[var(--foreground-subtle)]">
           <AlignLeft className="h-3 w-3" />
@@ -482,8 +456,6 @@ function StaticToolbar({
   );
 }
 
-/* ─── Floating toolbar ───────────────────────────────────────── */
-
 interface FloatingToolbarProps {
   pos: { x: number; y: number };
   state: ToolbarState;
@@ -498,7 +470,6 @@ function FloatingToolbar({ pos, state, onFormat, onBlock, onWrapCode }: Floating
   const [linkUrl, setLinkUrl] = useState("");
   const linkInputRef = useRef<HTMLInputElement>(null);
 
-  // Save selection before entering link input
   const savedRangeRef = useRef<Range | null>(null);
 
   const handleLinkClick = () => {
@@ -513,7 +484,7 @@ function FloatingToolbar({ pos, state, onFormat, onBlock, onWrapCode }: Floating
   const handleLinkSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!linkUrl.trim()) return;
-    // Restore selection, then create link
+    
     const sel = window.getSelection();
     if (savedRangeRef.current && sel) {
       sel.removeAllRanges();
@@ -529,7 +500,6 @@ function FloatingToolbar({ pos, state, onFormat, onBlock, onWrapCode }: Floating
     onFormat("unlink");
   };
 
-  // Toolbar style
   const style: React.CSSProperties = {
     position: "fixed",
     left: pos.x,
@@ -542,10 +512,10 @@ function FloatingToolbar({ pos, state, onFormat, onBlock, onWrapCode }: Floating
     <div
       style={style}
       className="flex items-center rounded-xl border border-[var(--border-strong)] bg-[var(--surface)] shadow-[var(--shadow-lg)] ring-1 ring-black/5"
-      onMouseDown={(e) => e.preventDefault()} // prevent blur/deselection
+      onMouseDown={(e) => e.preventDefault()} 
     >
       {linkMode ? (
-        /* ── Link input mode ── */
+        
         <form onSubmit={handleLinkSubmit} className="flex items-center gap-1.5 px-3 py-2">
           <Link className="h-3.5 w-3.5 shrink-0 text-[var(--primary)]" />
           <input
@@ -566,9 +536,9 @@ function FloatingToolbar({ pos, state, onFormat, onBlock, onWrapCode }: Floating
           </button>
         </form>
       ) : (
-        /* ── Full toolbar ── */
+        
         <div className="flex items-center divide-x divide-[var(--border)] px-1 py-1.5">
-          {/* Inline formatting */}
+          {}
           <div className="flex items-center gap-0.5 px-1">
             <TBtn
               icon={<Bold className="h-3.5 w-3.5" />}
@@ -596,7 +566,7 @@ function FloatingToolbar({ pos, state, onFormat, onBlock, onWrapCode }: Floating
             />
           </div>
 
-          {/* Block level */}
+          {}
           <div className="flex items-center gap-0.5 px-1">
             <TBtn
               icon={<Heading1 className="h-3.5 w-3.5" />}
@@ -618,7 +588,7 @@ function FloatingToolbar({ pos, state, onFormat, onBlock, onWrapCode }: Floating
             />
           </div>
 
-          {/* Lists + Quote + Code */}
+          {}
           <div className="flex items-center gap-0.5 px-1">
             <TBtn
               icon={<List className="h-3.5 w-3.5" />}
@@ -646,7 +616,7 @@ function FloatingToolbar({ pos, state, onFormat, onBlock, onWrapCode }: Floating
             />
           </div>
 
-          {/* Link + clear */}
+          {}
           <div className="flex items-center gap-0.5 px-1">
             <TBtn
               icon={<Link className="h-3.5 w-3.5" />}
@@ -673,8 +643,6 @@ function FloatingToolbar({ pos, state, onFormat, onBlock, onWrapCode }: Floating
   );
 }
 
-/* ─── Toolbar button ─────────────────────────────────────────── */
-
 function TBtn({
   icon,
   label,
@@ -691,7 +659,7 @@ function TBtn({
       <TooltipTrigger asChild>
         <button
           onMouseDown={(e) => {
-            e.preventDefault(); // don't blur editor
+            e.preventDefault(); 
             onClick();
           }}
           className={cn(
@@ -708,10 +676,6 @@ function TBtn({
     </Tooltip>
   );
 }
-
-/* ─── Auto-save indicator ────────────────────────────────────── */
-
-/* ─── Save indicator ────────────────────────────────────── */
 
 function SaveIndicator({ isDirty, isPending }: { isDirty: boolean; isPending: boolean }) {
   if (isPending) {
@@ -734,8 +698,6 @@ function SaveIndicator({ isDirty, isPending }: { isDirty: boolean; isPending: bo
     </span>
   );
 }
-
-/* ─── HTML → Markdown converter (basic) ─────────────────────── */
 
 function htmlToMarkdown(html: string): string {
   return html

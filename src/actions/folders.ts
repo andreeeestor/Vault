@@ -56,7 +56,7 @@ export async function updateFolderColor(folderId: string, color: string) {
 
 export async function deleteFolder(folderId: string) {
   const userId = await requireUserId();
-  // onDelete: Cascade no schema remove subpastas; itens ficam com folderId = null (SetNull)
+  
   await db.folder.delete({ where: { id: folderId, userId } });
   revalidatePath("/vault");
 }

@@ -4,12 +4,10 @@ import Link from "next/link";
 import { ShieldCheck, ArrowRight, ArrowUpRight, FolderOpen, ImageIcon, Lock, Code2, Link2 } from "lucide-react";
 import { motion } from "motion/react";
 
-/* ─── Header ──────────────────────────────────────────────── */
-
 export function LandingHeader() {
   return (
     <header className="sticky top-0 z-40 flex h-16 items-center justify-between border-b border-[#1E1B2E]/10 bg-[#F4EFE8]/85 px-6 backdrop-blur-md lg:px-10">
-      {/* Logo */}
+      {}
       <Link href="/" className="flex items-center gap-2.5">
         <div
           className="flex h-8 w-8 items-center justify-center rounded-lg text-white"
@@ -20,7 +18,7 @@ export function LandingHeader() {
         <span className="font-serif text-xl font-normal tracking-tight text-[#1E1B2E]">Vault</span>
       </Link>
 
-      {/* Nav */}
+      {}
       <nav className="hidden items-center gap-7 text-sm font-medium text-[#1E1B2E]/55 md:flex">
         <a href="#features" className="transition-colors hover:text-[#1E1B2E]">Recursos</a>
         <a href="#security" className="transition-colors hover:text-[#1E1B2E]">Segurança</a>
@@ -28,7 +26,7 @@ export function LandingHeader() {
         <a href="#faq" className="transition-colors hover:text-[#1E1B2E]">FAQ</a>
       </nav>
 
-      {/* Actions */}
+      {}
       <div className="flex items-center gap-3">
         <Link
           href="/login"
@@ -47,27 +45,25 @@ export function LandingHeader() {
   );
 }
 
-/* ─── Hero ────────────────────────────────────────────────── */
-
 export function Hero() {
   return (
     <section className="relative overflow-hidden px-6 pb-0 pt-14 lg:px-10 lg:pt-20">
       <div className="mx-auto grid max-w-6xl items-center gap-10 lg:grid-cols-[1fr_440px]">
 
-        {/* LEFT — copy */}
+        {}
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
           className="flex flex-col"
         >
-          {/* Eyebrow */}
+          {}
           <span className="inline-flex w-fit items-center gap-2 rounded-full border border-[#7C3AED]/20 bg-[#7C3AED]/8 px-3.5 py-1 text-[11px] font-semibold tracking-wide text-[#7C3AED]">
             <span className="h-1.5 w-1.5 rounded-full bg-[#7C3AED]" />
             AES-256-GCM · Organização estilo Drive
           </span>
 
-          {/* Headline — Playfair Display, bold for dramatic thick-thin contrast */}
+          {}
           <h1 className="font-serif mt-6 text-[clamp(3.2rem,6.5vw,5.2rem)] font-bold leading-none tracking-tight text-[#1E1B2E]">
             Tudo o que importa,<br />
             em um só{" "}
@@ -81,14 +77,14 @@ export function Hero() {
             </em>
           </h1>
 
-          {/* Sub */}
+          {}
           <p className="mt-5 max-w-[42ch] text-base leading-relaxed text-[#1E1B2E]/50 sm:text-lg">
             Imagens, PDFs, notas, snippets, links e senhas — organizados
             em pastas que você já conhece. Arraste, solte e encontre
             qualquer coisa em segundos.
           </p>
 
-          {/* CTAs */}
+          {}
           <div className="mt-8 flex flex-wrap items-center gap-3">
             <Link
               href="/register"
@@ -105,13 +101,13 @@ export function Hero() {
             </Link>
           </div>
 
-          {/* Micro trust */}
+          {}
           <p className="mt-4 text-[11px] font-medium text-[#1E1B2E]/35">
             Sem cartão de crédito · 500 MB grátis para sempre
           </p>
         </motion.div>
 
-        {/* RIGHT — visual card */}
+        {}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -122,18 +118,16 @@ export function Hero() {
         </motion.div>
       </div>
 
-      {/* Marquee */}
+      {}
       <LogoMarquee />
     </section>
   );
 }
 
-/* ─── Vault Visual Card ───────────────────────────────────── */
-
 function VaultVisualCard() {
   return (
     <div className="relative">
-      {/* Main card */}
+      {}
       <div
         className="relative w-full overflow-hidden rounded-[28px]"
         style={{
@@ -141,7 +135,7 @@ function VaultVisualCard() {
           minHeight: 420,
         }}
       >
-        {/* Top noise/texture overlay for depth */}
+        {}
         <div
           className="absolute inset-0 opacity-[0.08]"
           style={{
@@ -150,7 +144,7 @@ function VaultVisualCard() {
           }}
         />
 
-        {/* Radial light */}
+        {}
         <div
           className="absolute inset-0"
           style={{
@@ -158,7 +152,7 @@ function VaultVisualCard() {
           }}
         />
 
-        {/* Floating blob + icons */}
+        {}
         <div className="float-anim absolute inset-0 flex items-center justify-center pb-10">
           <div
             className="blob-morph relative flex h-56 w-56 items-center justify-center"
@@ -167,7 +161,7 @@ function VaultVisualCard() {
               boxShadow: "0 40px 100px rgba(0,0,0,0.55), inset 0 1px 1px rgba(255,255,255,0.12), inset -1px -1px 0 rgba(0,0,0,0.3)",
             }}
           >
-            {/* Specular highlight */}
+            {}
             <div
               className="blob-morph absolute inset-0 opacity-20"
               style={{
@@ -177,9 +171,9 @@ function VaultVisualCard() {
               }}
             />
 
-            {/* ── Central folder icon ── */}
+            {}
             <div className="relative z-10 flex flex-col items-center gap-2">
-              {/* Pulse ring */}
+              {}
               <div
                 className="absolute h-20 w-20 rounded-full"
                 style={{
@@ -195,7 +189,7 @@ function VaultVisualCard() {
                 }}
               />
 
-              {/* Folder */}
+              {}
               <div
                 className="relative z-10 flex h-14 w-14 items-center justify-center rounded-2xl"
                 style={{
@@ -207,7 +201,7 @@ function VaultVisualCard() {
                 <FolderOpen className="h-7 w-7 text-white" strokeWidth={1.5} />
               </div>
 
-              {/* Label under folder */}
+              {}
               <span
                 className="rounded-full px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-widest"
                 style={{ background: "rgba(255,255,255,0.08)", color: "rgba(216,180,254,0.8)" }}
@@ -216,7 +210,7 @@ function VaultVisualCard() {
               </span>
             </div>
 
-            {/* ── Orbiting mini icons ── */}
+            {}
             <OrbitIcon icon={<ImageIcon className="h-3.5 w-3.5 text-violet-300" strokeWidth={2} />}
               top="14%" left="68%" delay="0s" duration="3.8s" />
             <OrbitIcon icon={<Lock className="h-3.5 w-3.5 text-pink-300" strokeWidth={2} />}
@@ -228,10 +222,10 @@ function VaultVisualCard() {
           </div>
         </div>
 
-        {/* Rotating badge */}
+        {}
         <RotatingBadge />
 
-        {/* Bottom pills */}
+        {}
         <div className="absolute bottom-5 left-5 right-5 flex items-center justify-between">
           <div className="flex gap-2">
             <div className="rounded-full bg-white/15 px-3.5 py-1.5 text-[11px] font-semibold text-white backdrop-blur-sm">
@@ -243,7 +237,7 @@ function VaultVisualCard() {
           </div>
         </div>
 
-        {/* Top indicator bar */}
+        {}
         <div className="absolute top-5 left-5 right-5 flex items-center justify-between">
           <div className="flex items-center gap-1.5">
             <div className="h-2 w-2 rounded-full bg-white/30" />
@@ -256,7 +250,7 @@ function VaultVisualCard() {
         </div>
       </div>
 
-      {/* Floating stat card — outside the main card, bottom-right */}
+      {}
       <div className="absolute -bottom-12 -right-4 rounded-2xl border border-[#1E1B2E]/8 bg-white px-4 py-3 shadow-xl">
         <p className="text-[10px] font-semibold uppercase tracking-wider text-[#1E1B2E]/40">Itens seguros</p>
         <p className="font-serif mt-0.5 text-2xl font-normal text-[#1E1B2E]">
@@ -273,8 +267,6 @@ function VaultVisualCard() {
     </div>
   );
 }
-
-/* ─── Rotating badge ──────────────────────────────────────── */
 
 function RotatingBadge() {
   const text = "Cofre Digital · Vault Seguro · ";
@@ -304,15 +296,13 @@ function RotatingBadge() {
           <textPath href="#badge-path">{chars.join("")}</textPath>
         </text>
       </svg>
-      {/* Arrow center */}
+      {}
       <div className="absolute inset-[16px] flex items-center justify-center rounded-full border border-white/25 bg-white/12 backdrop-blur-sm">
         <ArrowUpRight className="h-5 w-5 text-white" strokeWidth={2} />
       </div>
     </div>
   );
 }
-
-/* ─── Orbit Icon (mini floating pills inside blob) ───────── */
 
 function OrbitIcon({
   icon,
@@ -346,8 +336,6 @@ function OrbitIcon({
     </div>
   );
 }
-
-/* ─── Logo Marquee ────────────────────────────────────────── */
 
 const BRANDS = [
   "Next.js", "Prisma", "PostgreSQL", "AES-256", "Cloudinary",
