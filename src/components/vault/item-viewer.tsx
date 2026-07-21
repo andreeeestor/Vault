@@ -25,7 +25,7 @@ export function ItemViewer({ item }: { item: VaultItem }) {
     case "PASSWORD":
       return (
         <div className="mx-auto w-full max-w-md p-8">
-          <PasswordField label="Senha" username="ana@exemplo.com" />
+          <PasswordField item={item} />
         </div>
       );
   }
