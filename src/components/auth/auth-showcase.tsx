@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ArrowDownLeft, ArrowUpRight, ShieldCheck } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 
 interface Slide {
@@ -49,6 +50,13 @@ export function AuthShowcase() {
   const [index, setIndex] = useState(0);
   const slide = SLIDES[index];
 
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setIndex((prev) => (prev + 1) % SLIDES.length);
+    }, 4500);
+    return () => clearInterval(timer);
+  }, []);
+
   const go = (dir: 1 | -1) =>
     setIndex((i) => (i + dir + SLIDES.length) % SLIDES.length);
 
@@ -59,7 +67,7 @@ export function AuthShowcase() {
     >
       <div className="absolute -left-16 -top-16 h-72 w-72 rounded-full bg-white/10 blur-3xl" />
       <div className="absolute -bottom-24 -right-10 h-80 w-80 rounded-full bg-black/20 blur-3xl" />
-      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/40" />
+      <div className="absolute inset-0 bg-linear-to-b from-transparent via-transparent to-black/40" />
 
       <div className="relative z-10 px-10 pt-12">
         <h2 className="max-w-xs text-2xl font-semibold leading-snug text-white">
@@ -106,7 +114,7 @@ export function AuthShowcase() {
       </div>
 
       <div
-        className="absolute inset-x-8 bottom-8 z-10 h-[110px] flex flex-col justify-between rounded-[22px] border bg-white/5 p-4 shadow-2xl backdrop-blur-2xl"
+        className="absolute inset-x-8 bottom-8 z-10 h-27.5 flex flex-col justify-between rounded-[22px] border bg-white/5 p-4 shadow-2xl backdrop-blur-2xl"
         style={{ borderColor: "rgba(255, 255, 255, 0.3)" }}
       >
         <div className="flex items-center justify-between gap-4">
@@ -116,10 +124,20 @@ export function AuthShowcase() {
               style={{ borderColor: "rgba(255, 255, 255, 0.85)" }}
             />
             <div
-              className="-ml-4 flex h-7 items-center justify-center rounded-full border pl-6 pr-4 text-[11px] font-medium text-white"
+              className="-ml-4 flex h-7 items-center justify-center rounded-full border pl-6 pr-4 text-[11px] font-medium text-white overflow-hidden"
               style={{ borderColor: "rgba(255, 255, 255, 0.85)" }}
             >
-              {slide.title}
+              <AnimatePresence mode="wait">
+                <motion.span
+                  key={index}
+                  initial={{ opacity: 0, y: 4 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -4 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  {slide.title}
+                </motion.span>
+              </AnimatePresence>
             </div>
           </div>
 
@@ -145,9 +163,20 @@ export function AuthShowcase() {
           </div>
         </div>
 
-        <p className="line-clamp-2 text-[11px] font-normal leading-relaxed text-white/80">
-          {slide.caption}
-        </p>
+        <div className="h-8 overflow-hidden">
+          <AnimatePresence mode="wait">
+            <motion.p
+              key={index}
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -6 }}
+              transition={{ duration: 0.25, ease: "easeOut" }}
+              className="line-clamp-2 text-[11px] font-normal leading-relaxed text-white/80"
+            >
+              {slide.caption}
+            </motion.p>
+          </AnimatePresence>
+        </div>
       </div>
     </div>
   );
