@@ -22,7 +22,8 @@ export function BreadcrumbNav() {
   };
 
   return (
-    <Breadcrumb>
+    <div className="flex max-w-full items-center overflow-x-auto whitespace-nowrap scrollbar-none py-1">
+      <Breadcrumb>
       {path.map((folder, index) => {
         const isLast = index === path.length - 1;
         const dropId = `breadcrumb:${folder.id}`;
@@ -58,6 +59,7 @@ export function BreadcrumbNav() {
           </span>
         );
       })}
-    </Breadcrumb>
+      </Breadcrumb>
+    </div>
   );
 }

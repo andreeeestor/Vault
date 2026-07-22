@@ -49,5 +49,6 @@ export const LABEL_COLORS = [
 ] as const;
 
 export function labelColorHex(id: string | null | undefined): string {
+  if (id && id.startsWith("#")) return id;
   return LABEL_COLORS.find((c) => c.id === id)?.hex ?? LABEL_COLORS[0].hex;
 }

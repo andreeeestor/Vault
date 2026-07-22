@@ -64,7 +64,7 @@ export function VaultFolderView({ folderId }: { folderId: string }) {
   return (
     <>
       <DashboardHeader breadcrumb={<BreadcrumbNav />} />
-      <main className="flex-1 p-6" onClick={(e) => e.currentTarget === e.target && clearSelection()}>
+      <main className="flex-1 p-4 sm:p-6" onClick={(e) => e.currentTarget === e.target && clearSelection()}>
         {viewMode === "grid" ? (
           <ItemGrid folders={childFolders} items={folderItems} />
         ) : (

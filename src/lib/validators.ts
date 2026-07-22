@@ -22,7 +22,7 @@ export const labelColorSchema = z.enum([
 export const createFolderSchema = z.object({
   name: z.string().trim().min(1, "Nome é obrigatório").max(120),
   parentId: z.string().nullable(),
-  color: labelColorSchema.default("violet"),
+  color: z.string().optional().default("violet"),
 });
 
 export const renameSchema = z.object({

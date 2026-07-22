@@ -22,7 +22,7 @@ export function ItemDetailSidebar({ item }: { item: VaultItem }) {
   const isEditable = item.type === "NOTE" || item.type === "SNIPPET";
 
   return (
-    <aside className="flex w-[300px] shrink-0 flex-col gap-6 border-l border-[var(--border)] bg-[var(--background-elevated)] p-5">
+    <aside className="flex w-full lg:w-[300px] shrink-0 flex-col gap-6 border-t lg:border-t-0 lg:border-l border-[var(--border)] bg-[var(--background-elevated)] p-4 sm:p-5">
       <div>
         <h2 className="text-heading text-base font-semibold text-[var(--foreground)]">Detalhes</h2>
       </div>

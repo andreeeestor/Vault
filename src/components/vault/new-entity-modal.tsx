@@ -15,6 +15,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { FolderColorPicker } from "./folder-color-picker";
 
 interface NewEntityModalProps {
   open: boolean;
@@ -34,6 +35,7 @@ export function NewEntityModal({ open, onClose, kind }: NewEntityModalProps) {
   const [title, setTitle] = useState("");
   const [url, setUrl] = useState("");
   const [language, setLanguage] = useState("javascript");
+  const [folderColor, setFolderColor] = useState("violet");
   const [reminderContent, setReminderContent] = useState("");
   const [reminderAtStr, setReminderAtStr] = useState("");
   const [isTemporary, setIsTemporary] = useState(false);
@@ -74,7 +76,7 @@ export function NewEntityModal({ open, onClose, kind }: NewEntityModalProps) {
           router.push(`/vault/item/${item.id}`);
           handleClose();
         } else if (kind === "folder") {
-          const folder = await createFolder(trimmedTitle, currentFolderId);
+          const folder = await createFolder(trimmedTitle, currentFolderId, folderColor);
           toast.success(`Pasta "${folder.name}" criada!`);
           router.push(`/vault/folder/${folder.id}`);
           handleClose();
@@ -98,6 +100,7 @@ export function NewEntityModal({ open, onClose, kind }: NewEntityModalProps) {
     setTitle("");
     setUrl("");
     setLanguage("javascript");
+    setFolderColor("violet");
     setReminderContent("");
     setReminderAtStr("");
     setIsTemporary(false);
@@ -190,6 +193,20 @@ export function NewEntityModal({ open, onClose, kind }: NewEntityModalProps) {
               onKeyDown={(e) => e.key === "Enter" && handleCreate()}
             />
           </div>
+
+          {kind === "folder" && (
+            <div>
+              <label className="text-sm font-medium text-[var(--foreground)]">
+                Cor da pasta <span className="text-xs text-[var(--foreground-subtle)] font-normal">(Opcional)</span>
+              </label>
+              <div className="mt-1.5">
+                <FolderColorPicker
+                  selectedColor={folderColor}
+                  onSelectColor={(color) => setFolderColor(color)}
+                />
+              </div>
+            </div>
+          )}
 
           {kind === "link" && (
             <div>

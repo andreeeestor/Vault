@@ -29,7 +29,15 @@ export function DashboardHeader({ breadcrumb }: { breadcrumb: ReactNode }) {
         <Menu className="h-5 w-5" />
       </button>
 
-      <div className="min-w-0 flex-1">{breadcrumb}</div>
+      <div className="min-w-0 flex-1 overflow-hidden">{breadcrumb}</div>
+
+      <button
+        aria-label="Abrir busca"
+        onClick={() => document.dispatchEvent(new KeyboardEvent("keydown", { key: "k", metaKey: true }))}
+        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[var(--radius-md)] border border-[var(--border-strong)] bg-[var(--surface)] text-[var(--foreground-muted)] transition-colors hover:bg-[var(--surface-hover)] sm:hidden"
+      >
+        <Search className="h-4 w-4" />
+      </button>
 
       <button
         onClick={() => document.dispatchEvent(new KeyboardEvent("keydown", { key: "k", metaKey: true }))}

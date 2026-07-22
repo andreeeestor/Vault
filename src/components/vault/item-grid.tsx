@@ -1,11 +1,13 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { Folder as FolderIcon, FolderOpen, MoreHorizontal } from "lucide-react";
+import { FolderOpen } from "lucide-react";
 import { motion } from "motion/react";
 import type { Folder, VaultItem } from "@/types";
 import { cn, labelColorHex } from "@/lib/utils";
-import { useVaultStore } from "@/lib/vault-store";
+import { getItemsInFolder, useVaultStore } from "@/lib/vault-store";
+import { AnimatedFolder } from "@/components/ui/animated-folder";
+import { MiniItemThumbnail } from "./mini-item-thumbnail";
 import { ItemContextMenu, ItemDropdownMenu } from "./item-context-menu";
 import { ItemCard } from "./item-card";
 import { EmptyState } from "./empty-state";
@@ -25,8 +27,8 @@ export function ItemGrid({ folders, items }: { folders: Folder[]; items: VaultIt
 
   return (
     <div
-      className="grid gap-4"
-      style={{ gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))" }}
+      className="grid gap-3 sm:gap-4"
+      style={{ gridTemplateColumns: "repeat(auto-fill, minmax(135px, 1fr))" }}
     >
       {folders.map((folder) => (
         <FolderCard key={folder.id} folder={folder} />
@@ -44,6 +46,13 @@ function FolderCard({ folder }: { folder: Folder }) {
   const setDropTarget = useVaultStore((s) => s.setDropTarget);
   const moveEntities = useVaultStore((s) => s.moveEntities);
   const setCurrentFolder = useVaultStore((s) => s.setCurrentFolder);
+
+  const storeItems = useVaultStore((s) => s.items);
+  const folderItems = getItemsInFolder(storeItems, folder.id);
+  const topItems = folderItems.slice(0, 3);
+  const paperThumbnails = topItems.map((item) => (
+    <MiniItemThumbnail key={item.id} item={item} />
+  ));
 
   const isDropTarget = drag.isDragging && drag.hoveredDropTargetId === folder.id;
   const isBeingDragged = drag.isDragging && drag.draggedIds.includes(folder.id);
@@ -72,7 +81,11 @@ function FolderCard({ folder }: { folder: Folder }) {
           const folderIds = drag.draggedKind === "folder" ? drag.draggedIds.filter((id) => id !== folder.id) : [];
           moveEntities(itemIds, folderIds, folder.id);
         }}
-        onClick={() => {
+        onClick={(e) => {
+          const target = e.target as HTMLElement;
+          if (target.closest("button, [role='menu'], [role='menuitem'], [data-radix-popper-content-wrapper], input, select")) {
+            return;
+          }
           setCurrentFolder(folder.id);
           router.push(`/vault/folder/${folder.id}`);
         }}
@@ -86,12 +99,10 @@ function FolderCard({ folder }: { folder: Folder }) {
         )}
       >
         <div className="flex items-start justify-between">
-          <FolderIcon
-            className="h-9 w-9"
-            style={{ color: labelColorHex(folder.color) }}
-            fill={labelColorHex(folder.color)}
-            fillOpacity={0.18}
-            strokeWidth={1.5}
+          <AnimatedFolder
+            color={labelColorHex(folder.color) || "#5227FF"}
+            size={0.45}
+            items={paperThumbnails}
           />
           <ItemDropdownMenu
             id={folder.id}

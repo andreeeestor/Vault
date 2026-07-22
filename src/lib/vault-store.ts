@@ -63,7 +63,7 @@ interface VaultState {
   selectAll: (ids: string[]) => void;
   clearSelection: () => void;
 
-  createFolder: (name: string, parentId: string) => Promise<Folder>;
+  createFolder: (name: string, parentId: string, color?: string) => Promise<Folder>;
   createNote: (title: string, folderId: string | null) => Promise<VaultItem>;
   createSnippet: (title: string, folderId: string | null, codeLanguage?: string) => Promise<VaultItem>;
   createLink: (title: string, folderId: string | null, url: string) => Promise<VaultItem>;
@@ -71,7 +71,7 @@ interface VaultState {
   
   renameEntity: (id: string, name: string, kind: "item" | "folder") => Promise<void>;
   deleteFolder: (id: string) => Promise<void>;
-  updateFolderColor: (id: string, color: LabelColor) => Promise<void>;
+  updateFolderColor: (id: string, color: string) => Promise<void>;
   updateItem: (id: string, patch: Partial<VaultItem>) => void;
   addItem: (item: VaultItem) => void;
   toggleFavorite: (id: string) => Promise<void>;
@@ -162,8 +162,8 @@ export const useVaultStore = create<VaultState>((set, get) => ({
 
   clearSelection: () => set({ selectedIds: new Set(), lastSelectedId: null }),
 
-  createFolder: async (name, parentId) => {
-    const rawFolder = await apiCreateFolder({ name, parentId });
+  createFolder: async (name, parentId, color) => {
+    const rawFolder = await apiCreateFolder({ name, parentId, color });
     const folder = mapFolder(rawFolder);
     set((state) => ({ folders: [...state.folders, folder] }));
     return folder;

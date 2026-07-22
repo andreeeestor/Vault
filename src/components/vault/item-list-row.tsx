@@ -39,7 +39,11 @@ export function FolderListRow({ folder }: { folder: Folder }) {
           const folderIds = drag.draggedKind === "folder" ? drag.draggedIds.filter((id) => id !== folder.id) : [];
           moveEntities(itemIds, folderIds, folder.id);
         }}
-        onClick={() => {
+        onClick={(e) => {
+          const target = e.target as HTMLElement;
+          if (target.closest("button, [role='menu'], [role='menuitem'], [data-radix-popper-content-wrapper], input, select")) {
+            return;
+          }
           setCurrentFolder(folder.id);
           router.push(`/vault/folder/${folder.id}`);
         }}

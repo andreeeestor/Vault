@@ -100,8 +100,8 @@ export function NewItemDropdown() {
     <>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button size="sm">
-            <Plus className="h-4 w-4" /> Novo
+          <Button size="sm" className="px-2.5 sm:px-3">
+            <Plus className="h-4 w-4" /> <span className="hidden sm:inline">Novo</span>
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="min-w-[220px]">
