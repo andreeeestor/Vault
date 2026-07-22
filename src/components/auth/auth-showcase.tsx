@@ -105,11 +105,20 @@ export function AuthShowcase() {
         </div>
       </div>
 
-      <div className="absolute inset-x-8 bottom-8 z-10 h-[110px] flex flex-col justify-between rounded-[22px] border border-white/30 bg-white/5 p-4 shadow-2xl backdrop-blur-2xl">
+      <div
+        className="absolute inset-x-8 bottom-8 z-10 h-[110px] flex flex-col justify-between rounded-[22px] border bg-white/5 p-4 shadow-2xl backdrop-blur-2xl"
+        style={{ borderColor: "rgba(255, 255, 255, 0.3)" }}
+      >
         <div className="flex items-center justify-between gap-4">
           <div className="relative flex items-center">
-            <div className="h-7 w-7 rounded-full border border-white shrink-0" />
-            <div className="-ml-4 flex h-7 items-center justify-center rounded-full border border-white pl-6 pr-4 text-[11px] font-medium text-white">
+            <div
+              className="h-7 w-7 rounded-full border shrink-0"
+              style={{ borderColor: "rgba(255, 255, 255, 0.85)" }}
+            />
+            <div
+              className="-ml-4 flex h-7 items-center justify-center rounded-full border pl-6 pr-4 text-[11px] font-medium text-white"
+              style={{ borderColor: "rgba(255, 255, 255, 0.85)" }}
+            >
               {slide.title}
             </div>
           </div>
@@ -119,7 +128,8 @@ export function AuthShowcase() {
               type="button"
               aria-label="Anterior"
               onClick={() => go(-1)}
-              className="flex h-8 w-8 items-center justify-center rounded-full border border-white text-white outline-none transition-colors hover:bg-white/20 focus:outline-none focus-visible:ring-0"
+              className="flex h-8 w-8 items-center justify-center rounded-full border text-white outline-none transition-colors hover:bg-white/20 focus:outline-none focus-visible:ring-0"
+              style={{ borderColor: "rgba(255, 255, 255, 0.85)" }}
             >
               <ArrowDownLeft className="h-3.5 w-3.5 text-white" strokeWidth={1.5} />
             </button>
@@ -127,7 +137,8 @@ export function AuthShowcase() {
               type="button"
               aria-label="Próximo"
               onClick={() => go(1)}
-              className="flex h-8 w-8 items-center justify-center rounded-full border border-white text-white outline-none transition-colors hover:bg-white/20 focus:outline-none focus-visible:ring-0"
+              className="flex h-8 w-8 items-center justify-center rounded-full border text-white outline-none transition-colors hover:bg-white/20 focus:outline-none focus-visible:ring-0"
+              style={{ borderColor: "rgba(255, 255, 255, 0.85)" }}
             >
               <ArrowUpRight className="h-3.5 w-3.5 text-white" strokeWidth={1.5} />
             </button>
