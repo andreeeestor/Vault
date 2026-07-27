@@ -5,7 +5,7 @@ export function FinalCta() {
   return (
     <section className="px-6 py-24 lg:px-10" style={{ background: "#F4EFE8" }}>
       <div
-        className="nb-shadow mx-auto flex max-w-4xl flex-col items-center rounded-3xl border-2 border-[#1E1B2E] bg-[#1E1B2E] px-8 py-16 text-center"
+        className="nb-shadow mx-auto flex max-w-4xl flex-col items-center rounded-3xl border-2 border-[#1E1B2E] bg-[#1E1B2E] px-5 py-10 text-center sm:px-8 sm:py-16"
       >
         <span className="rounded-full border border-white/15 bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-widest text-white/70">
           Comece hoje

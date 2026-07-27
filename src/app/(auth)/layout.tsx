@@ -1,3 +1,5 @@
+import { redirect } from "next/navigation";
+import { auth } from "@/lib/auth";
 import Link from "next/link";
 import {
   ShieldCheck,
@@ -8,19 +10,22 @@ import {
 } from "lucide-react";
 import { AuthShowcase } from "@/components/auth/auth-showcase";
 
-export default function AuthLayout({
+export default async function AuthLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const session = await auth();
+  if (session?.user?.id) redirect("/vault");
+
   return (
     <div
-      className="flex min-h-screen items-center justify-center p-6"
+      className="flex min-h-screen items-center justify-center p-4 sm:p-6"
       style={{ background: "var(--gradient-brand-soft)" }}
     >
       <div className="flex w-full max-w-[1000px] min-h-[640px] overflow-hidden rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface)] shadow-[var(--shadow-lg)]">
         <div className="flex w-full flex-col md:max-w-[440px]">
-          <div className="flex flex-1 flex-col justify-center px-10 py-12 sm:px-14">
+          <div className="flex flex-1 flex-col justify-center px-6 py-8 sm:px-14 sm:py-12">
             <Link href="/" className="mb-10 flex items-center gap-2.5">
               <div
                 className="flex h-8 w-8 items-center justify-center rounded-[var(--radius-sm)] text-white"
@@ -36,7 +41,7 @@ export default function AuthLayout({
             {children}
           </div>
 
-          <div className="hidden items-center justify-between gap-4 border-t border-[var(--border)] bg-[var(--background-elevated)] px-10 py-5 sm:flex">
+          <div className="flex items-center justify-between gap-4 border-t border-[var(--border)] bg-[var(--background-elevated)] px-6 py-4 sm:px-10 sm:py-5">
             <div className="flex items-center gap-3">
               <div className="flex -space-x-2">
                 <span className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-[var(--background-elevated)] bg-violet-500/20 text-violet-600">

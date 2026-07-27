@@ -34,7 +34,7 @@ export function FilteredItemsView({
           </Breadcrumb>
         }
       />
-      <main className="flex-1 p-6">
+      <main className="flex-1 p-4 sm:p-6">
         {filtered.length === 0 ? (
           <EmptyState icon={icon} title={`Nada em "${title}" por aqui`} description={emptyDescription} />
         ) : viewMode === "grid" ? (

@@ -155,7 +155,8 @@ export function NewEntityModal({ open, onClose, kind }: NewEntityModalProps) {
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && handleClose()}>
-      <DialogContent showClose={false} className="p-0 overflow-hidden max-w-md">
+      <DialogContent showClose={false} className="p-0 overflow-hidden max-w-md w-[calc(100vw-2rem)] sm:w-full">
+        <div className="max-h-[90vh] overflow-y-auto">
         <div className="flex items-center gap-3 border-b border-[var(--border)] px-5 py-4">
           <div
             className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl"
@@ -324,6 +325,7 @@ export function NewEntityModal({ open, onClose, kind }: NewEntityModalProps) {
             <Plus className="h-4 w-4" />
             {isPending ? "Criando…" : "Criar"}
           </Button>
+        </div>
         </div>
       </DialogContent>
     </Dialog>

@@ -65,7 +65,7 @@ export function SecuritySection() {
             <Lock className="h-3.5 w-3.5" />
             <span>vault.encryptSecret()</span>
           </div>
-          <pre className="mt-4 overflow-x-auto text-xs leading-relaxed text-violet-200">
+          <pre className="mt-4 overflow-x-auto text-[11px] sm:text-xs leading-relaxed text-violet-200 whitespace-pre">
             <code>{`const key = pbkdf2(masterPassword, salt, 120_000)
 const { ciphertext, iv, authTag } =
   aes256gcm.encrypt(password, key)

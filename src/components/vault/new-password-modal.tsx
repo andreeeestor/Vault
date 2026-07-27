@@ -105,7 +105,8 @@ export function NewPasswordModal({
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && handleClose()}>
-      <DialogContent showClose={false} className="p-0 overflow-hidden max-w-md">
+      <DialogContent showClose={false} className="p-0 overflow-hidden max-w-md w-[calc(100vw-2rem)] sm:w-full">
+        <div className="max-h-[90vh] overflow-y-auto">
         {}
         <div className="flex items-center gap-3 border-b border-[var(--border)] px-5 py-4">
           <div
@@ -250,6 +251,7 @@ export function NewPasswordModal({
               </Button>
             </div>
           )}
+        </div>
         </div>
       </DialogContent>
     </Dialog>

@@ -24,10 +24,10 @@ export default function SettingsLayout({ children }: { children: React.ReactNode
           </Breadcrumb>
         }
       />
-      <div className="mx-auto w-full max-w-3xl flex-1 px-6 py-8">
+      <div className="mx-auto w-full max-w-3xl flex-1 px-4 py-6 sm:px-6 sm:py-8">
         <h1 className="text-display text-2xl font-bold text-[var(--foreground)]">Configurações</h1>
 
-        <nav className="mt-6 flex gap-1 border-b border-[var(--border)]">
+        <nav className="mt-6 flex gap-1 overflow-x-auto scrollbar-none border-b border-[var(--border)] whitespace-nowrap">
           {TABS.map((tab) => {
             const active = pathname === tab.href;
             return (

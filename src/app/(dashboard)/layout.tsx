@@ -43,7 +43,7 @@ export default async function DashboardLayout({
   return (
     <TooltipProvider delayDuration={300}>
       <VaultStoreHydrator folders={folders} items={items} user={user} />
-      <div className="flex bg-[var(--background)]">
+      <div className="flex overflow-hidden bg-[var(--background)]">
         <Sidebar user={user} storage={storage} />
         <div className="flex min-h-screen flex-1 flex-col">{children}</div>
       </div>

@@ -1,54 +1,113 @@
 "use client";
 
 import Link from "next/link";
-import { ShieldCheck, ArrowRight, ArrowUpRight, FolderOpen, ImageIcon, Lock, Code2, Link2 } from "lucide-react";
-import { motion } from "motion/react";
+import { useState } from "react";
+import { ShieldCheck, ArrowRight, ArrowUpRight, FolderOpen, ImageIcon, Lock, Code2, Link2, Menu, X } from "lucide-react";
+import { motion, AnimatePresence } from "motion/react";
 
 export function LandingHeader() {
+  const [menuOpen, setMenuOpen] = useState(false);
+
   return (
-    <header className="sticky top-0 z-40 flex h-16 items-center justify-between border-b border-[#1E1B2E]/10 bg-[#F4EFE8]/85 px-6 backdrop-blur-md lg:px-10">
-      {}
-      <Link href="/" className="flex items-center gap-2.5">
-        <div
-          className="flex h-8 w-8 items-center justify-center rounded-lg text-white"
-          style={{ background: "linear-gradient(135deg, #7C3AED 0%, #A855F7 100%)" }}
-        >
-          <ShieldCheck className="h-4 w-4" />
+    <header className="sticky top-0 z-40 border-b border-[#1E1B2E]/10 bg-[#F4EFE8]/85 backdrop-blur-md">
+      <div className="flex h-16 items-center justify-between px-5 lg:px-10">
+        {}
+        <Link href="/" className="flex items-center gap-2.5">
+          <div
+            className="flex h-8 w-8 items-center justify-center rounded-lg text-white"
+            style={{ background: "linear-gradient(135deg, #7C3AED 0%, #A855F7 100%)" }}
+          >
+            <ShieldCheck className="h-4 w-4" />
+          </div>
+          <span className="font-serif text-xl font-normal tracking-tight text-[#1E1B2E]">Vault</span>
+        </Link>
+
+        {}
+        <nav className="hidden items-center gap-7 text-sm font-medium text-[#1E1B2E]/55 md:flex">
+          <a href="#features" className="transition-colors hover:text-[#1E1B2E]">Recursos</a>
+          <a href="#security" className="transition-colors hover:text-[#1E1B2E]">Segurança</a>
+          <a href="#pricing" className="transition-colors hover:text-[#1E1B2E]">Planos</a>
+          <a href="#faq" className="transition-colors hover:text-[#1E1B2E]">FAQ</a>
+        </nav>
+
+        {}
+        <div className="flex items-center gap-3">
+          <Link
+            href="/login"
+            className="hidden text-sm font-medium text-[#1E1B2E]/55 transition-colors hover:text-[#1E1B2E] sm:block"
+          >
+            Entrar
+          </Link>
+          <Link
+            href="/register"
+            className="hidden rounded-full bg-[#1E1B2E] px-5 py-2 text-sm font-semibold text-white transition-all hover:bg-[#3B2F5E] sm:block"
+          >
+            Criar conta grátis
+          </Link>
+          <button
+            onClick={() => setMenuOpen((v) => !v)}
+            className="flex h-9 w-9 items-center justify-center rounded-lg border border-[#1E1B2E]/12 bg-white text-[#1E1B2E] md:hidden"
+            aria-label={menuOpen ? "Fechar menu" : "Abrir menu"}
+          >
+            {menuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          </button>
         </div>
-        <span className="font-serif text-xl font-normal tracking-tight text-[#1E1B2E]">Vault</span>
-      </Link>
-
-      {}
-      <nav className="hidden items-center gap-7 text-sm font-medium text-[#1E1B2E]/55 md:flex">
-        <a href="#features" className="transition-colors hover:text-[#1E1B2E]">Recursos</a>
-        <a href="#security" className="transition-colors hover:text-[#1E1B2E]">Segurança</a>
-        <a href="#pricing" className="transition-colors hover:text-[#1E1B2E]">Planos</a>
-        <a href="#faq" className="transition-colors hover:text-[#1E1B2E]">FAQ</a>
-      </nav>
-
-      {}
-      <div className="flex items-center gap-3">
-        <Link
-          href="/login"
-          className="hidden text-sm font-medium text-[#1E1B2E]/55 transition-colors hover:text-[#1E1B2E] sm:block"
-        >
-          Entrar
-        </Link>
-        <Link
-          href="/register"
-          className="rounded-full bg-[#1E1B2E] px-5 py-2 text-sm font-semibold text-white transition-all hover:bg-[#3B2F5E]"
-        >
-          Criar conta grátis
-        </Link>
       </div>
+
+      {}
+      <AnimatePresence>
+        {menuOpen && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.2, ease: "easeInOut" }}
+            className="overflow-hidden border-t border-[#1E1B2E]/10 bg-[#F4EFE8] md:hidden"
+          >
+            <nav className="flex flex-col px-5 py-4 gap-1">
+              {[
+                { href: "#features", label: "Recursos" },
+                { href: "#security", label: "Segurança" },
+                { href: "#pricing", label: "Planos" },
+                { href: "#faq", label: "FAQ" },
+              ].map(({ href, label }) => (
+                <a
+                  key={href}
+                  href={href}
+                  onClick={() => setMenuOpen(false)}
+                  className="rounded-lg px-3 py-2.5 text-sm font-medium text-[#1E1B2E]/70 transition-colors hover:bg-[#1E1B2E]/5 hover:text-[#1E1B2E]"
+                >
+                  {label}
+                </a>
+              ))}
+              <div className="mt-2 flex flex-col gap-2 border-t border-[#1E1B2E]/8 pt-3">
+                <Link
+                  href="/login"
+                  onClick={() => setMenuOpen(false)}
+                  className="rounded-lg px-3 py-2.5 text-sm font-medium text-[#1E1B2E]/70 transition-colors hover:bg-[#1E1B2E]/5 hover:text-[#1E1B2E]"
+                >
+                  Entrar
+                </Link>
+                <Link
+                  href="/register"
+                  onClick={() => setMenuOpen(false)}
+                  className="rounded-full bg-[#1E1B2E] px-5 py-2.5 text-center text-sm font-semibold text-white transition-all hover:bg-[#3B2F5E]"
+                >
+                  Criar conta grátis
+                </Link>
+              </div>
+            </nav>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </header>
   );
 }
 
 export function Hero() {
   return (
-    <section className="relative overflow-hidden px-6 pb-0 pt-14 lg:px-10 lg:pt-20">
-      <div className="mx-auto grid max-w-6xl items-center gap-10 lg:grid-cols-[1fr_440px]">
+    <section className="relative overflow-hidden px-5 pb-0 pt-10 sm:px-6 lg:px-10 lg:pt-20">
+      <div className="mx-auto grid max-w-6xl items-center gap-8 lg:gap-10 lg:grid-cols-[1fr_440px]">
 
         {}
         <motion.div
@@ -64,7 +123,7 @@ export function Hero() {
           </span>
 
           {}
-          <h1 className="font-serif mt-6 text-[clamp(3.2rem,6.5vw,5.2rem)] font-bold leading-none tracking-tight text-[#1E1B2E]">
+          <h1 className="font-serif mt-6 text-[clamp(2.4rem,6.5vw,5.2rem)] font-bold leading-none tracking-tight text-[#1E1B2E]">
             Tudo o que importa,<br />
             em um só{" "}
             <em className="italic" style={{
@@ -112,7 +171,7 @@ export function Hero() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.12 }}
-          className="relative"
+          className="relative mx-auto w-full max-w-sm lg:max-w-none"
         >
           <VaultVisualCard />
         </motion.div>
@@ -132,7 +191,7 @@ function VaultVisualCard() {
         className="relative w-full overflow-hidden rounded-[28px]"
         style={{
           background: "linear-gradient(145deg, #9333EA 0%, #6D28D9 55%, #4C1D95 100%)",
-          minHeight: 420,
+          minHeight: 320,
         }}
       >
         {}
@@ -251,14 +310,14 @@ function VaultVisualCard() {
       </div>
 
       {}
-      <div className="absolute -bottom-12 -right-4 rounded-2xl border border-[#1E1B2E]/8 bg-white px-4 py-3 shadow-xl">
+      <div className="hidden sm:block absolute -bottom-12 -right-4 rounded-2xl border border-[#1E1B2E]/8 bg-white px-4 py-3 shadow-xl">
         <p className="text-[10px] font-semibold uppercase tracking-wider text-[#1E1B2E]/40">Itens seguros</p>
         <p className="font-serif mt-0.5 text-2xl font-normal text-[#1E1B2E]">
           500 <span className="text-sm text-[#7C3AED]">MB grátis</span>
         </p>
       </div>
 
-      <div className="absolute -top-6 -left-3 flex items-center gap-2 rounded-xl border border-[#1E1B2E]/8 bg-white px-3 py-2 shadow-lg">
+      <div className="hidden sm:flex absolute -top-6 -left-3 items-center gap-2 rounded-xl border border-[#1E1B2E]/8 bg-white px-3 py-2 shadow-lg">
         <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-[#7C3AED]/10">
           <ShieldCheck className="h-3.5 w-3.5 text-[#7C3AED]" />
         </div>
