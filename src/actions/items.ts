@@ -28,6 +28,7 @@ export async function createNote(input: unknown) {
       folderId: data.folderId,
       noteContent: data.noteContent,
       tags: data.tags,
+      expiresAt: data.expiresAt ?? null,
     },
   });
 
@@ -65,6 +66,7 @@ export async function createSnippet(input: unknown) {
       folderId: data.folderId,
       codeLanguage: data.codeLanguage,
       codeContent: data.codeContent,
+      expiresAt: data.expiresAt ?? null,
     },
   });
 
@@ -83,6 +85,7 @@ export async function createLink(input: unknown) {
       title: data.title,
       folderId: data.folderId,
       url: data.url,
+      expiresAt: data.expiresAt ?? null,
     },
   });
 
@@ -135,6 +138,17 @@ export async function purgeExpiredTrash() {
   });
 }
 
+export async function purgeExpiredItems() {
+  const now = new Date();
+  const result = await db.item.deleteMany({
+    where: {
+      expiresAt: { lte: now },
+      isDeleted: false,
+    },
+  });
+  return result.count;
+}
+
 export async function listAllItems(userId: string) {
   return db.item.findMany({
     where: { userId, isDeleted: false },
@@ -142,7 +156,13 @@ export async function listAllItems(userId: string) {
   });
 }
 
-export async function createReminder(title: string, noteContent: string | null, reminderAt: Date, folderId: string | null) {
+export async function createReminder(
+  title: string,
+  noteContent: string | null,
+  reminderAt: Date,
+  folderId: string | null,
+  expiresAt?: Date | null,
+) {
   const userId = await requireUserId();
   const item = await db.item.create({
     data: {
@@ -152,6 +172,7 @@ export async function createReminder(title: string, noteContent: string | null, 
       folderId,
       noteContent,
       reminderAt,
+      expiresAt: expiresAt ?? null,
     },
   });
 

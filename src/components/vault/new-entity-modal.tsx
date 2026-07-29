@@ -53,16 +53,32 @@ export function NewEntityModal({ open, onClose, kind }: NewEntityModalProps) {
       return;
     }
 
+    // Calcular expiresAt a partir do checkbox de arquivo temporário
+    let expiresAt: Date | null = null;
+    if (isTemporary && kind !== "folder") {
+      const num = parseInt(expiryTime.split(" ")[0] || "24", 10);
+      const unit = expiryTime.split(" ")[1] || "horas";
+      if (!isNaN(num) && num > 0) {
+        const ms =
+          unit === "minutos"
+            ? num * 60 * 1000
+            : unit === "dias"
+            ? num * 24 * 60 * 60 * 1000
+            : num * 60 * 60 * 1000; // horas
+        expiresAt = new Date(Date.now() + ms);
+      }
+    }
+
     startTransition(async () => {
       try {
         if (kind === "note") {
-          const item = await createNote(trimmedTitle, getFolderIdForDb());
-          toast.success("Nota criada com sucesso!");
+          const item = await createNote(trimmedTitle, getFolderIdForDb(), expiresAt);
+          toast.success(expiresAt ? `Nota temporária criada! Expira em ${expiryTime}.` : "Nota criada com sucesso!");
           router.push(`/vault/item/${item.id}`);
           handleClose();
         } else if (kind === "snippet") {
-          const item = await createSnippet(trimmedTitle, getFolderIdForDb(), language);
-          toast.success("Snippet criado com sucesso!");
+          const item = await createSnippet(trimmedTitle, getFolderIdForDb(), language, expiresAt);
+          toast.success(expiresAt ? `Snippet temporário criado! Expira em ${expiryTime}.` : "Snippet criado com sucesso!");
           router.push(`/vault/item/${item.id}`);
           handleClose();
         } else if (kind === "link") {
@@ -71,8 +87,8 @@ export function NewEntityModal({ open, onClose, kind }: NewEntityModalProps) {
             return;
           }
           const parsedUrl = url.trim().startsWith("http") ? url.trim() : `https://${url.trim()}`;
-          const item = await createLink(trimmedTitle, getFolderIdForDb(), parsedUrl);
-          toast.success("Link adicionado com sucesso!");
+          const item = await createLink(trimmedTitle, getFolderIdForDb(), parsedUrl, expiresAt);
+          toast.success(expiresAt ? `Link temporário criado! Expira em ${expiryTime}.` : "Link adicionado com sucesso!");
           router.push(`/vault/item/${item.id}`);
           handleClose();
         } else if (kind === "folder") {
@@ -85,8 +101,19 @@ export function NewEntityModal({ open, onClose, kind }: NewEntityModalProps) {
             toast.error("Informe a data e hora para o envio.");
             return;
           }
-          await createReminder(trimmedTitle, reminderContent.trim() || null, new Date(reminderAtStr), getFolderIdForDb());
-          toast.success("Lembrete agendado com sucesso!");
+          const reminderDate = new Date(reminderAtStr);
+          if (reminderDate <= new Date()) {
+            toast.error("A data do lembrete deve ser no futuro.");
+            return;
+          }
+          await createReminder(
+            trimmedTitle,
+            reminderContent.trim() || null,
+            reminderDate,
+            getFolderIdForDb(),
+            expiresAt,
+          );
+          toast.success(`Lembrete agendado para ${reminderDate.toLocaleString("pt-BR")}!`);
           handleClose();
         }
       } catch (err) {

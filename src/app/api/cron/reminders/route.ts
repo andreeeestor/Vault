@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
+import { render } from "@react-email/render";
 import { db } from "@/lib/db";
 import { resend, EMAIL_FROM } from "@/lib/email";
+import ReminderEmail from "@/emails/reminder";
 
 export const dynamic = "force-dynamic";
 
@@ -20,6 +22,7 @@ export async function GET(request: Request) {
         type: "REMINDER",
         reminderAt: { lte: now },
         reminderSent: false,
+        isDeleted: false,
       },
       include: {
         user: {
@@ -33,36 +36,37 @@ export async function GET(request: Request) {
     }
 
     const sentIds: string[] = [];
+    const failedIds: string[] = [];
 
     for (const item of reminders) {
       try {
-        const itemWithUser = item as typeof item & { user: { email: string; name: string | null } };
+        const itemWithUser = item as typeof item & {
+          user: { email: string; name: string | null };
+        };
         const userEmail = itemWithUser.user.email;
         const userName = itemWithUser.user.name ?? "Usuário";
 
+        const html = await render(
+          ReminderEmail({
+            userName,
+            reminderTitle: item.title,
+            reminderDescription: item.noteContent,
+            reminderAt: item.reminderAt ?? now,
+            vaultUrl: `${process.env.NEXTAUTH_URL ?? "https://vault.app"}/vault`,
+          })
+        );
+
         await resend.emails.send({
-          from: process.env.RESEND_FROM_EMAIL || EMAIL_FROM || "onboarding@resend.dev",
+          from: process.env.RESEND_FROM_EMAIL || EMAIL_FROM,
           to: userEmail,
           subject: `⏰ Lembrete do Vault: ${item.title}`,
-          html: `
-            <div style="font-family: sans-serif; max-width: 500px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 12px; background: #fff;">
-              <h2 style="color: #7c3aed; margin-top: 0;">Vault Lembretes</h2>
-              <p>Olá, <strong>${userName}</strong>!</p>
-              <p>Você tem um lembrete agendado:</p>
-              <div style="padding: 16px; background: #f8fafc; border-left: 4px solid #7c3aed; border-radius: 6px; margin: 20px 0;">
-                <h3 style="margin: 0 0 8px 0; color: #1e293b;">${item.title}</h3>
-                <p style="margin: 0; color: #475569; font-size: 14px; line-height: 1.5;">${item.noteContent || "Sem descrição"}</p>
-              </div>
-              <p style="font-size: 12px; color: #94a3b8; margin-top: 30px; border-top: 1px solid #e2e8f0; padding-top: 12px;">
-                Este é um email automático enviado pelo Vault.
-              </p>
-            </div>
-          `,
+          html,
         });
 
         sentIds.push(item.id);
       } catch (err) {
-        console.error(`Erro ao enviar lembrete ${item.id} para email:`, err);
+        console.error(`Erro ao enviar lembrete ${item.id}:`, err);
+        failedIds.push(item.id);
       }
     }
 
@@ -74,8 +78,9 @@ export async function GET(request: Request) {
     }
 
     return NextResponse.json({
-      message: `Sucesso: ${sentIds.length} lembrete(s) enviado(s)`,
+      message: `${sentIds.length} lembrete(s) enviado(s)`,
       sentIds,
+      failedIds,
     });
   } catch (err) {
     console.error("Erro na cron de lembretes:", err);

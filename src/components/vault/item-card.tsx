@@ -109,6 +109,23 @@ export function ItemCard({ item, orderedIds }: { item: VaultItem; orderedIds: st
             />
           </div>
 
+          {/* Badge de expiração */}
+          {item.expiresAt && !item.reminderSent && (
+            <ExpiryBadge expiresAt={new Date(item.expiresAt)} />
+          )}
+
+          {/* Badge de lembrete */}
+          {item.type === "REMINDER" && item.reminderAt && (
+            <div className="flex items-center gap-1 rounded-md bg-violet-500/10 px-1.5 py-0.5">
+              <span className="text-[10px] font-medium text-violet-600">
+                ⏰ {new Date(item.reminderAt).toLocaleString("pt-BR", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}
+              </span>
+              {item.reminderSent && (
+                <span className="text-[9px] text-emerald-600 font-semibold">✓ Enviado</span>
+              )}
+            </div>
+          )}
+
           {item.tags.length > 0 && (
             <div className="flex flex-wrap gap-1 pt-0.5">
               {item.tags.slice(0, 2).map((tag) => (
@@ -119,6 +136,7 @@ export function ItemCard({ item, orderedIds }: { item: VaultItem; orderedIds: st
             </div>
           )}
         </div>
+
       </motion.div>
     </ItemContextMenu>
   );
@@ -173,6 +191,36 @@ function ItemPreview({ item }: { item: VaultItem }) {
       style={{ background: `linear-gradient(135deg, ${meta.accent}14, ${meta.accent}05)` }}
     >
       <Icon className="h-9 w-9" style={{ color: meta.accent }} strokeWidth={1.5} />
+    </div>
+  );
+}
+
+function ExpiryBadge({ expiresAt }: { expiresAt: Date }) {
+  const diff = expiresAt.getTime() - Date.now();
+  const hours = diff / (1000 * 60 * 60);
+  const days = diff / (1000 * 60 * 60 * 24);
+
+  let label = "";
+  let className = "";
+
+  if (diff <= 0) {
+    label = "Expirado";
+    className = "bg-red-500/10 text-red-600 border-red-500/20";
+  } else if (hours < 1) {
+    const mins = Math.ceil(diff / (1000 * 60));
+    label = `⏳ Expira em ${mins}min`;
+    className = "bg-red-500/10 text-red-600 border-red-500/20";
+  } else if (hours < 24) {
+    label = `⏳ Expira em ${Math.ceil(hours)}h`;
+    className = "bg-amber-500/10 text-amber-600 border-amber-500/20";
+  } else {
+    label = `⏳ Expira em ${Math.ceil(days)}d`;
+    className = "bg-violet-500/10 text-violet-600 border-violet-500/20";
+  }
+
+  return (
+    <div className={`flex items-center rounded-md border px-1.5 py-0.5 ${className}`}>
+      <span className="text-[10px] font-medium">{label}</span>
     </div>
   );
 }

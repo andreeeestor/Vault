@@ -73,7 +73,7 @@ model Item {
   folderId String?
   folder   Folder? @relation(fields: [folderId], references: [id], onDelete: SetNull)
 
-  type        String // IMAGE | PDF | AUDIO | NOTE | SNIPPET | LINK | PASSWORD
+  type        String // IMAGE | PDF | AUDIO | NOTE | SNIPPET | LINK | PASSWORD | REMINDER
   title       String
   description String?
   tags        String[]
@@ -110,8 +110,13 @@ model Item {
   encryptedPassword String?
   encryptedNotes    String?
   passwordStrength  String?
-  reminderAt        DateTime?
-  reminderSent      Boolean   @default(false)
+
+  // Lembretes — data/hora de disparo + flag de enviado
+  reminderAt   DateTime?
+  reminderSent Boolean   @default(false)
+
+  // Arquivo temporário — apagado automaticamente quando expiresAt <= now
+  expiresAt DateTime?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -121,6 +126,7 @@ model Item {
   @@index([userId, isDeleted])
   @@index([userId, isFavorite])
   @@index([userId, isArchived])
+  @@index([expiresAt])
 }
 
 model Account {

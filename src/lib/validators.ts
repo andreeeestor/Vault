@@ -41,6 +41,7 @@ export const createNoteSchema = z.object({
   folderId: z.string().nullable(),
   noteContent: z.string().default(""),
   tags: z.array(z.string()).default([]),
+  expiresAt: z.date().nullable().optional(),
 });
 
 export const createSnippetSchema = z.object({
@@ -48,12 +49,14 @@ export const createSnippetSchema = z.object({
   folderId: z.string().nullable(),
   codeLanguage: z.string().default("plaintext"),
   codeContent: z.string().default(""),
+  expiresAt: z.date().nullable().optional(),
 });
 
 export const createLinkSchema = z.object({
   title: z.string().trim().min(1).max(200),
   folderId: z.string().nullable(),
   url: z.string().url("URL inválida"),
+  expiresAt: z.date().nullable().optional(),
 });
 
 export const createPasswordItemSchema = z.object({

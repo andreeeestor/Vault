@@ -28,6 +28,7 @@ export function mapItem(
     encryptedPassword?: string | null;
     reminderAt?: Date | string | null;
     reminderSent?: boolean | null;
+    expiresAt?: Date | string | null;
   }
 ): VaultItem {
   return {
@@ -58,6 +59,7 @@ export function mapItem(
     passwordStrength: (i.passwordStrength as VaultItem["passwordStrength"]) ?? null,
     reminderAt: i.reminderAt ? new Date(i.reminderAt) : null,
     reminderSent: !!i.reminderSent,
+    expiresAt: i.expiresAt ? new Date(i.expiresAt) : null,
     createdAt: new Date(i.createdAt),
     updatedAt: new Date(i.updatedAt),
   };

@@ -79,6 +79,9 @@ export interface VaultItem {
   reminderAt?: Date | null;
   reminderSent?: boolean;
 
+  // Arquivo temporário
+  expiresAt?: Date | null;
+
   createdAt: Date;
   updatedAt: Date;
 }

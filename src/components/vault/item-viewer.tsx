@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { ZoomIn, ZoomOut, ExternalLink } from "lucide-react";
+import { useState, useEffect } from "react";
+import { ZoomIn, ZoomOut, ExternalLink, Bell, CheckCircle2, Clock } from "lucide-react";
 import type { VaultItem } from "@/types";
 import { PasswordField } from "./password-item";
 import { SnippetEditor } from "./snippet-editor";
@@ -28,6 +28,8 @@ export function ItemViewer({ item }: { item: VaultItem }) {
           <PasswordField item={item} />
         </div>
       );
+    case "REMINDER":
+      return <ReminderViewer item={item} />;
   }
 }
 
@@ -157,6 +159,147 @@ function LinkViewer({ item }: { item: VaultItem }) {
           </span>
         </div>
       </a>
+    </div>
+  );
+}
+
+function ReminderViewer({ item }: { item: VaultItem }) {
+  const reminderAt = item.reminderAt ? new Date(item.reminderAt) : null;
+  const isSent = item.reminderSent;
+  const now = new Date();
+  const isOverdue = reminderAt && reminderAt < now && !isSent;
+
+  const [timeLeft, setTimeLeft] = useState(() => {
+    if (!reminderAt || isSent) return null;
+    const diff = reminderAt.getTime() - Date.now();
+    return diff > 0 ? diff : 0;
+  });
+
+  useEffect(() => {
+    if (isSent || !reminderAt) return;
+    const interval = setInterval(() => {
+      const diff = reminderAt.getTime() - Date.now();
+      setTimeLeft(diff > 0 ? diff : 0);
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [reminderAt, isSent]);
+
+  const formatTimeLeft = (ms: number) => {
+    if (ms <= 0) return "Pronto para envio";
+    const s = Math.floor(ms / 1000);
+    const m = Math.floor(s / 60);
+    const h = Math.floor(m / 60);
+    const d = Math.floor(h / 24);
+    if (d > 0) return `${d}d ${h % 24}h ${m % 60}min`;
+    if (h > 0) return `${h}h ${m % 60}min`;
+    if (m > 0) return `${m}min ${s % 60}s`;
+    return `${s}s`;
+  };
+
+  return (
+    <div className="flex flex-1 items-center justify-center p-6 sm:p-10">
+      <div className="w-full max-w-lg">
+        {/* Status badge */}
+        <div className="mb-6 flex justify-center">
+          {isSent ? (
+            <span className="inline-flex items-center gap-2 rounded-full bg-emerald-500/10 border border-emerald-500/20 px-4 py-1.5 text-sm font-medium text-emerald-600">
+              <CheckCircle2 className="h-4 w-4" />
+              E-mail enviado com sucesso
+            </span>
+          ) : isOverdue ? (
+            <span className="inline-flex items-center gap-2 rounded-full bg-amber-500/10 border border-amber-500/20 px-4 py-1.5 text-sm font-medium text-amber-600">
+              <Clock className="h-4 w-4" />
+              Aguardando processamento
+            </span>
+          ) : (
+            <span className="inline-flex items-center gap-2 rounded-full bg-violet-500/10 border border-violet-500/20 px-4 py-1.5 text-sm font-medium text-violet-600">
+              <Bell className="h-4 w-4" />
+              Lembrete agendado
+            </span>
+          )}
+        </div>
+
+        {/* Card */}
+        <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] overflow-hidden shadow-[var(--shadow-md)]">
+          {/* Header */}
+          <div
+            className="flex items-center gap-4 px-6 py-5 border-b border-[var(--border)]"
+            style={{ background: "linear-gradient(135deg, #7C3AED12, #A855F712)" }}
+          >
+            <div
+              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl"
+              style={{ background: "linear-gradient(135deg, #7C3AED, #A855F7)" }}
+            >
+              <Bell className="h-5 w-5 text-white" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <h2 className="text-lg font-semibold text-[var(--foreground)] truncate">
+                {item.title}
+              </h2>
+              <p className="text-sm text-[var(--foreground-subtle)] mt-0.5">
+                Lembrete por e-mail
+              </p>
+            </div>
+          </div>
+
+          <div className="p-6 flex flex-col gap-5">
+            {/* Description */}
+            {item.noteContent && (
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wider text-[var(--foreground-subtle)] mb-2">
+                  Mensagem
+                </p>
+                <p className="text-sm text-[var(--foreground)] leading-relaxed whitespace-pre-line bg-[var(--background-elevated)] rounded-xl p-4 border border-[var(--border)]">
+                  {item.noteContent}
+                </p>
+              </div>
+            )}
+
+            {/* Scheduled date */}
+            {reminderAt && (
+              <div className="flex items-center justify-between gap-4 rounded-xl border border-[var(--border)] bg-[var(--background-elevated)] px-4 py-3">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wider text-[var(--foreground-subtle)] mb-0.5">
+                    Agendado para
+                  </p>
+                  <p className="text-sm font-medium text-[var(--foreground)]">
+                    {reminderAt.toLocaleString("pt-BR", {
+                      weekday: "long",
+                      day: "numeric",
+                      month: "long",
+                      year: "numeric",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* Countdown */}
+            {!isSent && timeLeft !== null && (
+              <div className="rounded-xl border border-violet-500/20 bg-violet-500/5 px-4 py-3 text-center">
+                <p className="text-xs font-semibold uppercase tracking-wider text-violet-500/70 mb-1">
+                  {timeLeft > 0 ? "Envio em" : "Pronto para envio"}
+                </p>
+                <p className="text-2xl font-bold tabular-nums text-violet-600">
+                  {timeLeft > 0 ? formatTimeLeft(timeLeft) : "⏳"}
+                </p>
+              </div>
+            )}
+
+            {/* Sent confirmation */}
+            {isSent && (
+              <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/5 px-4 py-4 text-center">
+                <CheckCircle2 className="h-8 w-8 text-emerald-500 mx-auto mb-2" />
+                <p className="text-sm font-medium text-emerald-600">
+                  O e-mail foi enviado com sucesso.
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

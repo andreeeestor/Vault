@@ -64,10 +64,10 @@ interface VaultState {
   clearSelection: () => void;
 
   createFolder: (name: string, parentId: string, color?: string) => Promise<Folder>;
-  createNote: (title: string, folderId: string | null) => Promise<VaultItem>;
-  createSnippet: (title: string, folderId: string | null, codeLanguage?: string) => Promise<VaultItem>;
-  createLink: (title: string, folderId: string | null, url: string) => Promise<VaultItem>;
-  createReminder: (title: string, noteContent: string | null, reminderAt: Date, folderId: string | null) => Promise<VaultItem>;
+  createNote: (title: string, folderId: string | null, expiresAt?: Date | null) => Promise<VaultItem>;
+  createSnippet: (title: string, folderId: string | null, codeLanguage?: string, expiresAt?: Date | null) => Promise<VaultItem>;
+  createLink: (title: string, folderId: string | null, url: string, expiresAt?: Date | null) => Promise<VaultItem>;
+  createReminder: (title: string, noteContent: string | null, reminderAt: Date, folderId: string | null, expiresAt?: Date | null) => Promise<VaultItem>;
   
   renameEntity: (id: string, name: string, kind: "item" | "folder") => Promise<void>;
   deleteFolder: (id: string) => Promise<void>;
@@ -169,8 +169,8 @@ export const useVaultStore = create<VaultState>((set, get) => ({
     return folder;
   },
 
-  createNote: async (title, folderId) => {
-    const rawItem = await apiCreateNote({ title, folderId });
+  createNote: async (title, folderId, expiresAt) => {
+    const rawItem = await apiCreateNote({ title, folderId, expiresAt });
     const item = mapItem(rawItem);
     set((state) => ({
       items: [item, ...state.items],
@@ -181,8 +181,8 @@ export const useVaultStore = create<VaultState>((set, get) => ({
     return item;
   },
 
-  createSnippet: async (title, folderId, codeLanguage) => {
-    const rawItem = await apiCreateSnippet({ title, folderId, codeLanguage });
+  createSnippet: async (title, folderId, codeLanguage, expiresAt) => {
+    const rawItem = await apiCreateSnippet({ title, folderId, codeLanguage, expiresAt });
     const item = mapItem(rawItem);
     set((state) => ({
       items: [item, ...state.items],
@@ -193,8 +193,8 @@ export const useVaultStore = create<VaultState>((set, get) => ({
     return item;
   },
 
-  createLink: async (title, folderId, url) => {
-    const rawItem = await apiCreateLink({ title, folderId, url });
+  createLink: async (title, folderId, url, expiresAt) => {
+    const rawItem = await apiCreateLink({ title, folderId, url, expiresAt });
     const item = mapItem(rawItem);
     set((state) => ({
       items: [item, ...state.items],
@@ -205,8 +205,8 @@ export const useVaultStore = create<VaultState>((set, get) => ({
     return item;
   },
 
-  createReminder: async (title, noteContent, reminderAt, folderId) => {
-    const rawItem = await apiCreateReminder(title, noteContent, reminderAt, folderId);
+  createReminder: async (title, noteContent, reminderAt, folderId, expiresAt) => {
+    const rawItem = await apiCreateReminder(title, noteContent, reminderAt, folderId, expiresAt);
     const item = mapItem(rawItem);
     set((state) => ({
       items: [item, ...state.items],
