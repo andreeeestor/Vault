@@ -59,6 +59,12 @@ export const createLinkSchema = z.object({
   expiresAt: z.date().nullable().optional(),
 });
 
+export const createDiagramSchema = z.object({
+  title: z.string().trim().min(1).max(200),
+  folderId: z.string().nullable(),
+  expiresAt: z.date().nullable().optional(),
+});
+
 export const createPasswordItemSchema = z.object({
   title: z.string().trim().min(1).max(200),
   folderId: z.string().nullable(),

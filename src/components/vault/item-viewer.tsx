@@ -6,6 +6,7 @@ import type { VaultItem } from "@/types";
 import { PasswordField } from "./password-item";
 import { SnippetEditor } from "./snippet-editor";
 import { NoteEditor } from "./note-editor";
+import { DiagramEditor } from "./diagram-editor";
 import { cn } from "@/lib/utils";
 
 export function ItemViewer({ item }: { item: VaultItem }) {
@@ -30,6 +31,8 @@ export function ItemViewer({ item }: { item: VaultItem }) {
       );
     case "REMINDER":
       return <ReminderViewer item={item} />;
+    case "DIAGRAM":
+      return <DiagramEditor item={item} />;
   }
 }
 

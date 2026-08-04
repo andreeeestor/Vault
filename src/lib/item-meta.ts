@@ -7,6 +7,7 @@ import {
   Link2,
   KeyRound,
   Bell,
+  PenLine,
   type LucideIcon,
 } from "lucide-react";
 import type { ItemType } from "@/types";
@@ -26,4 +27,5 @@ export const ITEM_TYPE_META: Record<ItemType, ItemTypeMeta> = {
   LINK: { label: "Link", icon: Link2, accent: "#7C3AED" },
   PASSWORD: { label: "Senha", icon: KeyRound, accent: "#E11D48" },
   REMINDER: { label: "Lembrete", icon: Bell, accent: "#D97706" },
+  DIAGRAM: { label: "Diagrama", icon: PenLine, accent: "#0EA5E9" },
 };

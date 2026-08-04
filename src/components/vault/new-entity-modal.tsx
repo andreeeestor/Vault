@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { FolderPlus, StickyNote, Code2, Link2, Plus, Bell } from "lucide-react";
+import { FolderPlus, StickyNote, Code2, Link2, Plus, Bell, PenLine } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,7 +20,7 @@ import { FolderColorPicker } from "./folder-color-picker";
 interface NewEntityModalProps {
   open: boolean;
   onClose: () => void;
-  kind: "note" | "snippet" | "link" | "folder" | "reminder";
+  kind: "note" | "snippet" | "link" | "folder" | "reminder" | "diagram";
 }
 
 export function NewEntityModal({ open, onClose, kind }: NewEntityModalProps) {
@@ -31,6 +31,7 @@ export function NewEntityModal({ open, onClose, kind }: NewEntityModalProps) {
   const createLink = useVaultStore((s) => s.createLink);
   const createFolder = useVaultStore((s) => s.createFolder);
   const createReminder = useVaultStore((s) => s.createReminder);
+  const createDiagram = useVaultStore((s) => s.createDiagram);
 
   const [title, setTitle] = useState("");
   const [url, setUrl] = useState("");
@@ -115,6 +116,11 @@ export function NewEntityModal({ open, onClose, kind }: NewEntityModalProps) {
           );
           toast.success(`Lembrete agendado para ${reminderDate.toLocaleString("pt-BR")}!`);
           handleClose();
+        } else if (kind === "diagram") {
+          const item = await createDiagram(trimmedTitle, getFolderIdForDb(), expiresAt);
+          toast.success("Diagrama criado! Abrindo editor...");
+          router.push(`/vault/item/${item.id}`);
+          handleClose();
         }
       } catch (err) {
         console.error(err);
@@ -141,6 +147,7 @@ export function NewEntityModal({ open, onClose, kind }: NewEntityModalProps) {
     link: Link2,
     folder: FolderPlus,
     reminder: Bell,
+    diagram: PenLine,
   };
 
   const Icon = icons[kind];
@@ -175,6 +182,12 @@ export function NewEntityModal({ open, onClose, kind }: NewEntityModalProps) {
       desc: "Agende uma notificação para ser enviada diretamente ao seu e-mail",
       inputLabel: "Assunto do lembrete",
       placeholder: "Renovar assinatura, Encontro com cliente...",
+    },
+    diagram: {
+      title: "Novo diagrama",
+      desc: "Crie diagramas, fluxogramas e sketches com caixas, setas e texto",
+      inputLabel: "Nome do diagrama",
+      placeholder: "Arquitetura do sistema, Fluxo de cadastro...",
     },
   };
 

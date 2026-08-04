@@ -6,7 +6,8 @@ export type ItemType =
   | "SNIPPET"
   | "LINK"
   | "PASSWORD"
-  | "REMINDER";
+  | "REMINDER"
+  | "DIAGRAM";
 
 export type LabelColor =
   | "violet"
@@ -81,6 +82,9 @@ export interface VaultItem {
 
   // Arquivo temporário
   expiresAt?: Date | null;
+
+  // Diagrama (Excalidraw JSON)
+  diagramData?: string | null;
 
   createdAt: Date;
   updatedAt: Date;

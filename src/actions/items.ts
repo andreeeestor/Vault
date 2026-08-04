@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import {
+  createDiagramSchema,
   createLinkSchema,
   createNoteSchema,
   createSnippetSchema,
@@ -150,8 +151,14 @@ export async function purgeExpiredItems() {
 }
 
 export async function listAllItems(userId: string) {
+  const now = new Date();
   return db.item.findMany({
-    where: { userId, isDeleted: false },
+    where: {
+      userId,
+      isDeleted: false,
+      // Exclui itens temporários cujo tempo de expiração já passou
+      OR: [{ expiresAt: null }, { expiresAt: { gt: now } }],
+    },
     orderBy: { updatedAt: "desc" },
   });
 }
@@ -178,4 +185,32 @@ export async function createReminder(
 
   revalidatePath("/vault");
   return item;
+}
+
+export async function createDiagram(input: unknown) {
+  const userId = await requireUserId();
+  const data = createDiagramSchema.parse(input);
+
+  const item = await db.item.create({
+    data: {
+      userId,
+      type: "DIAGRAM",
+      title: data.title,
+      folderId: data.folderId,
+      diagramData: null,
+      expiresAt: data.expiresAt ?? null,
+    },
+  });
+
+  revalidatePath("/vault");
+  return item;
+}
+
+export async function updateDiagramData(itemId: string, diagramData: string) {
+  const userId = await requireUserId();
+  await db.item.update({
+    where: { id: itemId, userId },
+    data: { diagramData },
+  });
+  // Não revalidamos aqui para não interromper o auto-save no editor
 }

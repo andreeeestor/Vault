@@ -27,6 +27,7 @@ import {
   toggleArchive as apiToggleArchive,
   softDeleteItems as apiSoftDeleteItems,
   createReminder as apiCreateReminder,
+  createDiagram as apiCreateDiagram,
 } from "@/actions/items";
 
 import { mapFolder, mapItem } from "@/lib/mappers";
@@ -68,6 +69,7 @@ interface VaultState {
   createSnippet: (title: string, folderId: string | null, codeLanguage?: string, expiresAt?: Date | null) => Promise<VaultItem>;
   createLink: (title: string, folderId: string | null, url: string, expiresAt?: Date | null) => Promise<VaultItem>;
   createReminder: (title: string, noteContent: string | null, reminderAt: Date, folderId: string | null, expiresAt?: Date | null) => Promise<VaultItem>;
+  createDiagram: (title: string, folderId: string | null, expiresAt?: Date | null) => Promise<VaultItem>;
   
   renameEntity: (id: string, name: string, kind: "item" | "folder") => Promise<void>;
   deleteFolder: (id: string) => Promise<void>;
@@ -207,6 +209,18 @@ export const useVaultStore = create<VaultState>((set, get) => ({
 
   createReminder: async (title, noteContent, reminderAt, folderId, expiresAt) => {
     const rawItem = await apiCreateReminder(title, noteContent, reminderAt, folderId, expiresAt);
+    const item = mapItem(rawItem);
+    set((state) => ({
+      items: [item, ...state.items],
+      folders: state.folders.map((f) =>
+        f.id === folderId ? { ...f, itemCount: f.itemCount + 1 } : f
+      ),
+    }));
+    return item;
+  },
+
+  createDiagram: async (title, folderId, expiresAt) => {
+    const rawItem = await apiCreateDiagram({ title, folderId, expiresAt });
     const item = mapItem(rawItem);
     set((state) => ({
       items: [item, ...state.items],
@@ -393,7 +407,13 @@ export function getItemsInFolder(
   items: VaultItem[],
   folderId: string,
 ): VaultItem[] {
+  const now = new Date();
   return items.filter(
-    (i) => i.folderId === folderId && !i.isDeleted && !i.isArchived,
+    (i) =>
+      i.folderId === folderId &&
+      !i.isDeleted &&
+      !i.isArchived &&
+      // Exclui temporários expirados
+      (!i.expiresAt || new Date(i.expiresAt) > now),
   );
 }

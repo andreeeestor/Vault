@@ -73,7 +73,7 @@ model Item {
   folderId String?
   folder   Folder? @relation(fields: [folderId], references: [id], onDelete: SetNull)
 
-  type        String // IMAGE | PDF | AUDIO | NOTE | SNIPPET | LINK | PASSWORD | REMINDER
+  type        String // IMAGE | PDF | AUDIO | NOTE | SNIPPET | LINK | PASSWORD | REMINDER | DIAGRAM
   title       String
   description String?
   tags        String[]
@@ -117,6 +117,9 @@ model Item {
 
   // Arquivo temporário — apagado automaticamente quando expiresAt <= now
   expiresAt DateTime?
+
+  // Diagrama (Excalidraw) — JSON serializado da cena
+  diagramData String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
