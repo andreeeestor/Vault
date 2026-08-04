@@ -79,7 +79,7 @@ export default function ItemDetailPage() {
 
         <div
           className={cn(
-            "flex-1 overflow-hidden",
+            "relative flex-1 overflow-hidden",
             activeMobileTab === "details" ? "hidden lg:block" : "block"
           )}
         >

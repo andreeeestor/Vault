@@ -382,3 +382,32 @@ body {
   border-top: 1px solid var(--border);
   margin: 1.5rem 0;
 }
+
+/* ============================================================
+   EXCALIDRAW — Isolamento de CSS
+   Previne conflito entre Tailwind base e os estilos do Excalidraw
+   ============================================================ */
+.excalidraw-wrapper .excalidraw,
+.excalidraw-wrapper .excalidraw * {
+  box-sizing: border-box;
+}
+
+/* Tailwind v4 define max-width: 100% em svg — isso quebra o canvas do Excalidraw */
+.excalidraw-wrapper svg {
+  max-width: none !important;
+  max-height: none !important;
+  display: block;
+}
+
+/* Garante que os botões internos do Excalidraw não herdem tamanho de fonte */
+.excalidraw-wrapper .Island button,
+.excalidraw-wrapper .ToolIcon button,
+.excalidraw-wrapper .App-toolbar button {
+  font-size: 14px;
+  line-height: 1;
+}
+
+/* Corrige altura do container interno */
+.excalidraw-wrapper > * {
+  height: 100% !important;
+}
