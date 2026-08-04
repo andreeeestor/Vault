@@ -208,9 +208,14 @@ export async function createDiagram(input: unknown) {
 
 export async function updateDiagramData(itemId: string, diagramData: string) {
   const userId = await requireUserId();
-  await db.item.update({
+  const item = await db.item.update({
     where: { id: itemId, userId },
     data: { diagramData },
   });
-  // Não revalidamos aqui para não interromper o auto-save no editor
+  revalidatePath("/vault");
+  revalidatePath(`/vault/item/${itemId}`);
+  if (item.folderId) {
+    revalidatePath(`/vault/folder/${item.folderId}`);
+  }
+  return item;
 }

@@ -88,9 +88,11 @@ export function DiagramEditor({ item }: { item: VaultItem }) {
           width: undefined,
           height: undefined,
         },
+        files: parsed.files ?? {},
         scrollToContent: true,
       };
-    } catch {
+    } catch (err) {
+      console.error("Erro ao carregar dados do diagrama:", err);
       return undefined;
     }
   })()).current;
@@ -101,18 +103,14 @@ export function DiagramEditor({ item }: { item: VaultItem }) {
     setSaveStatus("saving");
 
     try {
+      const { serializeAsJSON } = await import("@excalidraw/excalidraw");
       const elements = excalidrawAPI.getSceneElements();
-      const rawState = excalidrawAPI.getAppState();
+      const appState = excalidrawAPI.getAppState();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const files = typeof (excalidrawAPI as any).getFiles === "function" ? (excalidrawAPI as any).getFiles() : {};
 
-      const {
-        collaborators: _c,
-        openMenu: _m,
-        openDialog: _d,
-        toast: _t,
-        ...serializableState
-      } = rawState as Record<string, unknown>;
-
-      const json = JSON.stringify({ elements, appState: serializableState });
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const json = serializeAsJSON(elements as any, appState as any, files, "local");
       await updateDiagramData(item.id, json);
       updateItem(item.id, { diagramData: json });
 
