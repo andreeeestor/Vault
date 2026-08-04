@@ -2,7 +2,8 @@
 
 import dynamic from "next/dynamic";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Download, Loader2, CheckCircle2, AlertCircle } from "lucide-react";
+import { Download, Save, Loader2, CheckCircle2, AlertCircle } from "lucide-react";
+import { toast } from "sonner";
 import type { VaultItem } from "@/types";
 import { updateDiagramData } from "@/actions/items";
 import { useVaultStore } from "@/lib/vault-store";
@@ -51,10 +52,8 @@ function DiagramSkeleton() {
 }
 
 // ─── Excalidraw carregado dinamicamente (zero SSR) ───────────────────────────
-// Importamos o CSS do Excalidraw junto com o componente para não poluir o bundle global
 const ExcalidrawCore = dynamic(
   async () => {
-    // Importa o CSS do Excalidraw (ignoramos erro de tipo — o bundler lida com CSS modules)
     try {
       // eslint-disable-next-line @typescript-eslint/no-require-imports
       require("@excalidraw/excalidraw/index.css");
@@ -71,8 +70,9 @@ const ExcalidrawCore = dynamic(
 export function DiagramEditor({ item }: { item: VaultItem }) {
   const [excalidrawAPI, setExcalidrawAPI] = useState<ExcalidrawAPI | null>(null);
   const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
-  const saveTimerRef = useRef<ReturnType<typeof setTimeout>>(null);
+  const isInitialMount = useRef(true);
   const updateItem = useVaultStore((s) => s.updateItem);
 
   // Faz parse do JSON salvo e retorna dados iniciais para o Excalidraw
@@ -85,7 +85,6 @@ export function DiagramEditor({ item }: { item: VaultItem }) {
         appState: {
           ...(parsed.appState ?? {}),
           collaborators: new Map(),
-          // Remove estado de janela para não quebrar o resize
           width: undefined,
           height: undefined,
         },
@@ -96,42 +95,59 @@ export function DiagramEditor({ item }: { item: VaultItem }) {
     }
   })()).current;
 
-  // Auto-save com debounce de 1.2s
-  const scheduleAutoSave = useCallback(() => {
-    if (!excalidrawAPI) return;
+  // Função manual de salvamento
+  const handleSave = useCallback(async () => {
+    if (!excalidrawAPI || saveStatus === "saving") return;
     setSaveStatus("saving");
-    if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
 
-    saveTimerRef.current = setTimeout(async () => {
-      try {
-        const elements = excalidrawAPI.getSceneElements();
-        const rawState = excalidrawAPI.getAppState();
+    try {
+      const elements = excalidrawAPI.getSceneElements();
+      const rawState = excalidrawAPI.getAppState();
 
-        // Remove propriedades não-serializáveis e desnecessárias
-        const {
-          collaborators: _c,
-          openMenu: _m,
-          openDialog: _d,
-          toast: _t,
-          ...serializableState
-        } = rawState as Record<string, unknown>;
+      const {
+        collaborators: _c,
+        openMenu: _m,
+        openDialog: _d,
+        toast: _t,
+        ...serializableState
+      } = rawState as Record<string, unknown>;
 
-        const json = JSON.stringify({ elements, appState: serializableState });
-        await updateDiagramData(item.id, json);
-        updateItem(item.id, { diagramData: json });
-        setSaveStatus("saved");
-        setTimeout(() => setSaveStatus("idle"), 2000);
-      } catch (err) {
-        console.error("Erro ao salvar diagrama:", err);
-        setSaveStatus("error");
-        setTimeout(() => setSaveStatus("idle"), 3000);
-      }
-    }, 1200);
-  }, [excalidrawAPI, item.id, updateItem]);
+      const json = JSON.stringify({ elements, appState: serializableState });
+      await updateDiagramData(item.id, json);
+      updateItem(item.id, { diagramData: json });
 
-  useEffect(() => {
-    return () => { if (saveTimerRef.current) clearTimeout(saveTimerRef.current); };
+      setSaveStatus("saved");
+      setHasUnsavedChanges(false);
+      toast.success("Diagrama salvo com sucesso!");
+      setTimeout(() => setSaveStatus("idle"), 2500);
+    } catch (err) {
+      console.error("Erro ao salvar diagrama:", err);
+      setSaveStatus("error");
+      toast.error("Erro ao salvar o diagrama.");
+      setTimeout(() => setSaveStatus("idle"), 3000);
+    }
+  }, [excalidrawAPI, saveStatus, item.id, updateItem]);
+
+  // Captura alterações na cena (marca como alterado)
+  const handleChange = useCallback(() => {
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      return;
+    }
+    setHasUnsavedChanges(true);
   }, []);
+
+  // Atalho de teclado Ctrl+S / Cmd+S para salvar
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === "s") {
+        e.preventDefault();
+        handleSave();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [handleSave]);
 
   const handleExportPNG = useCallback(async () => {
     if (!excalidrawAPI) return;
@@ -145,11 +161,11 @@ export function DiagramEditor({ item }: { item: VaultItem }) {
       URL.revokeObjectURL(url);
     } catch (err) {
       console.error("Erro ao exportar PNG:", err);
+      toast.error("Erro ao exportar imagem.");
     }
   }, [excalidrawAPI, item.title]);
 
   return (
-    // Wrapper absoluto para garantir que ocupa 100% do espaço disponível
     <div
       style={{
         position: "absolute",
@@ -173,7 +189,7 @@ export function DiagramEditor({ item }: { item: VaultItem }) {
           minHeight: "40px",
         }}
       >
-        {/* Status de save */}
+        {/* Status de alteração / salvamento */}
         <div style={{ display: "flex", alignItems: "center", gap: "6px", minWidth: 0 }}>
           {saveStatus === "saving" && (
             <span style={{ display: "flex", alignItems: "center", gap: "5px", fontSize: "12px", color: "var(--foreground-muted)" }}>
@@ -184,7 +200,7 @@ export function DiagramEditor({ item }: { item: VaultItem }) {
           {saveStatus === "saved" && (
             <span style={{ display: "flex", alignItems: "center", gap: "5px", fontSize: "12px", color: "#16a34a" }}>
               <CheckCircle2 style={{ width: "13px", height: "13px" }} />
-              Salvo
+              Salvo no cofre
             </span>
           )}
           {saveStatus === "error" && (
@@ -194,51 +210,82 @@ export function DiagramEditor({ item }: { item: VaultItem }) {
             </span>
           )}
           {saveStatus === "idle" && isLoaded && (
-            <span style={{ fontSize: "12px", color: "var(--foreground-subtle)" }}>
-              Edite livremente — auto-save ativo
-            </span>
+            hasUnsavedChanges ? (
+              <span style={{ fontSize: "12px", color: "#d97706", fontWeight: 500 }}>
+                ● Alterações não salvas
+              </span>
+            ) : (
+              <span style={{ fontSize: "12px", color: "var(--foreground-subtle)" }}>
+                Sem alterações pendentes
+              </span>
+            )
           )}
         </div>
 
         {/* Ações */}
-        <button
-          onClick={handleExportPNG}
-          disabled={!isLoaded}
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "5px",
-            padding: "4px 10px",
-            fontSize: "12px",
-            fontWeight: 500,
-            borderRadius: "6px",
-            border: "1px solid var(--border)",
-            background: "var(--surface-hover)",
-            color: "var(--foreground)",
-            cursor: isLoaded ? "pointer" : "not-allowed",
-            opacity: isLoaded ? 1 : 0.5,
-            transition: "background 0.15s",
-            flexShrink: 0,
-          }}
-        >
-          <Download style={{ width: "12px", height: "12px" }} />
-          Exportar PNG
-        </button>
+        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+          <button
+            onClick={handleSave}
+            disabled={!isLoaded || saveStatus === "saving"}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "5px",
+              padding: "4px 12px",
+              fontSize: "12px",
+              fontWeight: 600,
+              borderRadius: "6px",
+              border: "none",
+              background: hasUnsavedChanges
+                ? "var(--primary)"
+                : "var(--surface-hover)",
+              color: hasUnsavedChanges ? "#ffffff" : "var(--foreground)",
+              cursor: isLoaded && saveStatus !== "saving" ? "pointer" : "not-allowed",
+              opacity: isLoaded && saveStatus !== "saving" ? 1 : 0.6,
+              transition: "all 0.15s ease-in-out",
+              flexShrink: 0,
+              boxShadow: hasUnsavedChanges ? "0 2px 8px rgba(124, 58, 237, 0.25)" : "none",
+            }}
+          >
+            {saveStatus === "saving" ? (
+              <Loader2 style={{ width: "13px", height: "13px", animation: "spin 1s linear infinite" }} />
+            ) : (
+              <Save style={{ width: "13px", height: "13px" }} />
+            )}
+            Salvar
+          </button>
+
+          <button
+            onClick={handleExportPNG}
+            disabled={!isLoaded}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "5px",
+              padding: "4px 10px",
+              fontSize: "12px",
+              fontWeight: 500,
+              borderRadius: "6px",
+              border: "1px solid var(--border)",
+              background: "var(--surface-hover)",
+              color: "var(--foreground)",
+              cursor: isLoaded ? "pointer" : "not-allowed",
+              opacity: isLoaded ? 1 : 0.5,
+              transition: "background 0.15s",
+              flexShrink: 0,
+            }}
+          >
+            <Download style={{ width: "12px", height: "12px" }} />
+            Exportar PNG
+          </button>
+        </div>
       </div>
 
       {/* ── Canvas ────────────────────────────────────────────────────── */}
-      {/*
-        O wrapper do Excalidraw PRECISA de altura explícita em pixels ou position:absolute/relative
-        para que o canvas interno compute corretamente o ResizeObserver.
-        Usando position:relative + inset:0 resolvemos o problema de ícones gigantes
-        (que ocorre quando width/height são 0 no momento da montagem).
-      */}
       <div style={{ position: "relative", flex: 1, minHeight: 0 }}>
         {!isLoaded && <DiagramSkeleton />}
 
-        {/* CSS do Excalidraw injetado como <link> para não conflitar com Tailwind */}
         <style>{`
-          /* Isola o CSS do Excalidraw apenas dentro do nosso container */
           .excalidraw-wrapper {
             height: 100%;
             width: 100%;
@@ -248,7 +295,6 @@ export function DiagramEditor({ item }: { item: VaultItem }) {
           .excalidraw-wrapper .excalidraw {
             border-radius: 0 !important;
           }
-          /* Corrige ícones gigantes: remove font-size herdada do Tailwind base */
           .excalidraw-wrapper svg {
             max-width: none !important;
           }
@@ -268,7 +314,7 @@ export function DiagramEditor({ item }: { item: VaultItem }) {
               setIsLoaded(true);
             }}
             initialData={initialData}
-            onChange={scheduleAutoSave}
+            onChange={handleChange}
             langCode="pt-BR"
             UIOptions={{
               canvasActions: {
@@ -284,3 +330,4 @@ export function DiagramEditor({ item }: { item: VaultItem }) {
     </div>
   );
 }
+
