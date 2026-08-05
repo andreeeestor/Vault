@@ -32,6 +32,7 @@ export function NewEntityModal({ open, onClose, kind }: NewEntityModalProps) {
   const createFolder = useVaultStore((s) => s.createFolder);
   const createReminder = useVaultStore((s) => s.createReminder);
   const createDiagram = useVaultStore((s) => s.createDiagram);
+  const openTab = useVaultStore((s) => s.openTab);
 
   const [title, setTitle] = useState("");
   const [url, setUrl] = useState("");
@@ -75,12 +76,12 @@ export function NewEntityModal({ open, onClose, kind }: NewEntityModalProps) {
         if (kind === "note") {
           const item = await createNote(trimmedTitle, getFolderIdForDb(), expiresAt);
           toast.success(expiresAt ? `Nota temporária criada! Expira em ${expiryTime}.` : "Nota criada com sucesso!");
-          router.push(`/vault/item/${item.id}`);
+          openTab(item);
           handleClose();
         } else if (kind === "snippet") {
           const item = await createSnippet(trimmedTitle, getFolderIdForDb(), language, expiresAt);
           toast.success(expiresAt ? `Snippet temporário criado! Expira em ${expiryTime}.` : "Snippet criado com sucesso!");
-          router.push(`/vault/item/${item.id}`);
+          openTab(item);
           handleClose();
         } else if (kind === "link") {
           if (!url.trim()) {
@@ -90,7 +91,7 @@ export function NewEntityModal({ open, onClose, kind }: NewEntityModalProps) {
           const parsedUrl = url.trim().startsWith("http") ? url.trim() : `https://${url.trim()}`;
           const item = await createLink(trimmedTitle, getFolderIdForDb(), parsedUrl, expiresAt);
           toast.success(expiresAt ? `Link temporário criado! Expira em ${expiryTime}.` : "Link adicionado com sucesso!");
-          router.push(`/vault/item/${item.id}`);
+          openTab(item);
           handleClose();
         } else if (kind === "folder") {
           const folder = await createFolder(trimmedTitle, currentFolderId, folderColor);
@@ -119,7 +120,7 @@ export function NewEntityModal({ open, onClose, kind }: NewEntityModalProps) {
         } else if (kind === "diagram") {
           const item = await createDiagram(trimmedTitle, getFolderIdForDb(), expiresAt);
           toast.success("Diagrama criado! Abrindo editor...");
-          router.push(`/vault/item/${item.id}`);
+          openTab(item);
           handleClose();
         }
       } catch (err) {

@@ -1,6 +1,6 @@
 "use client";
 
-import { Star, Archive, Trash2, FolderInput, Share2, Pencil, Save } from "lucide-react";
+import { Star, Archive, Trash2, FolderInput, Share2, Save } from "lucide-react";
 import type { VaultItem } from "@/types";
 import { ITEM_TYPE_META } from "@/lib/item-meta";
 import { formatBytes, formatRelativeDate, labelColorHex } from "@/lib/utils";
@@ -8,10 +8,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useVaultStore } from "@/lib/vault-store";
 import { toast } from "sonner";
-import { useRouter } from "next/navigation";
 
 export function ItemDetailSidebar({ item }: { item: VaultItem }) {
-  const router = useRouter();
   const toggleFavorite = useVaultStore((s) => s.toggleFavorite);
   const toggleArchive = useVaultStore((s) => s.toggleArchive);
   const softDelete = useVaultStore((s) => s.softDelete);

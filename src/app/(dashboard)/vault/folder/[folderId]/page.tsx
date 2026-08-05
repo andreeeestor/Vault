@@ -4,7 +4,7 @@ import { listFolderTree } from "@/actions/folders";
 import { listAllItems } from "@/actions/items";
 import { mapFolder, mapItem } from "@/lib/mappers";
 import { VaultStoreHydrator } from "@/components/vault/vault-store-hydrator";
-import { VaultFolderView } from "@/components/vault/vault-folder-view";
+import { VaultWorkspace } from "@/components/vault/vault-workspace";
 
 export default async function VaultFolderPage({
   params,
@@ -39,7 +39,7 @@ export default async function VaultFolderPage({
   return (
     <>
       <VaultStoreHydrator folders={folders} items={items} user={user} />
-      <VaultFolderView folderId={folderId} />
+      <VaultWorkspace folderId={folderId} />
     </>
   );
 }

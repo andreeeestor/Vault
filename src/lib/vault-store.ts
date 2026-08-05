@@ -8,7 +8,14 @@ import type {
   VaultItem,
   ViewMode,
   LabelColor,
+  ItemType,
 } from "@/types";
+
+export interface Tab {
+  id: string;
+  title: string;
+  type: ItemType;
+}
 
 import {
   createFolder as apiCreateFolder,
@@ -43,7 +50,7 @@ interface VaultState {
   folders: Folder[];
   items: VaultItem[];
 
-  currentFolderId: string; 
+  currentFolderId: string;
   viewMode: ViewMode;
   sortField: SortField;
   sortDirection: SortDirection;
@@ -52,6 +59,15 @@ interface VaultState {
   lastSelectedId: string | null;
 
   drag: DragState;
+
+  // ─── Tab system ───────────────────────────────────────
+  openTabs: Tab[];
+  activeTabId: string | null;
+  openTab: (item: VaultItem) => void;
+  closeTab: (id: string) => void;
+  setActiveTab: (id: string) => void;
+  closeAllTabs: () => void;
+  // ────────────────────────────────────────────────────
 
   setCurrentFolder: (id: string) => void;
 
@@ -70,7 +86,7 @@ interface VaultState {
   createLink: (title: string, folderId: string | null, url: string, expiresAt?: Date | null) => Promise<VaultItem>;
   createReminder: (title: string, noteContent: string | null, reminderAt: Date, folderId: string | null, expiresAt?: Date | null) => Promise<VaultItem>;
   createDiagram: (title: string, folderId: string | null, expiresAt?: Date | null) => Promise<VaultItem>;
-  
+
   renameEntity: (id: string, name: string, kind: "item" | "folder") => Promise<void>;
   deleteFolder: (id: string) => Promise<void>;
   updateFolderColor: (id: string, color: string) => Promise<void>;
@@ -114,6 +130,39 @@ export const useVaultStore = create<VaultState>((set, get) => ({
   lastSelectedId: null,
   isSidebarOpen: false,
   setSidebarOpen: (open) => set({ isSidebarOpen: open }),
+
+  // ─── Tab system ───────────────────────────────────────
+  openTabs: [],
+  activeTabId: null,
+
+  openTab: (item) =>
+    set((state) => {
+      const existing = state.openTabs.find((t) => t.id === item.id);
+      if (existing) {
+        return { activeTabId: item.id };
+      }
+      const newTab: Tab = { id: item.id, title: item.title, type: item.type };
+      return { openTabs: [...state.openTabs, newTab], activeTabId: item.id };
+    }),
+
+  closeTab: (id) =>
+    set((state) => {
+      const idx = state.openTabs.findIndex((t) => t.id === id);
+      const next = state.openTabs.filter((t) => t.id !== id);
+      let nextActiveId: string | null = state.activeTabId;
+      if (state.activeTabId === id) {
+        // Activate the tab to the left, or right if leftmost
+        const prevTab = state.openTabs[idx - 1];
+        const nextTab = state.openTabs[idx + 1];
+        nextActiveId = prevTab?.id ?? nextTab?.id ?? null;
+      }
+      return { openTabs: next, activeTabId: nextActiveId };
+    }),
+
+  setActiveTab: (id) => set({ activeTabId: id }),
+
+  closeAllTabs: () => set({ openTabs: [], activeTabId: null }),
+  // ─────────────────────────────────────────────────────
 
   drag: {
     isDragging: false,
@@ -300,13 +349,25 @@ export const useVaultStore = create<VaultState>((set, get) => ({
   softDelete: async (ids) => {
     await apiSoftDeleteItems(ids);
     set((state) => {
-      
       const folderDecrements = new Map<string, number>();
       for (const item of state.items) {
         if (ids.includes(item.id) && item.folderId) {
           folderDecrements.set(item.folderId, (folderDecrements.get(item.folderId) ?? 0) + 1);
         }
       }
+
+      // Close any open tabs for the deleted items
+      const remainingTabs = state.openTabs.filter((t) => !ids.includes(t.id));
+      let nextActiveId = state.activeTabId;
+      if (nextActiveId && ids.includes(nextActiveId)) {
+        const deletedIdx = state.openTabs.findIndex((t) => t.id === nextActiveId);
+        const prev = state.openTabs[deletedIdx - 1];
+        const next = state.openTabs[deletedIdx + 1];
+        nextActiveId = remainingTabs.find((t) => t.id === prev?.id)?.id
+          ?? remainingTabs.find((t) => t.id === next?.id)?.id
+          ?? null;
+      }
+
       return {
         items: state.items.filter((i) => !ids.includes(i.id)),
         folders: state.folders.map((f) =>
@@ -315,6 +376,8 @@ export const useVaultStore = create<VaultState>((set, get) => ({
             : f,
         ),
         selectedIds: new Set(),
+        openTabs: remainingTabs,
+        activeTabId: nextActiveId,
       };
     });
   },

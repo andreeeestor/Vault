@@ -97,8 +97,10 @@ export function ItemListRow({ item, orderedIds }: { item: VaultItem; orderedIds:
   const handleClick = (e: MouseEvent) => {
     if (e.shiftKey) selectRange(item.id, orderedIds);
     else if (e.metaKey || e.ctrlKey) toggleSelect(item.id);
-    else router.push(`/vault/item/${item.id}`);
+    else openTab(item);
   };
+
+  const openTab = useVaultStore((s) => s.openTab);
 
   return (
     <ItemContextMenu id={item.id} kind="item" isFavorite={item.isFavorite}>
@@ -157,7 +159,7 @@ export function ItemListRow({ item, orderedIds }: { item: VaultItem; orderedIds:
               id={item.id}
               kind="item"
               isFavorite={item.isFavorite}
-              onOpen={() => router.push(`/vault/item/${item.id}`)}
+              onOpen={() => openTab(item)}
             />
           </div>
         </div>

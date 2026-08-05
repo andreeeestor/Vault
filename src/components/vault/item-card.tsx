@@ -23,11 +23,12 @@ export function ItemCard({ item, orderedIds }: { item: VaultItem; orderedIds: st
   const isBeingDragged = drag.isDragging && drag.draggedIds.includes(item.id);
   const meta = ITEM_TYPE_META[item.type];
   const Icon = meta.icon;
+  const openTab = useVaultStore((s) => s.openTab);
 
   const handleClick = (e: MouseEvent) => {
     if (e.shiftKey) selectRange(item.id, orderedIds);
     else if (e.metaKey || e.ctrlKey) toggleSelect(item.id);
-    else router.push(`/vault/item/${item.id}`);
+    else openTab(item);
   };
 
   const handleMouseDown = (e: MouseEvent) => {
@@ -86,7 +87,7 @@ export function ItemCard({ item, orderedIds }: { item: VaultItem; orderedIds: st
               id={item.id}
               kind="item"
               isFavorite={item.isFavorite}
-              onOpen={() => router.push(`/vault/item/${item.id}`)}
+              onOpen={() => openTab(item)}
             />
           </div>
         </div>
