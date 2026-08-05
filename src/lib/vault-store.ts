@@ -67,6 +67,10 @@ interface VaultState {
   closeTab: (id: string) => void;
   setActiveTab: (id: string) => void;
   closeAllTabs: () => void;
+  // dirty tracking
+  dirtyTabIds: Set<string>;
+  markTabDirty: (id: string) => void;
+  markTabClean: (id: string) => void;
   // ────────────────────────────────────────────────────
 
   setCurrentFolder: (id: string) => void;
@@ -134,6 +138,23 @@ export const useVaultStore = create<VaultState>((set, get) => ({
   // ─── Tab system ───────────────────────────────────────
   openTabs: [],
   activeTabId: null,
+  dirtyTabIds: new Set<string>(),
+
+  markTabDirty: (id) =>
+    set((state) => {
+      if (state.dirtyTabIds.has(id)) return {};
+      const next = new Set(state.dirtyTabIds);
+      next.add(id);
+      return { dirtyTabIds: next };
+    }),
+
+  markTabClean: (id) =>
+    set((state) => {
+      if (!state.dirtyTabIds.has(id)) return {};
+      const next = new Set(state.dirtyTabIds);
+      next.delete(id);
+      return { dirtyTabIds: next };
+    }),
 
   openTab: (item) =>
     set((state) => {
@@ -151,17 +172,18 @@ export const useVaultStore = create<VaultState>((set, get) => ({
       const next = state.openTabs.filter((t) => t.id !== id);
       let nextActiveId: string | null = state.activeTabId;
       if (state.activeTabId === id) {
-        // Activate the tab to the left, or right if leftmost
         const prevTab = state.openTabs[idx - 1];
         const nextTab = state.openTabs[idx + 1];
         nextActiveId = prevTab?.id ?? nextTab?.id ?? null;
       }
-      return { openTabs: next, activeTabId: nextActiveId };
+      const nextDirty = new Set(state.dirtyTabIds);
+      nextDirty.delete(id);
+      return { openTabs: next, activeTabId: nextActiveId, dirtyTabIds: nextDirty };
     }),
 
   setActiveTab: (id) => set({ activeTabId: id }),
 
-  closeAllTabs: () => set({ openTabs: [], activeTabId: null }),
+  closeAllTabs: () => set({ openTabs: [], activeTabId: null, dirtyTabIds: new Set<string>() }),
   // ─────────────────────────────────────────────────────
 
   drag: {

@@ -12,6 +12,7 @@ export function CommandPalette() {
   const router = useRouter();
   const items = useVaultStore((s) => s.items);
   const folders = useVaultStore((s) => s.folders);
+  const openTab = useVaultStore((s) => s.openTab);
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -102,7 +103,7 @@ export function CommandPalette() {
                     key={item.id}
                     value={item.title}
                     onSelect={() => {
-                      router.push(`/vault/item/${item.id}`);
+                      openTab(item);
                       setOpen(false);
                     }}
                     className="flex cursor-pointer items-center gap-2.5 rounded-[var(--radius-sm)] px-2.5 py-2 text-sm text-[var(--foreground)] data-[selected=true]:bg-[var(--surface-hover)]"

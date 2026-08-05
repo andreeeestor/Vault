@@ -41,7 +41,6 @@ import { useRouter } from "next/navigation";
 import { useVaultStore } from "@/lib/vault-store";
 import { cn } from "@/lib/utils";
 import type { VaultItem } from "@/types";
-import { UnsavedChangesModal } from "@/components/vault/unsaved-changes-modal";
 import { exportToDocx, exportToPdf } from "@/lib/export-document";
 import {
   DropdownMenu,
@@ -61,8 +60,9 @@ interface ToolbarState {
 }
 
 export function NoteEditor({ item }: { item: VaultItem }) {
-  const router = useRouter();
   const updateItem = useVaultStore((s) => s.updateItem);
+  const markTabDirty = useVaultStore((s) => s.markTabDirty);
+  const markTabClean = useVaultStore((s) => s.markTabClean);
   const editorRef = useRef<HTMLDivElement>(null);
 
   const [readOnly, setReadOnly] = useState(false);
@@ -70,8 +70,6 @@ export function NoteEditor({ item }: { item: VaultItem }) {
   const [wordCount, setWordCount] = useState(0);
 
   const [lastSavedContent, setLastSavedContent] = useState(item.noteContent ?? "");
-  const [showExitModal, setShowExitModal] = useState(false);
-  const [pendingHref, setPendingHref] = useState<string | null>(null);
 
   const [toolbarVisible, setToolbarVisible] = useState(false);
   const [toolbarPos, setToolbarPos] = useState({ x: 0, y: 0 });
@@ -87,6 +85,21 @@ export function NoteEditor({ item }: { item: VaultItem }) {
 
   const [isPending, startTransition] = useTransition();
   const isDirty = content !== lastSavedContent;
+
+  // Sync dirty state with the tab store
+  useEffect(() => {
+    if (isDirty) {
+      markTabDirty(item.id);
+    } else {
+      markTabClean(item.id);
+    }
+  }, [isDirty, item.id, markTabDirty, markTabClean]);
+
+  // Clean up dirty state when the component unmounts (tab closed)
+  useEffect(() => {
+    return () => markTabClean(item.id);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [item.id]);
 
   const handleSave = useCallback(() => {
     startTransition(async () => {
@@ -113,67 +126,19 @@ export function NoteEditor({ item }: { item: VaultItem }) {
       editorRef.current.innerHTML = item.noteContent;
       recalcWordCount(item.noteContent);
     }
-    
   }, []);
 
+  // Warn on browser/tab close only
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
       if (isDirty) {
         e.preventDefault();
-        e.returnValue = "Você tem alterações não salvas. Tem certeza que deseja sair?";
-        return e.returnValue;
+        e.returnValue = "";
       }
     };
     window.addEventListener("beforeunload", handleBeforeUnload);
     return () => window.removeEventListener("beforeunload", handleBeforeUnload);
   }, [isDirty]);
-
-  useEffect(() => {
-    if (!isDirty) return;
-
-    const handleAnchorClick = (e: MouseEvent) => {
-      const target = e.target as HTMLElement;
-      const anchor = target.closest("a");
-      if (anchor) {
-        const href = anchor.getAttribute("href");
-        if (href && href.startsWith("/") && !href.startsWith("#")) {
-          e.preventDefault();
-          e.stopPropagation();
-          setPendingHref(href);
-          setShowExitModal(true);
-        }
-      }
-    };
-
-    document.addEventListener("click", handleAnchorClick, true);
-    return () => document.removeEventListener("click", handleAnchorClick, true);
-  }, [isDirty]);
-
-  useEffect(() => {
-    if (!isDirty) return;
-
-    const handlePopState = () => {
-      window.history.pushState(null, "", window.location.href);
-      setPendingHref("back");
-      setShowExitModal(true);
-    };
-
-    window.history.pushState(null, "", window.location.href);
-    window.addEventListener("popstate", handlePopState);
-    return () => window.removeEventListener("popstate", handlePopState);
-  }, [isDirty]);
-
-  const handleConfirmExit = () => {
-    setShowExitModal(false);
-    
-    setLastSavedContent(content);
-    
-    if (pendingHref === "back") {
-      router.back();
-    } else if (pendingHref) {
-      router.push(pendingHref);
-    }
-  };
 
   const recalcWordCount = (html: string) => {
     const text = html.replace(/<[^>]*>/g, " ").trim();
@@ -373,12 +338,6 @@ export function NoteEditor({ item }: { item: VaultItem }) {
             onClose={() => setToolbarVisible(false)}
           />
         )}
-        {}
-        <UnsavedChangesModal
-          open={showExitModal}
-          onClose={() => setShowExitModal(false)}
-          onConfirm={handleConfirmExit}
-        />
       </div>
     </TooltipProvider>
   );

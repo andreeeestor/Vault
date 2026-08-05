@@ -6,7 +6,6 @@ import type { editor as MonacoEditorNS } from "monaco-editor";
 import { Check, ChevronDown, Copy, Loader2, Pencil, Eye } from "lucide-react";
 import { toast } from "sonner";
 import { useTheme } from "@/components/providers/theme-provider";
-import { useRouter } from "next/navigation";
 import { useVaultStore } from "@/lib/vault-store";
 import { languageLabel, defineVaultMonacoThemes, SNIPPET_LANGUAGES } from "@/lib/monaco-theme";
 import {
@@ -17,13 +16,13 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import type { VaultItem } from "@/types";
-import { UnsavedChangesModal } from "@/components/vault/unsaved-changes-modal";
 import { updateSnippetContent } from "@/actions/items";
 
 export function SnippetEditor({ item }: { item: VaultItem }) {
   const { theme } = useTheme();
-  const router = useRouter();
   const updateItem = useVaultStore((s) => s.updateItem);
+  const markTabDirty = useVaultStore((s) => s.markTabDirty);
+  const markTabClean = useVaultStore((s) => s.markTabClean);
   const [isPending, startTransition] = useTransition();
 
   const [content, setContent] = useState(item.codeContent ?? "");
@@ -33,10 +32,21 @@ export function SnippetEditor({ item }: { item: VaultItem }) {
   const editorRef = useRef<MonacoEditorNS.IStandaloneCodeEditor | null>(null);
 
   const [lastSavedContent, setLastSavedContent] = useState(item.codeContent ?? "");
-  const [showExitModal, setShowExitModal] = useState(false);
-  const [pendingHref, setPendingHref] = useState<string | null>(null);
 
   const isDirty = content !== lastSavedContent;
+
+  useEffect(() => {
+    if (isDirty) {
+      markTabDirty(item.id);
+    } else {
+      markTabClean(item.id);
+    }
+  }, [isDirty, item.id, markTabDirty, markTabClean]);
+
+  useEffect(() => {
+    return () => markTabClean(item.id);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [item.id]);
 
   const handleSave = useCallback(() => {
     const val = editorRef.current ? editorRef.current.getValue() : content;
@@ -67,60 +77,12 @@ export function SnippetEditor({ item }: { item: VaultItem }) {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
       if (isDirty) {
         e.preventDefault();
-        e.returnValue = "Você tem alterações não salvas. Tem certeza que deseja sair?";
-        return e.returnValue;
+        e.returnValue = "";
       }
     };
     window.addEventListener("beforeunload", handleBeforeUnload);
     return () => window.removeEventListener("beforeunload", handleBeforeUnload);
   }, [isDirty]);
-
-  useEffect(() => {
-    if (!isDirty) return;
-
-    const handleAnchorClick = (e: MouseEvent) => {
-      const target = e.target as HTMLElement;
-      const anchor = target.closest("a");
-      if (anchor) {
-        const href = anchor.getAttribute("href");
-        if (href && href.startsWith("/") && !href.startsWith("#")) {
-          e.preventDefault();
-          e.stopPropagation();
-          setPendingHref(href);
-          setShowExitModal(true);
-        }
-      }
-    };
-
-    document.addEventListener("click", handleAnchorClick, true);
-    return () => document.removeEventListener("click", handleAnchorClick, true);
-  }, [isDirty]);
-
-  useEffect(() => {
-    if (!isDirty) return;
-
-    const handlePopState = () => {
-      window.history.pushState(null, "", window.location.href);
-      setPendingHref("back");
-      setShowExitModal(true);
-    };
-
-    window.history.pushState(null, "", window.location.href);
-    window.addEventListener("popstate", handlePopState);
-    return () => window.removeEventListener("popstate", handlePopState);
-  }, [isDirty]);
-
-  const handleConfirmExit = () => {
-    setShowExitModal(false);
-    
-    setLastSavedContent(content);
-    
-    if (pendingHref === "back") {
-      router.back();
-    } else if (pendingHref) {
-      router.push(pendingHref);
-    }
-  };
 
   const handleMount: OnMount = (editorInstance, monacoInstance) => {
     editorRef.current = editorInstance;
@@ -216,12 +178,6 @@ export function SnippetEditor({ item }: { item: VaultItem }) {
           }
         />
       </div>
-
-      <UnsavedChangesModal
-        open={showExitModal}
-        onClose={() => setShowExitModal(false)}
-        onConfirm={handleConfirmExit}
-      />
     </div>
   );
 }

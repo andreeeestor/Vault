@@ -74,6 +74,21 @@ export function DiagramEditor({ item }: { item: VaultItem }) {
   const [isLoaded, setIsLoaded] = useState(false);
   const isInitialMount = useRef(true);
   const updateItem = useVaultStore((s) => s.updateItem);
+  const markTabDirty = useVaultStore((s) => s.markTabDirty);
+  const markTabClean = useVaultStore((s) => s.markTabClean);
+
+  useEffect(() => {
+    if (hasUnsavedChanges) {
+      markTabDirty(item.id);
+    } else {
+      markTabClean(item.id);
+    }
+  }, [hasUnsavedChanges, item.id, markTabDirty, markTabClean]);
+
+  useEffect(() => {
+    return () => markTabClean(item.id);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [item.id]);
 
   // Faz parse do JSON salvo e retorna dados iniciais para o Excalidraw
   const initialData = useRef((() => {

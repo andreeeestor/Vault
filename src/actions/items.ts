@@ -213,7 +213,6 @@ export async function updateDiagramData(itemId: string, diagramData: string) {
     data: { diagramData },
   });
   revalidatePath("/vault");
-  revalidatePath(`/vault/item/${itemId}`);
   if (item.folderId) {
     revalidatePath(`/vault/folder/${item.folderId}`);
   }
