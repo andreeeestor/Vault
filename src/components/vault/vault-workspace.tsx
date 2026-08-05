@@ -1,8 +1,10 @@
 "use client";
 
 import { useEffect } from "react";
-import { PenLine } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { LayoutPanelLeft, Folder as FolderIcon } from "lucide-react";
 import { useVaultStore, getChildFolders, getItemsInFolder } from "@/lib/vault-store";
+import { ITEM_TYPE_META } from "@/lib/item-meta";
 import { DashboardHeader } from "@/components/dashboard/header";
 import { BreadcrumbNav } from "./breadcrumb-nav";
 import { ItemGrid } from "./item-grid";
@@ -11,6 +13,7 @@ import { SelectionToolbar } from "./selection-toolbar";
 import { TabBar } from "./tab-bar";
 import { ItemViewer } from "./item-viewer";
 import { ItemDetailSidebar } from "./item-detail-sidebar";
+import { labelColorHex, formatRelativeDate } from "@/lib/utils";
 import type { Folder, SortField, VaultItem } from "@/types";
 
 // ─── sort helpers ──────────────────────────────────────────────────────────────
@@ -57,7 +60,7 @@ export function VaultWorkspace({ folderId }: { folderId: string }) {
   const childFolders = sortFolders(getChildFolders(folders, folderId), sortField, sortDirection);
   const folderItems = sortItems(getItemsInFolder(items, folderId), sortField, sortDirection);
 
-  // Remove tabs for deleted items
+  // Auto-close tabs for deleted items
   useEffect(() => {
     const itemIds = new Set(items.map((i) => i.id));
     openTabs.forEach((tab) => {
@@ -79,72 +82,181 @@ export function VaultWorkspace({ folderId }: { folderId: string }) {
     return () => document.removeEventListener("keydown", handler);
   }, [childFolders, folderItems, selectAll, clearSelection]);
 
-  // Resolve active item from store (always fresh)
   const activeItem = activeTabId ? items.find((i) => i.id === activeTabId) ?? null : null;
-
   const hasTabs = openTabs.length > 0;
 
   return (
-    <div className="flex min-h-screen flex-1 flex-col overflow-hidden lg:h-screen lg:flex-row">
-      {/* ── Left: file browser ─────────────────────────────────────────── */}
-      <div
-        className={
-          hasTabs
-            ? "hidden w-[280px] shrink-0 flex-col border-r border-[var(--border)] lg:flex"
-            : "flex flex-1 flex-col"
-        }
-      >
-        <DashboardHeader breadcrumb={<BreadcrumbNav />} />
-        <main
-          className="flex-1 overflow-y-auto p-4 sm:p-5"
+    /*
+      VaultWorkspace fills the flex-1 column in DashboardLayout.
+      Structure:
+        [Full-width header]
+        [Content row: file browser (left) | tab content (right)]
+    */
+    <div className="flex h-screen flex-col overflow-hidden">
+      {/* ── Full-width sticky header ──────────────────────────────────── */}
+      <DashboardHeader breadcrumb={<BreadcrumbNav />} />
+
+      {/* ── Scrollable content row ────────────────────────────────────── */}
+      <div className="flex min-h-0 flex-1 overflow-hidden">
+
+        {/* ── Left: file browser ───────────────────────────────────────
+            • No tabs open → fills full width (flex-1)
+            • Tabs open → 260px fixed, hidden on small screens
+        ─────────────────────────────────────────────────────────── */}
+        <aside
+          className={
+            hasTabs
+              ? "hidden w-[260px] shrink-0 flex-col overflow-y-auto border-r border-[var(--border)] lg:flex"
+              : "flex flex-1 flex-col overflow-y-auto"
+          }
           onClick={(e) => e.currentTarget === e.target && clearSelection()}
         >
-          {viewMode === "grid" ? (
-            <ItemGrid folders={childFolders} items={folderItems} />
-          ) : (
-            <ItemList folders={childFolders} items={folderItems} />
-          )}
-        </main>
-        <SelectionToolbar />
+          <div className="p-3 sm:p-4">
+            {hasTabs ? (
+              /* Compact list for narrow 260px panel */
+              <FileBrowserList
+                folders={childFolders}
+                items={folderItems}
+                activeTabId={activeTabId}
+              />
+            ) : viewMode === "grid" ? (
+              <ItemGrid folders={childFolders} items={folderItems} />
+            ) : (
+              <ItemList folders={childFolders} items={folderItems} />
+            )}
+          </div>
+        </aside>
+
+        {/* ── Right: tab content area ───────────────────────────────────
+            Only visible when at least one tab is open
+        ─────────────────────────────────────────────────────────── */}
+        {hasTabs && (
+          <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
+            {/* Tab strip */}
+            <TabBar />
+
+            {/* Active item viewer + detail sidebar */}
+            {activeItem ? (
+              <div className="flex min-h-0 flex-1 overflow-hidden">
+                {/* Main content */}
+                <div className="relative min-w-0 flex-1 overflow-hidden">
+                  <ItemViewer item={activeItem} />
+                </div>
+                {/* Details sidebar (hidden on small screens) */}
+                <div className="hidden lg:block">
+                  <ItemDetailSidebar item={activeItem} />
+                </div>
+              </div>
+            ) : (
+              <NoItemSelected />
+            )}
+          </div>
+        )}
       </div>
 
-      {/* ── Right: tab area ─────────────────────────────────────────────── */}
-      {hasTabs && (
-        <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
-          {/* Tab bar */}
-          <TabBar />
-
-          {/* Content */}
-          {activeItem ? (
-            <div className="flex min-h-0 flex-1 overflow-hidden">
-              {/* Viewer */}
-              <div className="relative min-w-0 flex-1 overflow-hidden">
-                <ItemViewer item={activeItem} />
-              </div>
-              {/* Details sidebar */}
-              <ItemDetailSidebar item={activeItem} />
-            </div>
-          ) : (
-            /* All tabs closed or active item not found */
-            <NoTabSelected />
-          )}
-        </div>
-      )}
+      <SelectionToolbar />
     </div>
   );
 }
 
-function NoTabSelected() {
+// ─── Compact file browser for the 260px narrow panel ─────────────────────────
+function FileBrowserList({
+  folders,
+  items,
+  activeTabId,
+}: {
+  folders: Folder[];
+  items: VaultItem[];
+  activeTabId: string | null;
+}) {
+  const router = useRouter();
+  const setCurrentFolder = useVaultStore((s) => s.setCurrentFolder);
+  const openTab = useVaultStore((s) => s.openTab);
+
+  if (folders.length === 0 && items.length === 0) {
+    return (
+      <p className="py-8 text-center text-xs text-[var(--foreground-subtle)]">
+        Pasta vazia
+      </p>
+    );
+  }
+
   return (
-    <div className="flex flex-1 flex-col items-center justify-center gap-3 text-center">
+    <div className="flex flex-col gap-0.5">
+      {/* Folders */}
+      {folders.map((folder) => (
+        <button
+          key={folder.id}
+          onClick={() => {
+            setCurrentFolder(folder.id);
+            router.push(`/vault/folder/${folder.id}`);
+          }}
+          className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-xs transition-colors hover:bg-[var(--surface-hover)]"
+        >
+          <FolderIcon
+            className="h-3.5 w-3.5 shrink-0"
+            style={{ color: labelColorHex(folder.color) }}
+          />
+          <span className="truncate font-medium text-[var(--foreground)]">{folder.name}</span>
+          <span className="ml-auto shrink-0 text-[10px] text-[var(--foreground-subtle)]">
+            {folder.itemCount}
+          </span>
+        </button>
+      ))}
+
+      {/* Divider */}
+      {folders.length > 0 && items.length > 0 && (
+        <div className="my-1.5 border-t border-[var(--border)]" />
+      )}
+
+      {/* Items */}
+      {items.map((item) => {
+        const meta = ITEM_TYPE_META[item.type];
+        const Icon = meta.icon;
+        const isActive = item.id === activeTabId;
+
+        return (
+          <button
+            key={item.id}
+            onClick={() => openTab(item)}
+            className={`flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-xs transition-colors ${
+              isActive
+                ? "bg-[var(--primary)]/10 font-medium"
+                : "hover:bg-[var(--surface-hover)]"
+            }`}
+          >
+            <Icon
+              className="h-3.5 w-3.5 shrink-0"
+              style={{ color: isActive ? "var(--primary)" : meta.accent }}
+            />
+            <span
+              className="truncate"
+              style={{ color: isActive ? "var(--primary)" : "var(--foreground)" }}
+            >
+              {item.title}
+            </span>
+            <span className="ml-auto shrink-0 text-[10px] text-[var(--foreground-subtle)]">
+              {formatRelativeDate(item.updatedAt)}
+            </span>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+// ─── Placeholder when tabs are open but none is active ────────────────────────
+function NoItemSelected() {
+  return (
+    <div className="flex flex-1 flex-col items-center justify-center gap-3 text-center p-6">
       <div
         className="flex h-14 w-14 items-center justify-center rounded-2xl"
         style={{ background: "var(--gradient-brand-soft)" }}
       >
-        <PenLine className="h-7 w-7 text-[var(--primary)]" strokeWidth={1.5} />
+        <LayoutPanelLeft className="h-7 w-7 text-[var(--primary)]" strokeWidth={1.5} />
       </div>
       <div>
-        <p className="text-sm font-medium text-[var(--foreground)]">Nenhum item aberto</p>
+        <p className="text-sm font-medium text-[var(--foreground)]">Selecione um item</p>
         <p className="mt-1 text-xs text-[var(--foreground-muted)]">
           Clique em um item no painel esquerdo para abri-lo aqui
         </p>
