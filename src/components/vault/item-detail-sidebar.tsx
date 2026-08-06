@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { Star, Archive, Trash2, FolderInput, Share2, Save } from "lucide-react";
 import type { VaultItem } from "@/types";
 import { ITEM_TYPE_META } from "@/lib/item-meta";
@@ -7,6 +8,7 @@ import { formatBytes, formatRelativeDate, labelColorHex } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useVaultStore } from "@/lib/vault-store";
+import { MoveModal } from "./move-modal";
 import { toast } from "sonner";
 
 export function ItemDetailSidebar({ item }: { item: VaultItem }) {
@@ -17,6 +19,7 @@ export function ItemDetailSidebar({ item }: { item: VaultItem }) {
   const meta = ITEM_TYPE_META[item.type];
   const folder = folders.find((f) => f.id === item.folderId);
 
+  const [isMoveOpen, setIsMoveOpen] = useState(false);
   const isEditable = item.type === "NOTE" || item.type === "SNIPPET";
 
   return (
@@ -71,7 +74,7 @@ export function ItemDetailSidebar({ item }: { item: VaultItem }) {
           <Star className="h-4 w-4" fill={item.isFavorite ? "currentColor" : "none"} />
           {item.isFavorite ? "Remover dos favoritos" : "Favoritar"}
         </Button>
-        <Button variant="secondary" onClick={() => toast("Selecione a pasta de destino")}>
+        <Button variant="secondary" onClick={() => setIsMoveOpen(true)}>
           <FolderInput className="h-4 w-4" /> Mover
         </Button>
         <Button variant="secondary" onClick={() => toast("Link de compartilhamento copiado")}>
@@ -90,6 +93,12 @@ export function ItemDetailSidebar({ item }: { item: VaultItem }) {
           <Trash2 className="h-4 w-4" /> Excluir
         </Button>
       </div>
+
+      <MoveModal
+        open={isMoveOpen}
+        itemIds={[item.id]}
+        onClose={() => setIsMoveOpen(false)}
+      />
     </aside>
   );
 }

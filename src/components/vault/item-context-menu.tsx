@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, type ReactNode } from "react";
+import { MoveModal } from "./move-modal";
 import {
   ContextMenu,
   ContextMenuContent,
@@ -60,6 +61,7 @@ export function ItemContextMenu({
   children: ReactNode;
 }) {
   const [isCustomColorModalOpen, setIsCustomColorModalOpen] = useState(false);
+  const [isMoveModalOpen, setIsMoveModalOpen] = useState(false);
   const toggleFavorite = useVaultStore((s) => s.toggleFavorite);
   const toggleArchive = useVaultStore((s) => s.toggleArchive);
   const softDelete = useVaultStore((s) => s.softDelete);
@@ -145,7 +147,7 @@ export function ItemContextMenu({
             </>
           )}
 
-          <ContextMenuItem onSelect={() => toast("Mover funcionalidade em breve!")}>
+          <ContextMenuItem onSelect={() => setIsMoveModalOpen(true)}>
             <FolderInput className="h-4 w-4" /> Mover para…
           </ContextMenuItem>
 
@@ -198,6 +200,12 @@ export function ItemContextMenu({
           }}
         />
       )}
+      <MoveModal
+        open={isMoveModalOpen}
+        itemIds={kind === "item" ? [id] : []}
+        folderIds={kind === "folder" ? [id] : []}
+        onClose={() => setIsMoveModalOpen(false)}
+      />
     </>
   );
 }
@@ -214,6 +222,7 @@ export function ItemDropdownMenu({
   onOpen?: () => void;
 }) {
   const [isCustomColorModalOpen, setIsCustomColorModalOpen] = useState(false);
+  const [isMoveModalOpen, setIsMoveModalOpen] = useState(false);
   const toggleFavorite = useVaultStore((s) => s.toggleFavorite);
   const toggleArchive = useVaultStore((s) => s.toggleArchive);
   const softDelete = useVaultStore((s) => s.softDelete);
@@ -318,7 +327,7 @@ export function ItemDropdownMenu({
           <DropdownMenuItem
             onSelect={(e) => {
               e.stopPropagation();
-              toast("Mover funcionalidade em breve!");
+              setIsMoveModalOpen(true);
             }}
           >
             <FolderInput className="h-4 w-4" /> Mover para…
@@ -385,6 +394,12 @@ export function ItemDropdownMenu({
           }}
         />
       )}
+      <MoveModal
+        open={isMoveModalOpen}
+        itemIds={kind === "item" ? [id] : []}
+        folderIds={kind === "folder" ? [id] : []}
+        onClose={() => setIsMoveModalOpen(false)}
+      />
     </>
   );
 }
