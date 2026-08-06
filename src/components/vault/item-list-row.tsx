@@ -9,13 +9,35 @@ import { cn, formatBytes, formatRelativeDate, labelColorHex } from "@/lib/utils"
 import { useVaultStore } from "@/lib/vault-store";
 import { ItemContextMenu, ItemDropdownMenu } from "./item-context-menu";
 
-export function FolderListRow({ folder }: { folder: Folder }) {
+export function FolderListRow({ folder, orderedIds }: { folder: Folder; orderedIds?: string[] }) {
   const router = useRouter();
+  const selectedIds = useVaultStore((s) => s.selectedIds);
+  const toggleSelect = useVaultStore((s) => s.toggleSelect);
+  const selectRange = useVaultStore((s) => s.selectRange);
   const drag = useVaultStore((s) => s.drag);
   const setDropTarget = useVaultStore((s) => s.setDropTarget);
   const moveEntities = useVaultStore((s) => s.moveEntities);
   const setCurrentFolder = useVaultStore((s) => s.setCurrentFolder);
+
+  const isSelected = selectedIds.has(folder.id);
   const isDropTarget = drag.isDragging && drag.hoveredDropTargetId === folder.id;
+
+  const handleClick = (e: MouseEvent) => {
+    if (e.shiftKey && orderedIds) {
+      selectRange(folder.id, orderedIds);
+      return;
+    }
+    if (e.metaKey || e.ctrlKey) {
+      toggleSelect(folder.id);
+      return;
+    }
+    if (selectedIds.size > 0) {
+      toggleSelect(folder.id);
+      return;
+    }
+    setCurrentFolder(folder.id);
+    router.push(`/vault/folder/${folder.id}`);
+  };
 
   return (
     <ItemContextMenu id={folder.id} kind="folder">
@@ -23,7 +45,8 @@ export function FolderListRow({ folder }: { folder: Folder }) {
         draggable
         onDragStart={(e) => {
           e.dataTransfer.effectAllowed = "move";
-          useVaultStore.getState().startDrag([folder.id], "folder");
+          const ids = isSelected ? Array.from(selectedIds) : [folder.id];
+          useVaultStore.getState().startDrag(ids, "folder");
         }}
         onDragEnd={() => useVaultStore.getState().endDrag()}
         onDragOver={(e) => {
@@ -39,16 +62,19 @@ export function FolderListRow({ folder }: { folder: Folder }) {
           const folderIds = drag.draggedKind === "folder" ? drag.draggedIds.filter((id) => id !== folder.id) : [];
           moveEntities(itemIds, folderIds, folder.id);
         }}
+        onMouseDown={(e) => {
+          if (e.metaKey || e.ctrlKey || e.shiftKey) e.preventDefault();
+        }}
         onClick={(e) => {
           const target = e.target as HTMLElement;
           if (target.closest("button, [role='menu'], [role='menuitem'], [data-radix-popper-content-wrapper], input, select")) {
             return;
           }
-          setCurrentFolder(folder.id);
-          router.push(`/vault/folder/${folder.id}`);
+          handleClick(e);
         }}
         className={cn(
           "group grid cursor-pointer grid-cols-[1fr_40px] md:grid-cols-[1fr_100px_90px_160px_120px] items-center gap-4 border-b border-[var(--border)] px-4 py-2.5 text-sm transition-colors hover:bg-[var(--surface-hover)]",
+          isSelected && "bg-[var(--primary)]/10 text-[var(--primary)]",
           isDropTarget && "drop-target-active"
         )}
       >

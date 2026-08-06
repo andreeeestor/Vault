@@ -240,9 +240,12 @@ function FolderRow({
   return (
     <div
       onClick={onSelect}
+      onDoubleClick={() => {
+        if (hasChildren && onNavigate) onNavigate();
+      }}
       className={`group flex cursor-pointer items-center gap-2.5 rounded-lg px-2.5 py-2 transition-colors ${
         isSelected
-          ? "bg-[var(--primary)]/10 text-[var(--primary)]"
+          ? "bg-[var(--primary)]/10 text-[var(--primary)] font-medium"
           : "hover:bg-[var(--surface-hover)] text-[var(--foreground)]"
       }`}
     >
@@ -253,11 +256,14 @@ function FolderRow({
       <span className="flex-1 truncate text-sm">{label}</span>
       {hasChildren && onNavigate && (
         <button
-          onClick={(e) => { e.stopPropagation(); onNavigate(); }}
-          className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md opacity-0 transition-all group-hover:opacity-100 hover:bg-[var(--primary)]/10"
-          title="Abrir pasta"
+          onClick={(e) => {
+            e.stopPropagation();
+            onNavigate();
+          }}
+          className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-[var(--foreground-subtle)] hover:bg-[var(--primary)]/10 hover:text-[var(--primary)] transition-colors"
+          title="Abrir pasta (ou clique duplo)"
         >
-          <ChevronRight className="h-3.5 w-3.5" />
+          <ChevronRight className="h-4 w-4" />
         </button>
       )}
     </div>

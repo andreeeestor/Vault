@@ -58,7 +58,7 @@ export function ItemList({ folders, items }: { folders: Folder[]; items: VaultIt
 
       <div>
         {folders.map((folder) => (
-          <FolderListRow key={folder.id} folder={folder} />
+          <FolderListRow key={folder.id} folder={folder} orderedIds={orderedIds} />
         ))}
         {items.map((item) => (
           <ItemListRow key={item.id} item={item} orderedIds={orderedIds} />

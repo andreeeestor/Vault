@@ -31,7 +31,7 @@ export function ItemGrid({ folders, items }: { folders: Folder[]; items: VaultIt
       style={{ gridTemplateColumns: "repeat(auto-fill, minmax(135px, 1fr))" }}
     >
       {folders.map((folder) => (
-        <FolderCard key={folder.id} folder={folder} />
+        <FolderCard key={folder.id} folder={folder} orderedIds={orderedIds} />
       ))}
       {items.map((item) => (
         <ItemCard key={item.id} item={item} orderedIds={orderedIds} />
@@ -40,13 +40,17 @@ export function ItemGrid({ folders, items }: { folders: Folder[]; items: VaultIt
   );
 }
 
-function FolderCard({ folder }: { folder: Folder }) {
+function FolderCard({ folder, orderedIds }: { folder: Folder; orderedIds: string[] }) {
   const router = useRouter();
+  const selectedIds = useVaultStore((s) => s.selectedIds);
+  const toggleSelect = useVaultStore((s) => s.toggleSelect);
+  const selectRange = useVaultStore((s) => s.selectRange);
   const drag = useVaultStore((s) => s.drag);
   const setDropTarget = useVaultStore((s) => s.setDropTarget);
   const moveEntities = useVaultStore((s) => s.moveEntities);
   const setCurrentFolder = useVaultStore((s) => s.setCurrentFolder);
 
+  const isSelected = selectedIds.has(folder.id);
   const storeItems = useVaultStore((s) => s.items);
   const folderItems = getItemsInFolder(storeItems, folder.id);
   const topItems = folderItems.slice(0, 3);
@@ -57,6 +61,23 @@ function FolderCard({ folder }: { folder: Folder }) {
   const isDropTarget = drag.isDragging && drag.hoveredDropTargetId === folder.id;
   const isBeingDragged = drag.isDragging && drag.draggedIds.includes(folder.id);
 
+  const handleClick = (e: React.MouseEvent) => {
+    if (e.shiftKey) {
+      selectRange(folder.id, orderedIds);
+      return;
+    }
+    if (e.metaKey || e.ctrlKey) {
+      toggleSelect(folder.id);
+      return;
+    }
+    if (selectedIds.size > 0) {
+      toggleSelect(folder.id);
+      return;
+    }
+    setCurrentFolder(folder.id);
+    router.push(`/vault/folder/${folder.id}`);
+  };
+
   return (
     <ItemContextMenu id={folder.id} kind="folder">
       <motion.div
@@ -65,7 +86,8 @@ function FolderCard({ folder }: { folder: Folder }) {
         onDragStart={(e) => {
           const dragEvent = e as unknown as React.DragEvent;
           dragEvent.dataTransfer.effectAllowed = "move";
-          useVaultStore.getState().startDrag([folder.id], "folder");
+          const ids = isSelected ? Array.from(selectedIds) : [folder.id];
+          useVaultStore.getState().startDrag(ids, "folder");
         }}
         onDragEnd={() => useVaultStore.getState().endDrag()}
         onDragOver={(e) => {
@@ -81,20 +103,22 @@ function FolderCard({ folder }: { folder: Folder }) {
           const folderIds = drag.draggedKind === "folder" ? drag.draggedIds.filter((id) => id !== folder.id) : [];
           moveEntities(itemIds, folderIds, folder.id);
         }}
+        onMouseDown={(e) => {
+          if (e.metaKey || e.ctrlKey || e.shiftKey) e.preventDefault();
+        }}
         onClick={(e) => {
           const target = e.target as HTMLElement;
           if (target.closest("button, [role='menu'], [role='menuitem'], [data-radix-popper-content-wrapper], input, select")) {
             return;
           }
-          setCurrentFolder(folder.id);
-          router.push(`/vault/folder/${folder.id}`);
+          handleClick(e);
         }}
         whileHover={{ y: -2 }}
         whileTap={{ scale: 0.985 }}
         transition={{ type: "spring", bounce: 0, duration: 0.25 }}
         className={cn(
           "group flex cursor-pointer flex-col gap-3 rounded-[var(--radius-lg)] border bg-[var(--surface)] p-4 shadow-[var(--shadow-sm)] transition-shadow hover:shadow-[var(--shadow-md)]",
-          isDropTarget ? "drop-target-active" : "border-[var(--border)]",
+          isSelected ? "border-[var(--primary)] ring-2 ring-[var(--ring)]" : isDropTarget ? "drop-target-active" : "border-[var(--border)]",
           isBeingDragged && "opacity-40"
         )}
       >
