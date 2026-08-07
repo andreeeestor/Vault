@@ -376,6 +376,17 @@ body {
 .prose-vault li { margin-bottom: 0.25rem; }
 .prose-vault li::marker { color: var(--primary); }
 
+/* Images in notes */
+.prose-vault img {
+  max-width: 100%;
+  height: auto;
+  border-radius: var(--radius-md);
+  margin: 0.75rem 0;
+  display: block;
+  box-shadow: var(--shadow-md);
+  object-fit: contain;
+}
+
 /* Horizontal rule */
 .prose-vault hr {
   border: none;

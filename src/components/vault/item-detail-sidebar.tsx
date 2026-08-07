@@ -20,7 +20,7 @@ export function ItemDetailSidebar({ item }: { item: VaultItem }) {
   const folder = folders.find((f) => f.id === item.folderId);
 
   const [isMoveOpen, setIsMoveOpen] = useState(false);
-  const isEditable = item.type === "NOTE" || item.type === "SNIPPET";
+  const isEditable = true;
 
   return (
     <aside className="flex w-full lg:w-[300px] shrink-0 flex-col gap-6 overflow-y-auto border-t lg:border-t-0 lg:border-l border-[var(--border)] bg-[var(--background-elevated)] p-4 sm:p-5">

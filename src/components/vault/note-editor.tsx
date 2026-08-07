@@ -26,9 +26,9 @@ import {
   Eye,
   Pencil,
   Loader2,
-  Check,
   Download,
   AlignLeft,
+  Image as ImageIcon,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -37,7 +37,6 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { useRouter } from "next/navigation";
 import { useVaultStore } from "@/lib/vault-store";
 import { cn } from "@/lib/utils";
 import type { VaultItem } from "@/types";
@@ -54,22 +53,74 @@ interface ToolbarState {
   italic: boolean;
   underline: boolean;
   strikeThrough: boolean;
-  blockTag: string; 
+  blockTag: string;
   inList: boolean;
   inOrderedList: boolean;
 }
 
-export function NoteEditor({ item }: { item: VaultItem }) {
+// ─── Image compression helper ──────────────────────────────────────────────
+async function compressImageFile(
+  file: File,
+  maxWidth = 1200,
+  maxHeight = 1200,
+  quality = 0.85
+): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = (event) => {
+      const img = new Image();
+      img.src = event.target?.result as string;
+      img.onload = () => {
+        let { width, height } = img;
+        if (width > maxWidth || height > maxHeight) {
+          if (width > height) {
+            height = Math.round((height * maxWidth) / width);
+            width = maxWidth;
+          } else {
+            width = Math.round((width * maxHeight) / height);
+            height = maxHeight;
+          }
+        }
+        const canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) {
+          resolve(event.target?.result as string);
+          return;
+        }
+        ctx.drawImage(img, 0, 0, width, height);
+        const mimeType = file.type === "image/png" ? "image/png" : "image/jpeg";
+        resolve(canvas.toDataURL(mimeType, quality));
+      };
+      img.onerror = () => resolve(event.target?.result as string);
+    };
+    reader.onerror = (err) => reject(err);
+  });
+}
+
+// ─── NoteEditor Component ──────────────────────────────────────────────────
+export function NoteEditor({
+  item,
+  placeholder = "Comece a escrever sua nota…",
+}: {
+  item: VaultItem;
+  placeholder?: string;
+}) {
   const updateItem = useVaultStore((s) => s.updateItem);
   const markTabDirty = useVaultStore((s) => s.markTabDirty);
   const markTabClean = useVaultStore((s) => s.markTabClean);
   const editorRef = useRef<HTMLDivElement>(null);
+  const imageInputRef = useRef<HTMLInputElement>(null);
 
   const [readOnly, setReadOnly] = useState(false);
   const [content, setContent] = useState(item.noteContent ?? "");
   const [wordCount, setWordCount] = useState(0);
 
-  const [lastSavedContent, setLastSavedContent] = useState(item.noteContent ?? "");
+  const [lastSavedContent, setLastSavedContent] = useState(
+    item.noteContent ?? ""
+  );
 
   const [toolbarVisible, setToolbarVisible] = useState(false);
   const [toolbarPos, setToolbarPos] = useState({ x: 0, y: 0 });
@@ -98,7 +149,7 @@ export function NoteEditor({ item }: { item: VaultItem }) {
   // Clean up dirty state when the component unmounts (tab closed)
   useEffect(() => {
     return () => markTabClean(item.id);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [item.id]);
 
   const handleSave = useCallback(() => {
@@ -118,15 +169,21 @@ export function NoteEditor({ item }: { item: VaultItem }) {
   useEffect(() => {
     const handleSaveEvent = () => handleSave();
     document.addEventListener("vault-save-item", handleSaveEvent);
-    return () => document.removeEventListener("vault-save-item", handleSaveEvent);
+    return () =>
+      document.removeEventListener("vault-save-item", handleSaveEvent);
   }, [handleSave]);
 
   useEffect(() => {
     if (editorRef.current && item.noteContent) {
-      editorRef.current.innerHTML = item.noteContent;
-      recalcWordCount(item.noteContent);
+      // Remove dead/expired blob: URLs from previous sessions so they don't render broken icons
+      const cleaned = item.noteContent.replace(
+        /<img[^>]*src=["']blob:[^"']*["'][^>]*>/gi,
+        ""
+      );
+      editorRef.current.innerHTML = cleaned;
+      recalcWordCount(cleaned);
     }
-  }, []);
+  }, [item.noteContent]);
 
   // Warn on browser/tab close only
   useEffect(() => {
@@ -137,7 +194,8 @@ export function NoteEditor({ item }: { item: VaultItem }) {
       }
     };
     window.addEventListener("beforeunload", handleBeforeUnload);
-    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+    return () =>
+      window.removeEventListener("beforeunload", handleBeforeUnload);
   }, [isDirty]);
 
   const recalcWordCount = (html: string) => {
@@ -152,6 +210,120 @@ export function NoteEditor({ item }: { item: VaultItem }) {
     setContent(html);
     recalcWordCount(html);
   }, []);
+
+  // Insert image HTML into editor safely
+  const insertImageHtml = useCallback(
+    (src: string, alt = "Imagem") => {
+      if (!editorRef.current) return;
+      editorRef.current.focus();
+
+      const imgHtml = `<img src="${src}" alt="${alt}" style="max-width:100%; height:auto; border-radius:8px; margin:12px 0; display:block; box-shadow:0 4px 12px rgba(0,0,0,0.15);" /><p><br></p>`;
+
+      const sel = window.getSelection();
+      if (
+        sel &&
+        sel.rangeCount > 0 &&
+        editorRef.current.contains(sel.getRangeAt(0).commonAncestorContainer)
+      ) {
+        const range = sel.getRangeAt(0);
+        range.deleteContents();
+
+        const temp = document.createElement("div");
+        temp.innerHTML = imgHtml;
+        const frag = document.createDocumentFragment();
+        let child: Node | null;
+        let lastNode: Node | null = null;
+        while ((child = temp.firstChild)) {
+          lastNode = frag.appendChild(child);
+        }
+        range.insertNode(frag);
+
+        if (lastNode) {
+          range.setStartAfter(lastNode);
+          range.collapse(true);
+          sel.removeAllRanges();
+          sel.addRange(range);
+        }
+      } else {
+        editorRef.current.innerHTML += imgHtml;
+      }
+
+      handleInput();
+    },
+    [handleInput]
+  );
+
+  // Paste image handler
+  const handlePaste = useCallback(
+    async (e: React.ClipboardEvent) => {
+      const items = Array.from(e.clipboardData.items);
+      const imageItem = items.find((it) => it.type.startsWith("image/"));
+
+      if (imageItem) {
+        e.preventDefault();
+        const file = imageItem.getAsFile();
+        if (!file) return;
+
+        try {
+          toast.loading("Carregando imagem…", { id: "pasting-img" });
+          const dataUrl = await compressImageFile(file);
+          toast.dismiss("pasting-img");
+          insertImageHtml(dataUrl, file.name);
+          toast.success("Imagem colada com sucesso!");
+        } catch (err) {
+          console.error(err);
+          toast.dismiss("pasting-img");
+          toast.error("Erro ao processar imagem colada.");
+        }
+      }
+    },
+    [insertImageHtml]
+  );
+
+  // Drop image handler
+  const handleDrop = useCallback(
+    async (e: React.DragEvent) => {
+      const files = Array.from(e.dataTransfer.files);
+      const imageFile = files.find((f) => f.type.startsWith("image/"));
+
+      if (imageFile) {
+        e.preventDefault();
+        try {
+          toast.loading("Inserindo imagem…", { id: "dropping-img" });
+          const dataUrl = await compressImageFile(imageFile);
+          toast.dismiss("dropping-img");
+          insertImageHtml(dataUrl, imageFile.name);
+          toast.success("Imagem inserida com sucesso!");
+        } catch (err) {
+          console.error(err);
+          toast.dismiss("dropping-img");
+          toast.error("Erro ao inserir imagem.");
+        }
+      }
+    },
+    [insertImageHtml]
+  );
+
+  // File picker handler
+  const handleImageFileSelect = async (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+    const file = files[0];
+    try {
+      toast.loading("Inserindo imagem…", { id: "uploading-img" });
+      const dataUrl = await compressImageFile(file);
+      toast.dismiss("uploading-img");
+      insertImageHtml(dataUrl, file.name);
+      toast.success("Imagem adicionada à nota!");
+    } catch (err) {
+      console.error(err);
+      toast.dismiss("uploading-img");
+      toast.error("Erro ao selecionar imagem.");
+    }
+    e.target.value = "";
+  };
 
   const handleSelectionChange = useCallback(() => {
     if (readOnly) return;
@@ -170,7 +342,7 @@ export function NoteEditor({ item }: { item: VaultItem }) {
     const rect = range.getBoundingClientRect();
     setToolbarPos({
       x: rect.left + rect.width / 2,
-      y: rect.top - 12, 
+      y: rect.top - 12,
     });
 
     setToolbarState({
@@ -237,11 +409,14 @@ export function NoteEditor({ item }: { item: VaultItem }) {
     [content, item.id, updateItem, startTransition]
   );
 
-  const execFormat = useCallback((command: string, value?: string) => {
-    editorRef.current?.focus();
-    document.execCommand(command, false, value);
-    handleInput();
-  }, [handleInput]);
+  const execFormat = useCallback(
+    (command: string, value?: string) => {
+      editorRef.current?.focus();
+      document.execCommand(command, false, value);
+      handleInput();
+    },
+    [handleInput]
+  );
 
   const wrapCode = useCallback(() => {
     const sel = window.getSelection();
@@ -260,7 +435,7 @@ export function NoteEditor({ item }: { item: VaultItem }) {
     (tag: string) => {
       editorRef.current?.focus();
       const current = detectBlockTag();
-      
+
       const next = current === tag ? "p" : tag.toLowerCase();
       document.execCommand("formatBlock", false, next);
       handleInput();
@@ -295,19 +470,27 @@ export function NoteEditor({ item }: { item: VaultItem }) {
   return (
     <TooltipProvider delayDuration={400}>
       <div className="flex h-full flex-col bg-[var(--background)]">
-        {}
+        {/* Hidden file input for image uploads */}
+        <input
+          ref={imageInputRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={handleImageFileSelect}
+        />
+
         <StaticToolbar
           readOnly={readOnly}
           isDirty={isDirty}
           isPending={isPending}
           wordCount={wordCount}
           onToggleReadOnly={() => setReadOnly((v) => !v)}
+          onAddImage={() => imageInputRef.current?.click()}
           onExportMd={handleExportMd}
           onExportDocx={handleExportDocx}
           onExportPdf={handleExportPdf}
         />
 
-        {}
         <div className="flex-1 overflow-y-auto">
           <div
             ref={editorRef}
@@ -318,16 +501,17 @@ export function NoteEditor({ item }: { item: VaultItem }) {
             onInput={handleInput}
             onKeyDown={handleKeyDown}
             onMouseUp={handleSelectionChange}
+            onPaste={handlePaste}
+            onDrop={handleDrop}
             spellCheck
             className={cn(
               "prose-vault mx-auto min-h-full w-full max-w-2xl px-8 py-10 outline-none",
               readOnly && "cursor-default select-text"
             )}
-            data-placeholder="Comece a escrever sua nota…"
+            data-placeholder={placeholder}
           />
         </div>
 
-        {}
         {toolbarVisible && !readOnly && (
           <FloatingToolbar
             pos={toolbarPos}
@@ -335,6 +519,7 @@ export function NoteEditor({ item }: { item: VaultItem }) {
             onFormat={execFormat}
             onBlock={execBlock}
             onWrapCode={wrapCode}
+            onAddImage={() => imageInputRef.current?.click()}
             onClose={() => setToolbarVisible(false)}
           />
         )}
@@ -349,6 +534,7 @@ function StaticToolbar({
   isPending,
   wordCount,
   onToggleReadOnly,
+  onAddImage,
   onExportMd,
   onExportDocx,
   onExportPdf,
@@ -358,6 +544,7 @@ function StaticToolbar({
   isPending: boolean;
   wordCount: number;
   onToggleReadOnly: () => void;
+  onAddImage: () => void;
   onExportMd: () => void;
   onExportDocx: () => void;
   onExportPdf: () => void;
@@ -375,16 +562,29 @@ function StaticToolbar({
           )}
         >
           {!readOnly ? (
-            <><Pencil className="h-3.5 w-3.5" /> Modo de Edição</>
+            <>
+              <Pencil className="h-3.5 w-3.5" /> Modo de Edição
+            </>
           ) : (
-            <><Eye className="h-3.5 w-3.5" /> Modo Leitura</>
+            <>
+              <Eye className="h-3.5 w-3.5" /> Modo Leitura
+            </>
           )}
         </button>
+
+        {!readOnly && (
+          <button
+            onClick={onAddImage}
+            className="flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-semibold text-foreground-muted transition-colors hover:bg-surface-hover"
+          >
+            <ImageIcon className="h-3.5 w-3.5 text-primary" />
+            Inserir Imagem
+          </button>
+        )}
 
         <SaveIndicator isDirty={isDirty} isPending={isPending} />
       </div>
 
-      {}
       <div className="flex items-center gap-3">
         <span className="flex items-center gap-1 text-xs text-[var(--foreground-subtle)]">
           <AlignLeft className="h-3 w-3" />
@@ -421,10 +621,18 @@ interface FloatingToolbarProps {
   onFormat: (cmd: string, value?: string) => void;
   onBlock: (tag: string) => void;
   onWrapCode: () => void;
+  onAddImage: () => void;
   onClose: () => void;
 }
 
-function FloatingToolbar({ pos, state, onFormat, onBlock, onWrapCode }: FloatingToolbarProps) {
+function FloatingToolbar({
+  pos,
+  state,
+  onFormat,
+  onBlock,
+  onWrapCode,
+  onAddImage,
+}: FloatingToolbarProps) {
   const [linkMode, setLinkMode] = useState(false);
   const [linkUrl, setLinkUrl] = useState("");
   const linkInputRef = useRef<HTMLInputElement>(null);
@@ -443,7 +651,7 @@ function FloatingToolbar({ pos, state, onFormat, onBlock, onWrapCode }: Floating
   const handleLinkSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!linkUrl.trim()) return;
-    
+
     const sel = window.getSelection();
     if (savedRangeRef.current && sel) {
       sel.removeAllRanges();
@@ -471,11 +679,13 @@ function FloatingToolbar({ pos, state, onFormat, onBlock, onWrapCode }: Floating
     <div
       style={style}
       className="flex items-center rounded-xl border border-[var(--border-strong)] bg-[var(--surface)] shadow-[var(--shadow-lg)] ring-1 ring-black/5"
-      onMouseDown={(e) => e.preventDefault()} 
+      onMouseDown={(e) => e.preventDefault()}
     >
       {linkMode ? (
-        
-        <form onSubmit={handleLinkSubmit} className="flex items-center gap-1.5 px-3 py-2">
+        <form
+          onSubmit={handleLinkSubmit}
+          className="flex items-center gap-1.5 px-3 py-2"
+        >
           <Link className="h-3.5 w-3.5 shrink-0 text-[var(--primary)]" />
           <input
             ref={linkInputRef}
@@ -484,7 +694,10 @@ function FloatingToolbar({ pos, state, onFormat, onBlock, onWrapCode }: Floating
             placeholder="https://exemplo.com"
             className="w-52 bg-transparent text-xs text-[var(--foreground)] outline-none placeholder:text-[var(--foreground-subtle)]"
             onKeyDown={(e) => {
-              if (e.key === "Escape") { setLinkMode(false); setLinkUrl(""); }
+              if (e.key === "Escape") {
+                setLinkMode(false);
+                setLinkUrl("");
+              }
             }}
           />
           <button
@@ -495,9 +708,7 @@ function FloatingToolbar({ pos, state, onFormat, onBlock, onWrapCode }: Floating
           </button>
         </form>
       ) : (
-        
         <div className="flex items-center divide-x divide-[var(--border)] px-1 py-1.5">
-          {}
           <div className="flex items-center gap-0.5 px-1">
             <TBtn
               icon={<Bold className="h-3.5 w-3.5" />}
@@ -525,7 +736,6 @@ function FloatingToolbar({ pos, state, onFormat, onBlock, onWrapCode }: Floating
             />
           </div>
 
-          {}
           <div className="flex items-center gap-0.5 px-1">
             <TBtn
               icon={<Heading1 className="h-3.5 w-3.5" />}
@@ -547,7 +757,6 @@ function FloatingToolbar({ pos, state, onFormat, onBlock, onWrapCode }: Floating
             />
           </div>
 
-          {}
           <div className="flex items-center gap-0.5 px-1">
             <TBtn
               icon={<List className="h-3.5 w-3.5" />}
@@ -573,9 +782,14 @@ function FloatingToolbar({ pos, state, onFormat, onBlock, onWrapCode }: Floating
               active={false}
               onClick={onWrapCode}
             />
+            <TBtn
+              icon={<ImageIcon className="h-3.5 w-3.5 text-[var(--primary)]" />}
+              label="Inserir Imagem"
+              active={false}
+              onClick={onAddImage}
+            />
           </div>
 
-          {}
           <div className="flex items-center gap-0.5 px-1">
             <TBtn
               icon={<Link className="h-3.5 w-3.5" />}
@@ -618,7 +832,7 @@ function TBtn({
       <TooltipTrigger asChild>
         <button
           onMouseDown={(e) => {
-            e.preventDefault(); 
+            e.preventDefault();
             onClick();
           }}
           className={cn(
@@ -636,7 +850,13 @@ function TBtn({
   );
 }
 
-function SaveIndicator({ isDirty, isPending }: { isDirty: boolean; isPending: boolean }) {
+function SaveIndicator({
+  isDirty,
+  isPending,
+}: {
+  isDirty: boolean;
+  isPending: boolean;
+}) {
   if (isPending) {
     return (
       <span className="flex items-center gap-1.5 text-xs text-[var(--foreground-subtle)]">
@@ -647,13 +867,15 @@ function SaveIndicator({ isDirty, isPending }: { isDirty: boolean; isPending: bo
   if (isDirty) {
     return (
       <span className="flex items-center gap-1.5 text-xs text-amber-500">
-        <span className="h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse" /> Alterações pendentes
+        <span className="h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse" />{" "}
+        Alterações pendentes
       </span>
     );
   }
   return (
     <span className="flex items-center gap-1.5 text-xs text-[var(--success)]">
-      <span className="h-1.5 w-1.5 rounded-full bg-[var(--success)]" /> Todas as alterações salvas
+      <span className="h-1.5 w-1.5 rounded-full bg-[var(--success)]" /> Todas as
+      alterações salvas
     </span>
   );
 }
@@ -671,6 +893,7 @@ function htmlToMarkdown(html: string): string {
     .replace(/<u[^>]*>(.*?)<\/u>/gi, "$1")
     .replace(/<s[^>]*>(.*?)<\/s>/gi, "~~$1~~")
     .replace(/<code[^>]*>(.*?)<\/code>/gi, "`$1`")
+    .replace(/<img[^>]*src="([^"]*)"[^>]*>/gi, "![Imagem]($1)\n\n")
     .replace(/<a[^>]*href="([^"]*)"[^>]*>(.*?)<\/a>/gi, "[$2]($1)")
     .replace(/<li[^>]*>(.*?)<\/li>/gi, "- $1\n")
     .replace(/<[ou]l[^>]*>/gi, "\n")
