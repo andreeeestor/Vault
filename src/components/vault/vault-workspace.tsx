@@ -13,7 +13,7 @@ import { SelectionToolbar } from "./selection-toolbar";
 import { TabBar } from "./tab-bar";
 import { ItemViewer } from "./item-viewer";
 import { ItemDetailSidebar } from "./item-detail-sidebar";
-import { labelColorHex, formatRelativeDate } from "@/lib/utils";
+import { cn, labelColorHex, formatRelativeDate } from "@/lib/utils";
 import type { Folder, SortField, VaultItem } from "@/types";
 
 // ─── sort helpers ──────────────────────────────────────────────────────────────
@@ -135,21 +135,35 @@ export function VaultWorkspace({ folderId }: { folderId: string }) {
             {/* Tab strip */}
             <TabBar />
 
-            {/* Active item viewer + detail sidebar */}
-            {activeItem ? (
-              <div className="flex min-h-0 flex-1 overflow-hidden">
-                {/* Main content */}
-                <div className="relative min-w-0 flex-1 overflow-hidden">
-                  <ItemViewer item={activeItem} />
-                </div>
-                {/* Details sidebar (hidden on small screens) */}
-                <div className="hidden lg:block">
-                  <ItemDetailSidebar item={activeItem} />
-                </div>
-              </div>
-            ) : (
-              <NoItemSelected />
-            )}
+            {/* Open tabs container (Keep-alive in DOM) */}
+            <div className="relative min-h-0 flex-1 overflow-hidden">
+              {openTabs.map((tab) => {
+                const item = items.find((i) => i.id === tab.id);
+                if (!item) return null;
+                const isActive = tab.id === activeTabId;
+
+                return (
+                  <div
+                    key={tab.id}
+                    className={cn(
+                      "flex h-full w-full min-h-0 flex-1 overflow-hidden",
+                      !isActive && "hidden"
+                    )}
+                  >
+                    {/* Main content */}
+                    <div className="relative min-w-0 flex-1 overflow-hidden">
+                      <ItemViewer item={item} />
+                    </div>
+                    {/* Details sidebar (hidden on small screens) */}
+                    <div className="hidden lg:block">
+                      <ItemDetailSidebar item={item} />
+                    </div>
+                  </div>
+                );
+              })}
+
+              {!activeItem && <NoItemSelected />}
+            </div>
           </div>
         )}
       </div>

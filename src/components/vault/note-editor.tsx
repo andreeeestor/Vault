@@ -200,14 +200,16 @@ export function NoteEditor({
   }, [handleSave]);
 
   useEffect(() => {
-    if (editorRef.current && item.noteContent) {
+    if (editorRef.current && item.noteContent !== undefined) {
       // Remove dead/expired blob: URLs from previous sessions so they don't render broken icons
-      const cleaned = item.noteContent.replace(
+      const cleaned = (item.noteContent ?? "").replace(
         /<img[^>]*src=["']blob:[^"']*["'][^>]*>/gi,
         ""
       );
-      editorRef.current.innerHTML = cleaned;
-      recalcWordCount(cleaned);
+      if (editorRef.current.innerHTML !== cleaned) {
+        editorRef.current.innerHTML = cleaned;
+        recalcWordCount(cleaned);
+      }
     }
   }, [item.noteContent]);
 
@@ -234,8 +236,9 @@ export function NoteEditor({
     if (!editorRef.current) return;
     const html = editorRef.current.innerHTML;
     setContent(html);
+    updateItem(item.id, { noteContent: html });
     recalcWordCount(html);
-  }, []);
+  }, [item.id, updateItem]);
 
   // ─── Mention trigger detection ──────────────────────────────────────────
   const checkMentionTrigger = useCallback(() => {

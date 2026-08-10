@@ -156,7 +156,11 @@ export function SnippetEditor({ item }: { item: VaultItem }) {
           theme={theme === "dark" ? "vault-dark" : "vault-light"}
           beforeMount={handleBeforeMount}
           onMount={handleMount}
-          onChange={(value) => setContent(value ?? "")}
+          onChange={(value) => {
+            const val = value ?? "";
+            setContent(val);
+            updateItem(item.id, { codeContent: val });
+          }}
           options={{
             readOnly,
             minimap: { enabled: false },
