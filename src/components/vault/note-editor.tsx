@@ -3,10 +3,12 @@
 import {
   useCallback,
   useEffect,
+  useMemo,
   useRef,
   useState,
   useTransition,
 } from "react";
+import { useRouter } from "next/navigation";
 import { updateNoteContent } from "@/actions/items";
 import {
   Bold,
@@ -29,6 +31,8 @@ import {
   Download,
   AlignLeft,
   Image as ImageIcon,
+  Folder as FolderIcon,
+  AtSign,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -38,8 +42,9 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useVaultStore } from "@/lib/vault-store";
-import { cn } from "@/lib/utils";
-import type { VaultItem } from "@/types";
+import { ITEM_TYPE_META } from "@/lib/item-meta";
+import { cn, labelColorHex } from "@/lib/utils";
+import type { VaultItem, ItemType } from "@/types";
 import { exportToDocx, exportToPdf } from "@/lib/export-document";
 import {
   DropdownMenu,
@@ -57,6 +62,10 @@ interface ToolbarState {
   inList: boolean;
   inOrderedList: boolean;
 }
+
+type MentionCandidate =
+  | { id: string; title: string; kind: "folder"; color?: string | null }
+  | { id: string; title: string; kind: "item"; type: ItemType };
 
 // ─── Image compression helper ──────────────────────────────────────────────
 async function compressImageFile(
@@ -103,14 +112,20 @@ async function compressImageFile(
 // ─── NoteEditor Component ──────────────────────────────────────────────────
 export function NoteEditor({
   item,
-  placeholder = "Comece a escrever sua nota…",
+  placeholder = "Comece a escrever sua nota… (Digite @ para mencionar arquivos ou pastas)",
 }: {
   item: VaultItem;
   placeholder?: string;
 }) {
+  const router = useRouter();
   const updateItem = useVaultStore((s) => s.updateItem);
   const markTabDirty = useVaultStore((s) => s.markTabDirty);
   const markTabClean = useVaultStore((s) => s.markTabClean);
+  const folders = useVaultStore((s) => s.folders);
+  const items = useVaultStore((s) => s.items);
+  const openTab = useVaultStore((s) => s.openTab);
+  const setCurrentFolder = useVaultStore((s) => s.setCurrentFolder);
+
   const editorRef = useRef<HTMLDivElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
 
@@ -133,6 +148,17 @@ export function NoteEditor({
     inList: false,
     inOrderedList: false,
   });
+
+  // ─── Mention (@) State ──────────────────────────────────────────────────
+  const [mentionOpen, setMentionOpen] = useState(false);
+  const [mentionQuery, setMentionQuery] = useState("");
+  const [mentionPos, setMentionPos] = useState({ left: 0, top: 0 });
+  const [selectedIndex, setSelectedIndex] = useState(0);
+  const savedMentionRangeRef = useRef<{
+    textNode: Node;
+    atIndex: number;
+    endIndex: number;
+  } | null>(null);
 
   const [isPending, startTransition] = useTransition();
   const isDirty = content !== lastSavedContent;
@@ -211,6 +237,155 @@ export function NoteEditor({
     recalcWordCount(html);
   }, []);
 
+  // ─── Mention trigger detection ──────────────────────────────────────────
+  const checkMentionTrigger = useCallback(() => {
+    if (readOnly) {
+      setMentionOpen(false);
+      return;
+    }
+
+    const sel = window.getSelection();
+    if (!sel || sel.rangeCount === 0 || !sel.isCollapsed) {
+      setMentionOpen(false);
+      return;
+    }
+
+    const range = sel.getRangeAt(0);
+    const node = range.startContainer;
+    if (node.nodeType !== Node.TEXT_NODE || !editorRef.current?.contains(node)) {
+      setMentionOpen(false);
+      return;
+    }
+
+    const textBeforeCaret = node.nodeValue?.substring(0, range.startOffset) || "";
+    const match = /(?:^|\s)@([^\s@]*)$/.exec(textBeforeCaret);
+
+    if (match) {
+      const query = match[1];
+      const atIndex = textBeforeCaret.lastIndexOf("@");
+
+      savedMentionRangeRef.current = {
+        textNode: node,
+        atIndex,
+        endIndex: range.startOffset,
+      };
+
+      setMentionQuery(query);
+      setSelectedIndex(0);
+
+      const rect = range.getBoundingClientRect();
+      setMentionPos({
+        left: rect.left,
+        top: rect.bottom + 6,
+      });
+      setMentionOpen(true);
+    } else {
+      setMentionOpen(false);
+    }
+  }, [readOnly]);
+
+  const mentionCandidates = useMemo(() => {
+    if (!mentionOpen) return [];
+    const q = mentionQuery.toLowerCase().trim();
+
+    const matchedFolders = folders
+      .filter((f) => !f.isRoot && f.name.toLowerCase().includes(q))
+      .map((f) => ({
+        id: f.id,
+        title: f.name,
+        kind: "folder" as const,
+        color: f.color,
+      }));
+
+    const matchedItems = items
+      .filter((i) => i.id !== item.id && i.title.toLowerCase().includes(q))
+      .map((i) => ({
+        id: i.id,
+        title: i.title,
+        kind: "item" as const,
+        type: i.type,
+      }));
+
+    return [...matchedFolders, ...matchedItems].slice(0, 8);
+  }, [mentionOpen, mentionQuery, folders, items, item.id]);
+
+  const insertMention = useCallback(
+    (candidate: MentionCandidate) => {
+      if (!candidate || !savedMentionRangeRef.current) return;
+      const { textNode, atIndex, endIndex } = savedMentionRangeRef.current;
+
+      const fullText = textNode.nodeValue || "";
+      const beforeText = fullText.substring(0, atIndex);
+      const afterText = fullText.substring(endIndex);
+
+      textNode.nodeValue = beforeText;
+
+      const iconEmoji = candidate.kind === "folder" ? "📁" : ITEM_TYPE_META[candidate.type]?.label.split(" ")[0] || "📄";
+
+      const chip = document.createElement("a");
+      chip.href = "#";
+      chip.className = "mention-chip";
+      chip.setAttribute("contenteditable", "false");
+      chip.setAttribute("data-mention-kind", candidate.kind);
+      chip.setAttribute("data-mention-id", candidate.id);
+      chip.title = `Clique para abrir ${candidate.title}`;
+      chip.innerHTML = `<span>${iconEmoji}</span><span>${candidate.title}</span>`;
+
+      const space = document.createTextNode(" " + (afterText.startsWith(" ") ? afterText.substring(1) : afterText));
+
+      const parent = textNode.parentNode;
+      if (parent) {
+        if (textNode.nextSibling) {
+          parent.insertBefore(chip, textNode.nextSibling);
+          parent.insertBefore(space, chip.nextSibling);
+        } else {
+          parent.appendChild(chip);
+          parent.appendChild(space);
+        }
+
+        const sel = window.getSelection();
+        if (sel) {
+          const range = document.createRange();
+          range.setStart(space, 1);
+          range.collapse(true);
+          sel.removeAllRanges();
+          sel.addRange(range);
+        }
+      }
+
+      setMentionOpen(false);
+      handleInput();
+    },
+    [handleInput]
+  );
+
+  // Click delegate for clicking mention links in the note
+  const handleEditorClick = useCallback(
+    (e: React.MouseEvent) => {
+      const target = e.target as HTMLElement;
+      const chip = target.closest<HTMLElement>("[data-mention-kind]");
+      if (chip) {
+        e.preventDefault();
+        e.stopPropagation();
+        const kind = chip.getAttribute("data-mention-kind");
+        const id = chip.getAttribute("data-mention-id");
+
+        if (kind === "item" && id) {
+          const targetItem = items.find((i) => i.id === id);
+          if (targetItem) {
+            openTab(targetItem);
+          } else {
+            toast.error("Este arquivo não foi encontrado.");
+          }
+        } else if (kind === "folder" && id) {
+          setCurrentFolder(id);
+          router.push(`/vault/folder/${id}`);
+        }
+      }
+    },
+    [items, openTab, setCurrentFolder, router]
+  );
+
   // Insert image HTML into editor safely
   const insertImageHtml = useCallback(
     (src: string, alt = "Imagem") => {
@@ -256,8 +431,8 @@ export function NoteEditor({
   // Paste image handler
   const handlePaste = useCallback(
     async (e: React.ClipboardEvent) => {
-      const items = Array.from(e.clipboardData.items);
-      const imageItem = items.find((it) => it.type.startsWith("image/"));
+      const itemsList = Array.from(e.clipboardData.items);
+      const imageItem = itemsList.find((it) => it.type.startsWith("image/"));
 
       if (imageItem) {
         e.preventDefault();
@@ -283,8 +458,8 @@ export function NoteEditor({
   // Drop image handler
   const handleDrop = useCallback(
     async (e: React.DragEvent) => {
-      const files = Array.from(e.dataTransfer.files);
-      const imageFile = files.find((f) => f.type.startsWith("image/"));
+      const filesList = Array.from(e.dataTransfer.files);
+      const imageFile = filesList.find((f) => f.type.startsWith("image/"));
 
       if (imageFile) {
         e.preventDefault();
@@ -308,9 +483,9 @@ export function NoteEditor({
   const handleImageFileSelect = async (
     e: React.ChangeEvent<HTMLInputElement>
   ) => {
-    const files = e.target.files;
-    if (!files || files.length === 0) return;
-    const file = files[0];
+    const filesList = e.target.files;
+    if (!filesList || filesList.length === 0) return;
+    const file = filesList[0];
     try {
       toast.loading("Inserindo imagem…", { id: "uploading-img" });
       const dataUrl = await compressImageFile(file);
@@ -327,6 +502,8 @@ export function NoteEditor({
 
   const handleSelectionChange = useCallback(() => {
     if (readOnly) return;
+    checkMentionTrigger();
+
     const sel = window.getSelection();
     if (!sel || sel.isCollapsed || sel.rangeCount === 0) {
       setToolbarVisible(false);
@@ -356,7 +533,7 @@ export function NoteEditor({
     });
 
     setToolbarVisible(true);
-  }, [readOnly]);
+  }, [readOnly, checkMentionTrigger]);
 
   const detectBlockTag = (): string => {
     const sel = window.getSelection();
@@ -381,8 +558,34 @@ export function NoteEditor({
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
+      if (mentionOpen && mentionCandidates.length > 0) {
+        if (e.key === "ArrowDown") {
+          e.preventDefault();
+          setSelectedIndex((prev) => (prev + 1) % mentionCandidates.length);
+          return;
+        }
+        if (e.key === "ArrowUp") {
+          e.preventDefault();
+          setSelectedIndex(
+            (prev) => (prev - 1 + mentionCandidates.length) % mentionCandidates.length
+          );
+          return;
+        }
+        if (e.key === "Enter" || e.key === "Tab") {
+          e.preventDefault();
+          insertMention(mentionCandidates[selectedIndex]);
+          return;
+        }
+        if (e.key === "Escape") {
+          e.preventDefault();
+          setMentionOpen(false);
+          return;
+        }
+      }
+
       if (e.key === "Escape") {
         setToolbarVisible(false);
+        setMentionOpen(false);
         return;
       }
       const mod = e.metaKey || e.ctrlKey;
@@ -406,7 +609,16 @@ export function NoteEditor({
         });
       }
     },
-    [content, item.id, updateItem, startTransition]
+    [
+      mentionOpen,
+      mentionCandidates,
+      selectedIndex,
+      insertMention,
+      content,
+      item.id,
+      updateItem,
+      startTransition,
+    ]
   );
 
   const execFormat = useCallback(
@@ -469,7 +681,7 @@ export function NoteEditor({
 
   return (
     <TooltipProvider delayDuration={400}>
-      <div className="flex h-full flex-col bg-[var(--background)]">
+      <div className="relative flex h-full flex-col bg-[var(--background)]">
         {/* Hidden file input for image uploads */}
         <input
           ref={imageInputRef}
@@ -498,7 +710,12 @@ export function NoteEditor({
             data-vault-editor
             contentEditable={!readOnly}
             suppressContentEditableWarning
-            onInput={handleInput}
+            onInput={() => {
+              handleInput();
+              checkMentionTrigger();
+            }}
+            onKeyUp={checkMentionTrigger}
+            onClick={handleEditorClick}
             onKeyDown={handleKeyDown}
             onMouseUp={handleSelectionChange}
             onPaste={handlePaste}
@@ -511,6 +728,62 @@ export function NoteEditor({
             data-placeholder={placeholder}
           />
         </div>
+
+        {/* Mention Popover Menu (@) */}
+        {mentionOpen && mentionCandidates.length > 0 && (
+          <div
+            style={{
+              position: "fixed",
+              left: mentionPos.left,
+              top: mentionPos.top,
+              zIndex: 9999,
+            }}
+            className="flex w-72 flex-col overflow-hidden rounded-xl border border-[var(--border-strong)] bg-[var(--surface)] p-1 shadow-2xl ring-1 ring-black/10"
+          >
+            <div className="flex items-center gap-1.5 border-b border-[var(--border)] px-3 py-2 text-[11px] font-semibold uppercase tracking-wider text-[var(--foreground-subtle)]">
+              <AtSign className="h-3.5 w-3.5 text-[var(--primary)]" />
+              Mencionar arquivo ou pasta
+            </div>
+            <div className="max-h-56 overflow-y-auto p-1">
+              {mentionCandidates.map((candidate, idx) => {
+                const isSelected = idx === selectedIndex;
+                const Icon =
+                  candidate.kind === "folder"
+                    ? FolderIcon
+                    : ITEM_TYPE_META[candidate.type]?.icon || AtSign;
+
+                return (
+                  <button
+                    key={`${candidate.kind}-${candidate.id}`}
+                    type="button"
+                    onClick={() => insertMention(candidate)}
+                    onMouseEnter={() => setSelectedIndex(idx)}
+                    className={cn(
+                      "flex w-full items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-left text-xs transition-colors",
+                      isSelected
+                        ? "bg-[var(--primary)]/10 text-[var(--primary)] font-medium"
+                        : "text-[var(--foreground)] hover:bg-[var(--surface-hover)]"
+                    )}
+                  >
+                    <Icon
+                      className="h-3.5 w-3.5 shrink-0"
+                      style={{
+                        color:
+                          candidate.kind === "folder"
+                            ? labelColorHex(candidate.color)
+                            : "var(--primary)",
+                      }}
+                    />
+                    <span className="flex-1 truncate">{candidate.title}</span>
+                    <span className="text-[10px] text-[var(--foreground-subtle)] uppercase">
+                      {candidate.kind === "folder" ? "Pasta" : candidate.type}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         {toolbarVisible && !readOnly && (
           <FloatingToolbar
@@ -894,6 +1167,10 @@ function htmlToMarkdown(html: string): string {
     .replace(/<s[^>]*>(.*?)<\/s>/gi, "~~$1~~")
     .replace(/<code[^>]*>(.*?)<\/code>/gi, "`$1`")
     .replace(/<img[^>]*src="([^"]*)"[^>]*>/gi, "![Imagem]($1)\n\n")
+    .replace(
+      /<a[^>]*data-mention-kind="([^"]*)"[^>]*data-mention-id="([^"]*)"[^>]*>(.*?)<\/a>/gi,
+      "[$3](#$1/$2)"
+    )
     .replace(/<a[^>]*href="([^"]*)"[^>]*>(.*?)<\/a>/gi, "[$2]($1)")
     .replace(/<li[^>]*>(.*?)<\/li>/gi, "- $1\n")
     .replace(/<[ou]l[^>]*>/gi, "\n")
