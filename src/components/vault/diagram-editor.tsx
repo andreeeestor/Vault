@@ -9,8 +9,9 @@ import { updateDiagramData } from "@/actions/items";
 import { useVaultStore } from "@/lib/vault-store";
 
 // ─── Tipos mínimos da API do Excalidraw ──────────────────────────────────────
+// Note: exportToBlob is NOT on the API instance — it is a standalone util exported
+// from the @excalidraw/excalidraw package. Only instance methods go here.
 type ExcalidrawAPI = {
-  exportToBlob: (opts: { mimeType: string; quality?: number }) => Promise<Blob>;
   getSceneElements: () => readonly unknown[];
   getAppState: () => Record<string, unknown>;
 };
@@ -165,7 +166,22 @@ export function DiagramEditor({ item }: { item: VaultItem }) {
   const handleExportPNG = useCallback(async () => {
     if (!excalidrawAPI) return;
     try {
-      const blob = await excalidrawAPI.exportToBlob({ mimeType: "image/png", quality: 1 });
+      // exportToBlob is a package-level util, not an instance method.
+      const { exportToBlob } = await import("@excalidraw/excalidraw");
+      const elements = excalidrawAPI.getSceneElements();
+      const appState = excalidrawAPI.getAppState();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const files = typeof (excalidrawAPI as any).getFiles === "function" ? (excalidrawAPI as any).getFiles() : {};
+
+      const blob = await exportToBlob({
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        elements: elements as any,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        appState: appState as any,
+        files,
+        mimeType: "image/png",
+        quality: 1,
+      });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
