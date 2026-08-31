@@ -267,7 +267,7 @@ function FileBrowserList({
             >
               {item.title}
             </span>
-            <span className="ml-auto shrink-0 text-[10px] text-[var(--foreground-subtle)]">
+            <span className="ml-auto shrink-0 text-[10px] text-[var(--foreground-subtle)]" suppressHydrationWarning>
               {formatRelativeDate(item.updatedAt)}
             </span>
           </button>

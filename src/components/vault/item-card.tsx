@@ -101,7 +101,10 @@ export function ItemCard({ item, orderedIds }: { item: VaultItem; orderedIds: st
           </div>
 
           <div className="flex items-center justify-between gap-2">
-            <span className="text-caption text-xs text-[var(--foreground-subtle)]">
+            <span
+              suppressHydrationWarning
+              className="text-caption text-xs text-[var(--foreground-subtle)]"
+            >
               {formatRelativeDate(item.updatedAt)}
             </span>
             <span
@@ -119,7 +122,7 @@ export function ItemCard({ item, orderedIds }: { item: VaultItem; orderedIds: st
           {item.type === "REMINDER" && item.reminderAt && (
             <div className="flex items-center gap-1 rounded-md bg-violet-500/10 px-1.5 py-0.5">
               <Clock className="h-3 w-3 shrink-0 text-violet-600" />
-              <span className="text-[10px] font-medium text-violet-600">
+              <span className="text-[10px] font-medium text-violet-600" suppressHydrationWarning>
                 {new Date(item.reminderAt).toLocaleString("pt-BR", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}
               </span>
               {item.reminderSent && (
@@ -224,7 +227,7 @@ function ExpiryBadge({ expiresAt }: { expiresAt: Date }) {
 
   return (
     <div className={`flex items-center rounded-md border px-1.5 py-0.5 ${className}`}>
-      <span className="text-[10px] font-medium">{label}</span>
+      <span className="text-[10px] font-medium" suppressHydrationWarning>{label}</span>
     </div>
   );
 }

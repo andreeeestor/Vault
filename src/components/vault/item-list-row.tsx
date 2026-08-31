@@ -91,7 +91,7 @@ export function FolderListRow({ folder, orderedIds }: { folder: Folder; orderedI
         <span className="text-[var(--foreground-subtle)] hidden md:block">
           {folder.itemCount} {folder.itemCount === 1 ? "item" : "itens"}
         </span>
-        <span className="text-[var(--foreground-subtle)] hidden md:block">{formatRelativeDate(folder.updatedAt)}</span>
+        <span className="text-[var(--foreground-subtle)] hidden md:block" suppressHydrationWarning>{formatRelativeDate(folder.updatedAt)}</span>
         <div className="flex justify-end pr-1 col-start-2 md:col-start-5 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
           <ItemDropdownMenu
             id={folder.id}
@@ -168,7 +168,7 @@ export function ItemListRow({ item, orderedIds }: { item: VaultItem; orderedIds:
         <span className="text-[var(--foreground-subtle)] hidden md:block">
           {item.fileSize ? formatBytes(item.fileSize) : "—"}
         </span>
-        <span className="text-[var(--foreground-subtle)] hidden md:block">{formatRelativeDate(item.updatedAt)}</span>
+        <span className="text-[var(--foreground-subtle)] hidden md:block" suppressHydrationWarning>{formatRelativeDate(item.updatedAt)}</span>
         <div className="flex items-center justify-end md:justify-between gap-1 pr-1 col-start-2 md:col-start-5">
           <div className="hidden md:flex items-center gap-1 min-w-0 flex-1">
             {item.tags.slice(0, 1).map((tag) => (

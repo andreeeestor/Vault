@@ -107,7 +107,7 @@ function Row({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex items-center justify-between">
       <dt className="text-[var(--foreground-subtle)]">{label}</dt>
-      <dd className="font-medium text-[var(--foreground)]">{value}</dd>
+      <dd suppressHydrationWarning className="font-medium text-[var(--foreground)]">{value}</dd>
     </div>
   );
 }

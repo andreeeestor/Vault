@@ -373,7 +373,7 @@ function ReminderViewer({ item }: { item: VaultItem }) {
                 <p className="text-xs font-semibold uppercase tracking-wider text-[var(--foreground-subtle)] mb-0.5">
                   Agendado para
                 </p>
-                <p className="text-sm font-medium text-[var(--foreground)]">
+                <p className="text-sm font-medium text-[var(--foreground)]" suppressHydrationWarning>
                   {reminderAt.toLocaleString("pt-BR", {
                     weekday: "long",
                     day: "numeric",
@@ -389,10 +389,10 @@ function ReminderViewer({ item }: { item: VaultItem }) {
 
           {!isSent && timeLeft !== null && (
             <div className="rounded-xl border border-violet-500/20 bg-violet-500/5 px-4 py-3 text-center">
-              <p className="text-xs font-semibold uppercase tracking-wider text-violet-500/70 mb-1">
+              <p className="text-xs font-semibold uppercase tracking-wider text-violet-500/70 mb-1" suppressHydrationWarning>
                 {timeLeft > 0 ? "Envio em" : "Pronto para envio"}
               </p>
-              <p className="text-2xl font-bold tabular-nums text-violet-600">
+              <p className="text-2xl font-bold tabular-nums text-violet-600" suppressHydrationWarning>
                 {timeLeft > 0 ? formatTimeLeft(timeLeft) : "⏳"}
               </p>
             </div>
