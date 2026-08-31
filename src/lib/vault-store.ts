@@ -27,6 +27,7 @@ import {
 
 import {
   createNote as apiCreateNote,
+  createDocument as apiCreateDocument,
   createSnippet as apiCreateSnippet,
   createLink as apiCreateLink,
   renameItem as apiRenameItem,
@@ -86,6 +87,7 @@ interface VaultState {
 
   createFolder: (name: string, parentId: string, color?: string) => Promise<Folder>;
   createNote: (title: string, folderId: string | null, expiresAt?: Date | null) => Promise<VaultItem>;
+  createDocument: (title: string, folderId: string | null, expiresAt?: Date | null) => Promise<VaultItem>;
   createSnippet: (title: string, folderId: string | null, codeLanguage?: string, expiresAt?: Date | null) => Promise<VaultItem>;
   createLink: (title: string, folderId: string | null, url: string, expiresAt?: Date | null) => Promise<VaultItem>;
   createReminder: (title: string, noteContent: string | null, reminderAt: Date, folderId: string | null, expiresAt?: Date | null) => Promise<VaultItem>;
@@ -112,6 +114,10 @@ interface VaultState {
   user: { name: string; email: string; image: string | null } | null;
   isSidebarOpen: boolean;
   setSidebarOpen: (open: boolean) => void;
+  isSidebarCollapsed: boolean;
+  setSidebarCollapsed: (collapsed: boolean) => void;
+  isFileBrowserCollapsed: boolean;
+  setFileBrowserCollapsed: (collapsed: boolean) => void;
 }
 
 function folderChildren(folders: Folder[], parentId: string): Folder[] {
@@ -134,6 +140,10 @@ export const useVaultStore = create<VaultState>((set, get) => ({
   lastSelectedId: null,
   isSidebarOpen: false,
   setSidebarOpen: (open) => set({ isSidebarOpen: open }),
+  isSidebarCollapsed: false,
+  setSidebarCollapsed: (collapsed) => set({ isSidebarCollapsed: collapsed }),
+  isFileBrowserCollapsed: false,
+  setFileBrowserCollapsed: (collapsed) => set({ isFileBrowserCollapsed: collapsed }),
 
   // ─── Tab system ───────────────────────────────────────
   openTabs: [],
@@ -244,6 +254,18 @@ export const useVaultStore = create<VaultState>((set, get) => ({
 
   createNote: async (title, folderId, expiresAt) => {
     const rawItem = await apiCreateNote({ title, folderId, expiresAt });
+    const item = mapItem(rawItem);
+    set((state) => ({
+      items: [item, ...state.items],
+      folders: state.folders.map((f) =>
+        f.id === folderId ? { ...f, itemCount: f.itemCount + 1 } : f
+      ),
+    }));
+    return item;
+  },
+
+  createDocument: async (title, folderId, expiresAt) => {
+    const rawItem = await apiCreateDocument({ title, folderId, expiresAt });
     const item = mapItem(rawItem);
     set((state) => ({
       items: [item, ...state.items],

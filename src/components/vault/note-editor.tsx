@@ -33,6 +33,8 @@ import {
   Image as ImageIcon,
   Folder as FolderIcon,
   AtSign,
+  FileText,
+  FileDown,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -128,6 +130,7 @@ export function NoteEditor({
 
   const editorRef = useRef<HTMLDivElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
+  const autosaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const [readOnly, setReadOnly] = useState(false);
   const [content, setContent] = useState(item.noteContent ?? "");
@@ -238,6 +241,19 @@ export function NoteEditor({
     setContent(html);
     updateItem(item.id, { noteContent: html });
     recalcWordCount(html);
+
+    if (autosaveTimer.current) clearTimeout(autosaveTimer.current);
+    autosaveTimer.current = setTimeout(() => {
+      startTransition(async () => {
+        try {
+          await updateNoteContent(item.id, html);
+          updateItem(item.id, { noteContent: html });
+          setLastSavedContent(html);
+        } catch (err) {
+          console.error(err);
+        }
+      });
+    }, 2000);
   }, [item.id, updateItem]);
 
   // ─── Mention trigger detection ──────────────────────────────────────────
@@ -323,7 +339,9 @@ export function NoteEditor({
 
       textNode.nodeValue = beforeText;
 
-      const iconEmoji = candidate.kind === "folder" ? "📁" : ITEM_TYPE_META[candidate.type]?.label.split(" ")[0] || "📄";
+      const iconSvg = candidate.kind === "folder"
+        ? `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline mr-1"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg>`
+        : `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline mr-1"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/></svg>`;
 
       const chip = document.createElement("a");
       chip.href = "#";
@@ -332,7 +350,7 @@ export function NoteEditor({
       chip.setAttribute("data-mention-kind", candidate.kind);
       chip.setAttribute("data-mention-id", candidate.id);
       chip.title = `Clique para abrir ${candidate.title}`;
-      chip.innerHTML = `<span>${iconEmoji}</span><span>${candidate.title}</span>`;
+      chip.innerHTML = `${iconSvg}<span>${candidate.title}</span>`;
 
       const space = document.createTextNode(" " + (afterText.startsWith(" ") ? afterText.substring(1) : afterText));
 
@@ -875,14 +893,14 @@ function StaticToolbar({
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="min-w-[180px]">
-            <DropdownMenuItem onSelect={onExportPdf}>
-              📄 Exportar em PDF (.pdf)
+            <DropdownMenuItem onSelect={onExportPdf} className="flex items-center gap-2">
+              <FileText className="h-3.5 w-3.5 text-rose-500" /> Exportar em PDF (.pdf)
             </DropdownMenuItem>
-            <DropdownMenuItem onSelect={onExportDocx}>
-              📝 Exportar em Word (.docx)
+            <DropdownMenuItem onSelect={onExportDocx} className="flex items-center gap-2">
+              <FileDown className="h-3.5 w-3.5 text-blue-500" /> Exportar em Word (.docx)
             </DropdownMenuItem>
-            <DropdownMenuItem onSelect={onExportMd}>
-              📑 Exportar em Markdown (.md)
+            <DropdownMenuItem onSelect={onExportMd} className="flex items-center gap-2">
+              <Code className="h-3.5 w-3.5 text-amber-500" /> Exportar em Markdown (.md)
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

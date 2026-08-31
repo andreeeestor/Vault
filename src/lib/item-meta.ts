@@ -8,6 +8,7 @@ import {
   KeyRound,
   Bell,
   PenLine,
+  BookText,
   type LucideIcon,
 } from "lucide-react";
 import type { ItemType } from "@/types";
@@ -23,6 +24,7 @@ export const ITEM_TYPE_META: Record<ItemType, ItemTypeMeta> = {
   PDF: { label: "PDF", icon: FileText, accent: "#DC2626" },
   AUDIO: { label: "Áudio", icon: Music, accent: "#0284C7" },
   NOTE: { label: "Nota", icon: StickyNote, accent: "#D97706" },
+  DOCUMENT: { label: "Documento", icon: BookText, accent: "#6366F1" },
   SNIPPET: { label: "Snippet", icon: Code2, accent: "#059669" },
   LINK: { label: "Link", icon: Link2, accent: "#7C3AED" },
   PASSWORD: { label: "Senha", icon: KeyRound, accent: "#E11D48" },

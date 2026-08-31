@@ -106,7 +106,7 @@ export default function ReminderEmail({
                 lineHeight: "1.6",
               }}
             >
-              Olá, <strong style={{ color: "#1E1B2E" }}>{userName}</strong>! 👋
+              Olá, <strong style={{ color: "#1E1B2E" }}>{userName}</strong>!
               <br />
               Este é um aviso do seu cofre Vault:
             </Text>
@@ -159,7 +159,7 @@ export default function ReminderEmail({
                   gap: "4px",
                 }}
               >
-                📅 {formattedDate}
+                {formattedDate}
               </Text>
             </Section>
 

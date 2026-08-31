@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import type { MouseEvent } from "react";
-import { Star } from "lucide-react";
+import { Star, Clock, Check } from "lucide-react";
 import { motion } from "motion/react";
 import type { VaultItem } from "@/types";
 import { ITEM_TYPE_META } from "@/lib/item-meta";
@@ -118,11 +118,14 @@ export function ItemCard({ item, orderedIds }: { item: VaultItem; orderedIds: st
           {/* Badge de lembrete */}
           {item.type === "REMINDER" && item.reminderAt && (
             <div className="flex items-center gap-1 rounded-md bg-violet-500/10 px-1.5 py-0.5">
+              <Clock className="h-3 w-3 shrink-0 text-violet-600" />
               <span className="text-[10px] font-medium text-violet-600">
-                ⏰ {new Date(item.reminderAt).toLocaleString("pt-BR", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}
+                {new Date(item.reminderAt).toLocaleString("pt-BR", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}
               </span>
               {item.reminderSent && (
-                <span className="text-[9px] text-emerald-600 font-semibold">✓ Enviado</span>
+                <span className="flex items-center gap-0.5 text-[9px] text-emerald-600 font-semibold">
+                  <Check className="h-2.5 w-2.5" /> Enviado
+                </span>
               )}
             </div>
           )}

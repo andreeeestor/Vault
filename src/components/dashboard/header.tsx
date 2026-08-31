@@ -22,9 +22,11 @@ export function DashboardHeader({ breadcrumb }: { breadcrumb: ReactNode }) {
 
   return (
     <header className="glass sticky top-0 z-30 flex h-16 items-center gap-4 border-b border-[var(--border)] px-4 md:px-6">
+      {/* Mobile-only menu button */}
       <button
         onClick={() => setSidebarOpen(true)}
         className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[var(--radius-md)] border border-[var(--border-strong)] bg-[var(--surface)] text-[var(--foreground-muted)] transition-colors hover:bg-[var(--surface-hover)] md:hidden"
+        aria-label="Abrir menu"
       >
         <Menu className="h-5 w-5" />
       </button>

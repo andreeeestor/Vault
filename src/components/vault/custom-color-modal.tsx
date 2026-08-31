@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Palette } from "lucide-react";
+import { Palette, X } from "lucide-react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -60,7 +60,7 @@ export function CustomColorModal({
               onClick={onClose}
               className="flex h-8 w-8 items-center justify-center rounded-lg text-[var(--foreground-muted)] hover:bg-[var(--surface-hover)]"
             >
-              ✕
+              <X className="h-4 w-4" />
             </button>
           </div>
 

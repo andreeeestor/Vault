@@ -1,10 +1,11 @@
 "use client";
 
 import { useRef, useEffect, useState } from "react";
-import { X, Circle } from "lucide-react";
+import { X, Circle, PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import { useVaultStore, type Tab } from "@/lib/vault-store";
 import { ITEM_TYPE_META } from "@/lib/item-meta";
 import { UnsavedChangesModal } from "./unsaved-changes-modal";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 
 export function TabBar() {
@@ -13,6 +14,8 @@ export function TabBar() {
   const dirtyTabIds = useVaultStore((s) => s.dirtyTabIds);
   const closeTab = useVaultStore((s) => s.closeTab);
   const setActiveTab = useVaultStore((s) => s.setActiveTab);
+  const isFileBrowserCollapsed = useVaultStore((s) => s.isFileBrowserCollapsed);
+  const setFileBrowserCollapsed = useVaultStore((s) => s.setFileBrowserCollapsed);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   // Pending close confirmation
@@ -64,6 +67,26 @@ export function TabBar() {
         className="flex h-9 shrink-0 items-stretch overflow-x-auto border-b border-[var(--border)] bg-[var(--background-elevated)]"
         style={{ scrollbarWidth: "none" }}
       >
+        {/* Toggle file browser sidebar */}
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              onClick={() => setFileBrowserCollapsed(!isFileBrowserCollapsed)}
+              className="flex h-full w-9 shrink-0 items-center justify-center border-r border-[var(--border)] text-[var(--foreground-muted)] transition-colors hover:bg-[var(--surface-hover)] hover:text-[var(--foreground)]"
+              aria-label={isFileBrowserCollapsed ? "Expandir menu de arquivos" : "Recolher menu de arquivos"}
+            >
+              {isFileBrowserCollapsed ? (
+                <PanelLeftOpen className="h-3.5 w-3.5" />
+              ) : (
+                <PanelLeftClose className="h-3.5 w-3.5" />
+              )}
+            </button>
+          </TooltipTrigger>
+          <TooltipContent side="bottom">
+            {isFileBrowserCollapsed ? "Expandir menu de arquivos" : "Recolher menu de arquivos"}
+          </TooltipContent>
+        </Tooltip>
+
         {openTabs.map((tab) => (
           <TabItem
             key={tab.id}

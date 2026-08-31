@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Eye, EyeOff, KeyRound, Lock, ShieldCheck } from "lucide-react";
+import { Eye, EyeOff, KeyRound, Lock, ShieldCheck, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -129,7 +129,7 @@ export function NewPasswordModal({
             onClick={handleClose}
             className="flex h-8 w-8 items-center justify-center rounded-lg text-[var(--foreground-muted)] hover:bg-[var(--surface-hover)]"
           >
-            ✕
+            <X className="h-4 w-4" />
           </button>
         </div>
 

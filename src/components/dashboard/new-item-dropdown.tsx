@@ -1,13 +1,16 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { Plus, Upload, StickyNote, Code2, Link2, KeyRound, FolderPlus, Mic, FileText, Bell, PenLine } from "lucide-react";
+import { Plus, Upload, StickyNote, Code2, Link2, KeyRound, FolderPlus, Mic, FileText, Bell, PenLine, BookText, ChevronRight } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
+  DropdownMenuSub,
+  DropdownMenuSubTrigger,
+  DropdownMenuSubContent,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -23,13 +26,13 @@ export function NewItemDropdown() {
   const [hasMasterPass, setHasMasterPass] = useState(false);
   const [isEntityModalOpen, setIsEntityModalOpen] = useState(false);
   const [isAudioModalOpen, setIsAudioModalOpen] = useState(false);
-  const [entityKind, setEntityKind] = useState<"note" | "snippet" | "link" | "folder" | "reminder" | "diagram">("note");
+  const [entityKind, setEntityKind] = useState<"note" | "document" | "snippet" | "link" | "folder" | "reminder" | "diagram">("note");
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const currentFolderId = useVaultStore((s) => s.currentFolderId);
   const addItem = useVaultStore((s) => s.addItem);
 
-  const openEntityModal = (kind: "note" | "snippet" | "link" | "folder" | "reminder" | "diagram") => {
+  const openEntityModal = (kind: "note" | "document" | "snippet" | "link" | "folder" | "reminder" | "diagram") => {
     setEntityKind(kind);
     setIsEntityModalOpen(true);
   };
@@ -113,9 +116,29 @@ export function NewItemDropdown() {
             <Mic className="h-4 w-4" /> Gravar novo áudio
           </DropdownMenuItem>
           
-          <DropdownMenuItem onSelect={() => openEntityModal("note")}>
-            <FileText className="h-4 w-4" /> Nova Nota
-          </DropdownMenuItem>
+          <DropdownMenuSub>
+            <DropdownMenuSubTrigger className="flex items-center gap-2 cursor-pointer">
+              <FileText className="h-4 w-4" /> Novo arquivo de texto
+            </DropdownMenuSubTrigger>
+            <DropdownMenuSubContent className="min-w-[200px]">
+              <DropdownMenuItem onSelect={() => openEntityModal("note")} className="flex flex-col items-start gap-0.5 py-2.5">
+                <div className="flex items-center gap-2 font-medium">
+                  <StickyNote className="h-4 w-4 text-amber-500" /> Nota
+                </div>
+                <span className="pl-6 text-[11px] text-[var(--foreground-subtle)]">
+                  Bloco de notas rápido em Markdown
+                </span>
+              </DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => openEntityModal("document")} className="flex flex-col items-start gap-0.5 py-2.5">
+                <div className="flex items-center gap-2 font-medium">
+                  <BookText className="h-4 w-4 text-indigo-500" /> Documento
+                </div>
+                <span className="pl-6 text-[11px] text-[var(--foreground-subtle)]">
+                  Editor rico com toolbar completa
+                </span>
+              </DropdownMenuItem>
+            </DropdownMenuSubContent>
+          </DropdownMenuSub>
           
           <DropdownMenuItem onSelect={() => openEntityModal("snippet")}>
             <Code2 className="h-4 w-4" /> Novo snippet

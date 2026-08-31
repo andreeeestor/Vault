@@ -17,11 +17,16 @@ import { PasswordField } from "./password-item";
 import { SnippetEditor } from "./snippet-editor";
 import { NoteEditor } from "./note-editor";
 import { DiagramEditor } from "./diagram-editor";
+import { DocumentEditor } from "./document-editor";
 import { cn } from "@/lib/utils";
 
 export function ItemViewer({ item }: { item: VaultItem }) {
   if (item.type === "NOTE") {
     return <NoteEditor item={item} />;
+  }
+
+  if (item.type === "DOCUMENT") {
+    return <DocumentEditor item={item} />;
   }
 
   return <ItemViewerWithNotes item={item} />;

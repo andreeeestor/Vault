@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Eye, EyeOff, Copy, Check, ShieldQuestion, User, FileText } from "lucide-react";
+import { Eye, EyeOff, Copy, Check, ShieldQuestion, User, FileText, KeyRound } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
@@ -58,7 +58,7 @@ export function PasswordField({ item }: { item: VaultItem }) {
     <div className="flex flex-col gap-5 rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface)] p-6 shadow-sm">
       <div className="flex items-center gap-3 border-b border-[var(--border)] pb-4">
         <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-rose-500/10 text-rose-500">
-          🔑
+          <KeyRound className="h-5 w-5" />
         </div>
         <div>
           <h3 className="font-semibold text-[var(--foreground)]">{item.title}</h3>

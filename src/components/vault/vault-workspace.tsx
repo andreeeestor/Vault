@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { LayoutPanelLeft, Folder as FolderIcon } from "lucide-react";
+import { LayoutPanelLeft, Folder as FolderIcon, PanelLeftClose } from "lucide-react";
 import { useVaultStore, getChildFolders, getItemsInFolder } from "@/lib/vault-store";
 import { ITEM_TYPE_META } from "@/lib/item-meta";
 import { DashboardHeader } from "@/components/dashboard/header";
@@ -47,6 +47,7 @@ export function VaultWorkspace({ folderId }: { folderId: string }) {
   const setCurrentFolder = useVaultStore((s) => s.setCurrentFolder);
   const selectAll = useVaultStore((s) => s.selectAll);
   const clearSelection = useVaultStore((s) => s.clearSelection);
+  const isFileBrowserCollapsed = useVaultStore((s) => s.isFileBrowserCollapsed);
 
   // Tab state
   const openTabs = useVaultStore((s) => s.openTabs);
@@ -101,12 +102,15 @@ export function VaultWorkspace({ folderId }: { folderId: string }) {
 
         {/* ── Left: file browser ───────────────────────────────────────
             • No tabs open → fills full width (flex-1)
-            • Tabs open → 260px fixed, hidden on small screens
+            • Tabs open → 260px fixed (collapsible), hidden on small screens
         ─────────────────────────────────────────────────────────── */}
         <aside
           className={
             hasTabs
-              ? "hidden w-[260px] shrink-0 flex-col overflow-y-auto border-r border-[var(--border)] lg:flex"
+              ? cn(
+                  "shrink-0 flex-col overflow-y-auto border-r border-[var(--border)] transition-all duration-200",
+                  isFileBrowserCollapsed ? "hidden w-0" : "hidden w-[260px] lg:flex"
+                )
               : "flex flex-1 flex-col overflow-y-auto"
           }
           onClick={(e) => e.currentTarget === e.target && clearSelection()}
@@ -186,17 +190,31 @@ function FileBrowserList({
   const router = useRouter();
   const setCurrentFolder = useVaultStore((s) => s.setCurrentFolder);
   const openTab = useVaultStore((s) => s.openTab);
-
-  if (folders.length === 0 && items.length === 0) {
-    return (
-      <p className="py-8 text-center text-xs text-[var(--foreground-subtle)]">
-        Pasta vazia
-      </p>
-    );
-  }
+  const setFileBrowserCollapsed = useVaultStore((s) => s.setFileBrowserCollapsed);
 
   return (
     <div className="flex flex-col gap-0.5">
+      {/* Header with collapse button */}
+      <div className="mb-2 flex items-center justify-between px-1 pb-1.5 border-b border-[var(--border)]">
+        <span className="text-[11px] font-semibold uppercase tracking-wider text-[var(--foreground-subtle)]">
+          Arquivos
+        </span>
+        {/* <button
+          onClick={() => setFileBrowserCollapsed(true)}
+          className="flex h-6 w-6 items-center justify-center rounded text-[var(--foreground-muted)] transition-colors hover:bg-[var(--surface-hover)] hover:text-[var(--foreground)]"
+          title="Recolher menu de arquivos"
+          aria-label="Recolher menu de arquivos"
+        >
+          <PanelLeftClose className="h-3.5 w-3.5" />
+        </button> */}
+      </div>
+
+      {folders.length === 0 && items.length === 0 && (
+        <p className="py-8 text-center text-xs text-[var(--foreground-subtle)]">
+          Pasta vazia
+        </p>
+      )}
+
       {/* Folders */}
       {folders.map((folder) => (
         <button

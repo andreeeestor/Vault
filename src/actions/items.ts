@@ -37,6 +37,26 @@ export async function createNote(input: unknown) {
   return item;
 }
 
+export async function createDocument(input: unknown) {
+  const userId = await requireUserId();
+  const data = createNoteSchema.parse(input);
+
+  const item = await db.item.create({
+    data: {
+      userId,
+      type: "DOCUMENT",
+      title: data.title,
+      folderId: data.folderId,
+      noteContent: data.noteContent ?? "",
+      tags: data.tags,
+      expiresAt: data.expiresAt ?? null,
+    },
+  });
+
+  revalidatePath("/vault");
+  return item;
+}
+
 export async function updateNoteContent(itemId: string, noteContent: string) {
   const userId = await requireUserId();
   await db.item.update({

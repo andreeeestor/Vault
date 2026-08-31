@@ -30,6 +30,7 @@ export function SnippetEditor({ item }: { item: VaultItem }) {
   const [readOnly, setReadOnly] = useState(true);
   const [copied, setCopied] = useState(false);
   const editorRef = useRef<MonacoEditorNS.IStandaloneCodeEditor | null>(null);
+  const autosaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const [lastSavedContent, setLastSavedContent] = useState(item.codeContent ?? "");
 
@@ -160,6 +161,19 @@ export function SnippetEditor({ item }: { item: VaultItem }) {
             const val = value ?? "";
             setContent(val);
             updateItem(item.id, { codeContent: val });
+
+            if (autosaveTimer.current) clearTimeout(autosaveTimer.current);
+            autosaveTimer.current = setTimeout(() => {
+              startTransition(async () => {
+                try {
+                  await updateSnippetContent(item.id, val, language);
+                  updateItem(item.id, { codeContent: val, codeLanguage: language });
+                  setLastSavedContent(val);
+                } catch (err) {
+                  console.error(err);
+                }
+              });
+            }, 2000);
           }}
           options={{
             readOnly,

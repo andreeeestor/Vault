@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Palette, Check } from "lucide-react";
+import { Palette, Check, X } from "lucide-react";
 import { LABEL_COLORS, labelColorHex } from "@/lib/utils";
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
@@ -94,9 +94,9 @@ export function FolderColorPicker({
               <button
                 type="button"
                 onClick={() => setShowCustomPopover(false)}
-                className="text-xs text-[var(--foreground-subtle)] hover:text-[var(--foreground)]"
+                className="flex h-5 w-5 items-center justify-center rounded text-[var(--foreground-subtle)] hover:bg-[var(--surface-hover)] hover:text-[var(--foreground)]"
               >
-                ✕
+                <X className="h-3.5 w-3.5" />
               </button>
             </div>
 

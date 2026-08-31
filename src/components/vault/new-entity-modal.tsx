@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { FolderPlus, StickyNote, Code2, Link2, Plus, Bell, PenLine } from "lucide-react";
+import { FolderPlus, StickyNote, Code2, Link2, Plus, Bell, PenLine, BookText, X, ChevronDown } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,13 +20,14 @@ import { FolderColorPicker } from "./folder-color-picker";
 interface NewEntityModalProps {
   open: boolean;
   onClose: () => void;
-  kind: "note" | "snippet" | "link" | "folder" | "reminder" | "diagram";
+  kind: "note" | "document" | "snippet" | "link" | "folder" | "reminder" | "diagram";
 }
 
 export function NewEntityModal({ open, onClose, kind }: NewEntityModalProps) {
   const router = useRouter();
   const currentFolderId = useVaultStore((s) => s.currentFolderId);
   const createNote = useVaultStore((s) => s.createNote);
+  const createDocument = useVaultStore((s) => s.createDocument);
   const createSnippet = useVaultStore((s) => s.createSnippet);
   const createLink = useVaultStore((s) => s.createLink);
   const createFolder = useVaultStore((s) => s.createFolder);
@@ -76,6 +77,11 @@ export function NewEntityModal({ open, onClose, kind }: NewEntityModalProps) {
         if (kind === "note") {
           const item = await createNote(trimmedTitle, getFolderIdForDb(), expiresAt);
           toast.success(expiresAt ? `Nota temporária criada! Expira em ${expiryTime}.` : "Nota criada com sucesso!");
+          openTab(item);
+          handleClose();
+        } else if (kind === "document") {
+          const item = await createDocument(trimmedTitle, getFolderIdForDb(), expiresAt);
+          toast.success(expiresAt ? `Documento temporário criado! Expira em ${expiryTime}.` : "Documento criado com sucesso!");
           openTab(item);
           handleClose();
         } else if (kind === "snippet") {
@@ -144,6 +150,7 @@ export function NewEntityModal({ open, onClose, kind }: NewEntityModalProps) {
 
   const icons = {
     note: StickyNote,
+    document: BookText,
     snippet: Code2,
     link: Link2,
     folder: FolderPlus,
@@ -159,6 +166,12 @@ export function NewEntityModal({ open, onClose, kind }: NewEntityModalProps) {
       desc: "Crie uma nova nota formatada em markdown",
       inputLabel: "Título da nota",
       placeholder: "Minhas ideias, Roteiro de viagem...",
+    },
+    document: {
+      title: "Novo documento",
+      desc: "Crie um documento rico com formatação completa",
+      inputLabel: "Título do documento",
+      placeholder: "Relatório mensal, Contrato, NDA...",
     },
     snippet: {
       title: "Novo snippet",
@@ -217,7 +230,7 @@ export function NewEntityModal({ open, onClose, kind }: NewEntityModalProps) {
             onClick={handleClose}
             className="flex h-8 w-8 items-center justify-center rounded-lg text-[var(--foreground-muted)] hover:bg-[var(--surface-hover)]"
           >
-            ✕
+            <X className="h-4 w-4" />
           </button>
         </div>
 
@@ -303,7 +316,7 @@ export function NewEntityModal({ open, onClose, kind }: NewEntityModalProps) {
                 <DropdownMenu>
                   <DropdownMenuTrigger className="flex w-full items-center justify-between rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-sm text-[var(--foreground)] outline-none hover:bg-[var(--surface-hover)]">
                     {languageLabel(language)}
-                    <span className="text-xs text-[var(--foreground-subtle)]">▼</span>
+                    <ChevronDown className="h-3.5 w-3.5 text-[var(--foreground-subtle)]" />
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="start" className="w-[380px] max-h-60 overflow-y-auto">
                     {SNIPPET_LANGUAGES.map((lang) => (

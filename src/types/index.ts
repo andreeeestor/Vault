@@ -3,6 +3,7 @@ export type ItemType =
   | "PDF"
   | "AUDIO"
   | "NOTE"
+  | "DOCUMENT"
   | "SNIPPET"
   | "LINK"
   | "PASSWORD"

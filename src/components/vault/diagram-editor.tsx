@@ -113,7 +113,9 @@ export function DiagramEditor({ item }: { item: VaultItem }) {
     }
   })()).current;
 
-  // Função manual de salvamento
+  const autosaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Função de salvamento
   const handleSave = useCallback(async () => {
     if (!excalidrawAPI || saveStatus === "saving") return;
     setSaveStatus("saving");
@@ -132,24 +134,26 @@ export function DiagramEditor({ item }: { item: VaultItem }) {
 
       setSaveStatus("saved");
       setHasUnsavedChanges(false);
-      toast.success("Diagrama salvo com sucesso!");
       setTimeout(() => setSaveStatus("idle"), 2500);
     } catch (err) {
       console.error("Erro ao salvar diagrama:", err);
       setSaveStatus("error");
-      toast.error("Erro ao salvar o diagrama.");
       setTimeout(() => setSaveStatus("idle"), 3000);
     }
   }, [excalidrawAPI, saveStatus, item.id, updateItem]);
 
-  // Captura alterações na cena (marca como alterado)
+  // Captura alterações na cena e salva após 2 segundos
   const handleChange = useCallback(() => {
     if (isInitialMount.current) {
       isInitialMount.current = false;
       return;
     }
     setHasUnsavedChanges(true);
-  }, []);
+    if (autosaveTimer.current) clearTimeout(autosaveTimer.current);
+    autosaveTimer.current = setTimeout(() => {
+      handleSave();
+    }, 2000);
+  }, [handleSave]);
 
   // Atalho de teclado Ctrl+S / Cmd+S para salvar
   useEffect(() => {
