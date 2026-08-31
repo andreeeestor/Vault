@@ -98,6 +98,9 @@ export function DocumentEditor({ item }: { item: VaultItem }) {
   const linkInputRef = useRef<HTMLInputElement>(null);
   const autosaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const savedRangeRef = useRef<Range | null>(null);
+  const isEditorFocusedRef = useRef(false);
+  const isSavingRef = useRef(false);
+  const pendingSaveRef = useRef<string | null>(null);
 
   const [content, setContent] = useState(item.noteContent ?? "");
   const [lastSavedContent, setLastSavedContent] = useState(item.noteContent ?? "");
@@ -116,21 +119,56 @@ export function DocumentEditor({ item }: { item: VaultItem }) {
   useEffect(() => { return () => markTabClean(item.id); }, [item.id]);
 
   useEffect(() => {
-    if (editorRef.current && item.noteContent !== undefined) {
-      const cleaned = (item.noteContent ?? "").replace(/<img[^>]*src=['"]blob:[^'"]*['"][^>]*>/gi, "");
-      if (editorRef.current.innerHTML !== cleaned) editorRef.current.innerHTML = cleaned;
-    }
+    if (!editorRef.current || item.noteContent === undefined) return;
+    // Never overwrite the DOM while the user is actively typing (would reset
+    // the caret and delete characters mid-keystroke).
+    if (isEditorFocusedRef.current) return;
+    const cleaned = (item.noteContent ?? "").replace(/<img[^>]*src=['"]blob:[^'"]*['"][^>]*>/gi, "");
+    if (editorRef.current.innerHTML !== cleaned) editorRef.current.innerHTML = cleaned;
   }, [item.noteContent]);
 
-  const doSave = useCallback((html: string) => {
+  // ─── Serialized autosave ────────────────────────────────────────────────
+  // Only one DB write is in flight at a time, coalescing pending saves so a
+  // stale snapshot never overwrites characters typed while saving.
+  const flushSave = useCallback(() => {
+    if (isSavingRef.current || pendingSaveRef.current === null) return;
+    const html = pendingSaveRef.current;
+    pendingSaveRef.current = null;
+    isSavingRef.current = true;
     startTransition(async () => {
       try {
         await updateNoteContent(item.id, html);
-        updateItem(item.id, { noteContent: html });
-        setLastSavedContent(html);
-      } catch { toast.error("Erro ao salvar documento."); }
+      } catch {
+        toast.error("Erro ao salvar documento.");
+      } finally {
+        isSavingRef.current = false;
+        // Only mark as saved (and sync the store) if the saved snapshot is
+        // still what's in the editor.
+        if (editorRef.current && editorRef.current.innerHTML === html) {
+          updateItem(item.id, { noteContent: html });
+          setLastSavedContent(html);
+        }
+        if (pendingSaveRef.current !== null) flushSave();
+      }
     });
   }, [item.id, updateItem]);
+
+  const requestSave = useCallback(
+    (html: string) => {
+      pendingSaveRef.current = html;
+      flushSave();
+    },
+    [flushSave]
+  );
+
+  // Manual save always saves the *current* editor DOM, never a stale snapshot.
+  const doSave = useCallback(
+    (html?: string) => {
+      const next = html ?? editorRef.current?.innerHTML ?? "";
+      if (next.length > 0) requestSave(next);
+    },
+    [requestSave]
+  );
 
   const handleInput = useCallback(() => {
     if (!editorRef.current) return;
@@ -138,8 +176,8 @@ export function DocumentEditor({ item }: { item: VaultItem }) {
     setContent(html);
     updateItem(item.id, { noteContent: html });
     if (autosaveTimer.current) clearTimeout(autosaveTimer.current);
-    autosaveTimer.current = setTimeout(() => doSave(html), 2000);
-  }, [item.id, updateItem, doSave]);
+    autosaveTimer.current = setTimeout(() => requestSave(html), 1500);
+  }, [item.id, updateItem, requestSave]);
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -399,6 +437,12 @@ export function DocumentEditor({ item }: { item: VaultItem }) {
               ref={editorRef}
               contentEditable
               suppressContentEditableWarning
+              onFocus={() => {
+                isEditorFocusedRef.current = true;
+              }}
+              onBlur={() => {
+                isEditorFocusedRef.current = false;
+              }}
               onInput={handleInput}
               onPaste={handlePaste}
               onDrop={handleDrop}

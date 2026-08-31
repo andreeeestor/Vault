@@ -131,6 +131,9 @@ export function NoteEditor({
   const editorRef = useRef<HTMLDivElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
   const autosaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isEditorFocusedRef = useRef(false);
+  const isSavingRef = useRef(false);
+  const pendingSaveRef = useRef<string | null>(null);
 
   const [readOnly, setReadOnly] = useState(false);
   const [content, setContent] = useState(item.noteContent ?? "");
@@ -181,19 +184,55 @@ export function NoteEditor({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [item.id]);
 
-  const handleSave = useCallback(() => {
+  // ─── Serialized autosave ────────────────────────────────────────────────
+  // Only one DB write is in flight at a time, and coalesced pending saves
+  // always use the *latest* editor content. This prevents two overlapping
+  // `updateNoteContent` calls from committing out of order, and never lets a
+  // stale snapshot overwrite characters typed while a save was in progress.
+  const flushSave = useCallback(() => {
+    if (isSavingRef.current || pendingSaveRef.current === null) return;
+    const html = pendingSaveRef.current;
+    pendingSaveRef.current = null;
+    isSavingRef.current = true;
     startTransition(async () => {
       try {
-        await updateNoteContent(item.id, content);
-        updateItem(item.id, { noteContent: content });
-        setLastSavedContent(content);
-        toast.success("Nota salva com sucesso!");
+        await updateNoteContent(item.id, html);
       } catch (err) {
         console.error(err);
         toast.error("Erro ao salvar nota.");
+      } finally {
+        isSavingRef.current = false;
+        // Only mark as saved (and sync the store) if the saved snapshot is
+        // still what's in the editor. If the user typed more meanwhile, the
+        // newer content is picked up by the pending queue below.
+        if (editorRef.current && editorRef.current.innerHTML === html) {
+          updateItem(item.id, { noteContent: html });
+          setLastSavedContent(html);
+        }
+        if (pendingSaveRef.current !== null) flushSave();
       }
     });
-  }, [content, item.id, updateItem]);
+  }, [item.id, updateItem]);
+
+  // Coalesce save requests while one write is already in flight (serial +
+  // trailing edge = never lose data).
+  const requestSave = useCallback(
+    (html: string) => {
+      pendingSaveRef.current = html;
+      flushSave();
+    },
+    [flushSave]
+  );
+
+  // Manual save (Ctrl/Cmd+S or the "vault-save-item" event) always saves the
+  // *current* editor DOM, never a stale snapshot.
+  const handleSave = useCallback(
+    (html?: string) => {
+      const next = html ?? editorRef.current?.innerHTML ?? "";
+      if (next.length > 0) requestSave(next);
+    },
+    [requestSave]
+  );
 
   useEffect(() => {
     const handleSaveEvent = () => handleSave();
@@ -202,17 +241,21 @@ export function NoteEditor({
       document.removeEventListener("vault-save-item", handleSaveEvent);
   }, [handleSave]);
 
+  // Keep the editor DOM in sync with external updates (e.g. loading an item),
+  // but NEVER overwrite it while the user is actively typing — doing so resets
+  // the caret and deletes characters mid-keystroke. The DOM is the source of
+  // truth while focused.
   useEffect(() => {
-    if (editorRef.current && item.noteContent !== undefined) {
-      // Remove dead/expired blob: URLs from previous sessions so they don't render broken icons
-      const cleaned = (item.noteContent ?? "").replace(
-        /<img[^>]*src=["']blob:[^"']*["'][^>]*>/gi,
-        ""
-      );
-      if (editorRef.current.innerHTML !== cleaned) {
-        editorRef.current.innerHTML = cleaned;
-        recalcWordCount(cleaned);
-      }
+    if (!editorRef.current || item.noteContent === undefined) return;
+    if (isEditorFocusedRef.current) return;
+    // Remove dead/expired blob: URLs from previous sessions so they don't render broken icons
+    const cleaned = (item.noteContent ?? "").replace(
+      /<img[^>]*src=["']blob:[^"']*["'][^>]*>/gi,
+      ""
+    );
+    if (editorRef.current.innerHTML !== cleaned) {
+      editorRef.current.innerHTML = cleaned;
+      recalcWordCount(cleaned);
     }
   }, [item.noteContent]);
 
@@ -243,18 +286,8 @@ export function NoteEditor({
     recalcWordCount(html);
 
     if (autosaveTimer.current) clearTimeout(autosaveTimer.current);
-    autosaveTimer.current = setTimeout(() => {
-      startTransition(async () => {
-        try {
-          await updateNoteContent(item.id, html);
-          updateItem(item.id, { noteContent: html });
-          setLastSavedContent(html);
-        } catch (err) {
-          console.error(err);
-        }
-      });
-    }, 2000);
-  }, [item.id, updateItem]);
+    autosaveTimer.current = setTimeout(() => requestSave(html), 1500);
+  }, [item.id, updateItem, requestSave]);
 
   // ─── Mention trigger detection ──────────────────────────────────────────
   const checkMentionTrigger = useCallback(() => {
@@ -623,11 +656,7 @@ export function NoteEditor({
       if (e.key === "`") saved(() => wrapCode());
       if (e.key === "s") {
         e.preventDefault();
-        startTransition(async () => {
-          await updateNoteContent(item.id, content);
-          updateItem(item.id, { noteContent: content });
-          toast.success("Nota salva");
-        });
+        handleSave();
       }
     },
     [
@@ -635,10 +664,7 @@ export function NoteEditor({
       mentionCandidates,
       selectedIndex,
       insertMention,
-      content,
-      item.id,
-      updateItem,
-      startTransition,
+      handleSave,
     ]
   );
 
@@ -731,6 +757,12 @@ export function NoteEditor({
             data-vault-editor
             contentEditable={!readOnly}
             suppressContentEditableWarning
+            onFocus={() => {
+              isEditorFocusedRef.current = true;
+            }}
+            onBlur={() => {
+              isEditorFocusedRef.current = false;
+            }}
             onInput={() => {
               handleInput();
               checkMentionTrigger();
