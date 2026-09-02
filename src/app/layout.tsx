@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Inter, Playfair_Display } from "next/font/google";
+import { Inter, Playfair_Display, Space_Grotesk } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/providers/theme-provider";
 import { Toaster } from "sonner";
@@ -19,6 +19,13 @@ const playfairDisplay = Playfair_Display({
   style: ["normal", "italic"],
 });
 
+const spaceGrotesk = Space_Grotesk({
+  variable: "--font-space",
+  subsets: ["latin"],
+  weight: ["300", "400", "500", "600", "700"],
+  display: "swap",
+});
+
 export const metadata: Metadata = {
   title: "Vault — Seu cofre digital pessoal",
   description:
@@ -32,10 +39,13 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="pt-BR" suppressHydrationWarning>
-      <body suppressHydrationWarning className={`${inter.variable} ${playfairDisplay.variable} font-sans antialiased`}>
+      <body
+        suppressHydrationWarning
+        className={`${inter.variable} ${playfairDisplay.variable} ${spaceGrotesk.variable} font-sans antialiased`}
+      >
         <ThemeProvider>
           <NextTopLoader
-            color="#7C3AED" 
+            color="#7C3AED"
             initialPosition={0.08}
             crawlSpeed={200}
             height={3}

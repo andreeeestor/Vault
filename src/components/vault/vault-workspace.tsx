@@ -115,7 +115,7 @@ export function VaultWorkspace({ folderId }: { folderId: string }) {
           }
           onClick={(e) => e.currentTarget === e.target && clearSelection()}
         >
-          <div className="p-3 sm:p-4">
+          <div className="p-3 sm:p-8">
             {hasTabs ? (
               /* Compact list for narrow 260px panel */
               <FileBrowserList

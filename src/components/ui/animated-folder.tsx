@@ -5,6 +5,10 @@ export interface AnimatedFolderProps {
   size?: number;
   items?: React.ReactNode[];
   className?: string;
+  /** Conteúdo renderizado sobre a capa da pasta (título, stats etc.) */
+  frontContent?: React.ReactNode;
+  /** Se fornecido, o clique ativa este callback em vez de abrir a pasta */
+  onActivate?: () => void;
 }
 
 const darkenColor = (hex: string, percent: number): string => {
@@ -31,6 +35,8 @@ export const AnimatedFolder: React.FC<AnimatedFolderProps> = ({
   size = 1,
   items = [],
   className = "",
+  frontContent,
+  onActivate,
 }) => {
   const maxItems = 3;
   const papers = items.slice(0, maxItems);
@@ -51,6 +57,10 @@ export const AnimatedFolder: React.FC<AnimatedFolderProps> = ({
 
   const handleClick = (e?: React.SyntheticEvent) => {
     e?.stopPropagation();
+    if (onActivate) {
+      onActivate();
+      return;
+    }
     setOpen((prev) => !prev);
     if (open) {
       setPaperOffsets(Array.from({ length: maxItems }, () => ({ x: 0, y: 0 })));
@@ -96,8 +106,8 @@ export const AnimatedFolder: React.FC<AnimatedFolderProps> = ({
   const scaleStyle: React.CSSProperties = {
     transform: `scale(${size})`,
     transformOrigin: "top left",
-    width: size < 1 ? `${100 * size}px` : undefined,
-    height: size < 1 ? `${80 * size}px` : undefined,
+    width: `${100 * size}px`,
+    height: `${80 * size}px`,
   };
 
   const getOpenTransform = (index: number) => {
@@ -187,6 +197,15 @@ export const AnimatedFolder: React.FC<AnimatedFolderProps> = ({
               ...(open && { transform: "skew(-15deg) scaleY(0.6)" }),
             }}
           ></div>
+          {frontContent && (
+            <div
+              className={`pointer-events-none absolute inset-0 z-40 flex flex-col justify-between p-1.5 transition-opacity duration-200 ${
+                open ? "opacity-0" : "group-hover:opacity-0"
+              }`}
+            >
+              {frontContent}
+            </div>
+          )}
         </div>
       </div>
     </div>
