@@ -2,13 +2,11 @@
 
 import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
-import { FolderOpen, Loader2 } from "lucide-react";
+import { Files, Folder as FolderIcon, FolderOpen, HardDrive, Loader2 } from "lucide-react";
 import { motion } from "motion/react";
 import type { Folder, VaultItem } from "@/types";
 import { cn, formatBytes, labelColorHex } from "@/lib/utils";
 import { getItemsInFolder, useVaultStore } from "@/lib/vault-store";
-import { AnimatedFolder } from "@/components/ui/animated-folder";
-import { MiniItemThumbnail } from "./mini-item-thumbnail";
 import { ItemContextMenu, ItemDropdownMenu } from "./item-context-menu";
 import { ItemCard } from "./item-card";
 import { EmptyState } from "./empty-state";
@@ -62,10 +60,8 @@ function FolderCard({ folder, orderedIds }: { folder: Folder; orderedIds: string
   const storeItems = useVaultStore((s) => s.items);
   const folderItems = getItemsInFolder(storeItems, folder.id);
   const folderSize = folderItems.reduce((acc, item) => acc + (item.fileSize ?? 0), 0);
-  const topItems = folderItems.slice(0, 3);
-  const paperThumbnails = topItems.map((item) => (
-    <MiniItemThumbnail key={item.id} item={item} />
-  ));
+  const folderColor = labelColorHex(folder.color) || "#5227FF";
+  const folderTint = `${folderColor}1F`;
 
   const isDropTarget = drag.isDragging && drag.hoveredDropTargetId === folder.id;
   const isBeingDragged = drag.isDragging && drag.draggedIds.includes(folder.id);
@@ -126,24 +122,38 @@ function FolderCard({ folder, orderedIds }: { folder: Folder; orderedIds: string
         whileHover={{ y: -2 }}
         whileTap={{ scale: 0.985 }}
         transition={{ type: "spring", bounce: 0, duration: 0.25 }}
-        className={cn(
-          "group relative flex h-full cursor-pointer flex-col gap-2 rounded-[var(--radius-lg)] border bg-[var(--surface)] p-4 shadow-[var(--shadow-sm)] transition-shadow hover:shadow-[var(--shadow-md)]",
-          isSelected ? "border-[var(--primary)] ring-2 ring-[var(--ring)]" : isDropTarget ? "drop-target-active" : "border-[var(--border)]",
-          isBeingDragged && "opacity-40"
-        )}
+        className="group relative h-full cursor-pointer pt-[10px]"
       >
-        {isNavigating && (
-          <div className="absolute inset-0 z-20 flex items-center justify-center rounded-[var(--radius-lg)] bg-[var(--surface)]/70 backdrop-blur-[2px]">
-            <Loader2 className="h-5 w-5 animate-spin text-[var(--primary)]" />
-          </div>
-        )}
-        <div className="relative flex min-h-0 flex-1 items-center justify-center">
-          <AnimatedFolder
-            color={labelColorHex(folder.color) || "#5227FF"}
-            size={0.75}
-            items={paperThumbnails}
-          />
-          <div className="absolute right-0 top-0">
+        {/* Aba da pasta (atrás do corpo) */}
+        <div
+          aria-hidden
+          className={cn(
+            "absolute top-0 left-3 h-[22px] w-[58%] rounded-t-[10px] border border-b-0 transition-colors",
+            isSelected ? "border-[var(--primary)]" : "border-[var(--border)]"
+          )}
+          style={{ backgroundColor: folderTint }}
+        />
+        {/* Corpo da pasta */}
+        <div
+          className={cn(
+            "relative flex h-full flex-col rounded-[14px] rounded-tl-[6px] border p-4 shadow-[var(--shadow-sm)] transition-shadow group-hover:shadow-[var(--shadow-md)]",
+            isSelected ? "border-[var(--primary)] ring-2 ring-[var(--ring)]" : isDropTarget ? "drop-target-active" : "border-[var(--border)]",
+            isBeingDragged && "opacity-40"
+          )}
+          style={{ background: `linear-gradient(160deg, ${folderTint}, var(--surface) 55%)` }}
+        >
+          {isNavigating && (
+            <div className="absolute inset-0 z-20 flex items-center justify-center rounded-[14px] rounded-tl-[6px] bg-[var(--surface)]/70 backdrop-blur-[2px]">
+              <Loader2 className="h-5 w-5 animate-spin text-[var(--primary)]" />
+            </div>
+          )}
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex min-w-0 items-center gap-2">
+              <FolderIcon className="size-4 shrink-0" style={{ color: folderColor }} />
+              <h3 className="truncate text-sm font-semibold text-[var(--foreground)]">
+                {folder.name}
+              </h3>
+            </div>
             <ItemDropdownMenu
               id={folder.id}
               kind="folder"
@@ -153,22 +163,40 @@ function FolderCard({ folder, orderedIds }: { folder: Folder; orderedIds: string
               }}
             />
           </div>
-        </div>
-        <div className="min-w-0">
-          <h3 className="truncate text-xl font-semibold tracking-tight text-[var(--foreground)]">
-            {folder.name}
-          </h3>
-          <p className="text-caption mt-1 truncate text-sm text-[var(--foreground-subtle)]">
-            {folder.itemCount} {folder.itemCount === 1 ? "item" : "itens"}
-            {folderSize > 0 && (
-              <>
-                <span className="mx-1.5">·</span>
-                {formatBytes(folderSize)}
-              </>
-            )}
-          </p>
+
+          <div className="mt-auto space-y-1.5">
+            <FolderStatRow
+              icon={Files}
+              label="Itens"
+              value={String(folder.itemCount)}
+            />
+            <FolderStatRow
+              icon={HardDrive}
+              label="Armazenamento"
+              value={formatBytes(folderSize)}
+            />
+          </div>
         </div>
       </motion.div>
     </ItemContextMenu>
+  );
+}
+
+function FolderStatRow({
+  icon: Icon,
+  label,
+  value,
+}: {
+  icon: React.ComponentType<{ className?: string }>;
+  label: string;
+  value: string;
+}) {
+  return (
+    <div className="flex items-center gap-2 text-xs">
+      <Icon className="size-3.5 shrink-0 text-[var(--foreground-subtle)]" />
+      <span className="shrink-0 text-[var(--foreground-subtle)]">{label}</span>
+      <span className="mx-1 flex-1 border-b border-dashed border-[var(--border)]" />
+      <span className="shrink-0 text-xs font-semibold text-[var(--foreground)]">{value}</span>
+    </div>
   );
 }
