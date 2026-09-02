@@ -1,5 +1,6 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { useState, useEffect } from "react";
 import {
   ZoomIn,
@@ -10,15 +11,36 @@ import {
   Clock,
   FileText,
   Columns,
+  Loader2,
 } from "lucide-react";
 import type { VaultItem } from "@/types";
 import { ITEM_TYPE_META } from "@/lib/item-meta";
 import { PasswordField } from "./password-item";
-import { SnippetEditor } from "./snippet-editor";
 import { NoteEditor } from "./note-editor";
-import { DiagramEditor } from "./diagram-editor";
-import { DocumentEditor } from "./document-editor";
 import { cn } from "@/lib/utils";
+
+// ─── Editores pesados carregados sob demanda (reduz o tempo de compilação/hidratação inicial) ──
+function EditorLoading() {
+  return (
+    <div className="flex h-full w-full items-center justify-center gap-2 text-sm text-[var(--foreground-subtle)]">
+      <Loader2 className="h-4 w-4 animate-spin" />
+      Carregando editor…
+    </div>
+  );
+}
+
+const SnippetEditor = dynamic(
+  () => import("./snippet-editor").then((m) => m.SnippetEditor),
+  { ssr: false, loading: EditorLoading }
+);
+const DiagramEditor = dynamic(
+  () => import("./diagram-editor").then((m) => m.DiagramEditor),
+  { ssr: false, loading: EditorLoading }
+);
+const DocumentEditor = dynamic(
+  () => import("./document-editor").then((m) => m.DocumentEditor),
+  { ssr: false, loading: EditorLoading }
+);
 
 export function ItemViewer({ item }: { item: VaultItem }) {
   if (item.type === "NOTE") {

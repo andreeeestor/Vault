@@ -1,10 +1,11 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { FolderOpen } from "lucide-react";
+import { useEffect, useState } from "react";
+import { useRouter, usePathname } from "next/navigation";
+import { FolderOpen, Loader2 } from "lucide-react";
 import { motion } from "motion/react";
 import type { Folder, VaultItem } from "@/types";
-import { cn, labelColorHex } from "@/lib/utils";
+import { cn, formatBytes, labelColorHex } from "@/lib/utils";
 import { getItemsInFolder, useVaultStore } from "@/lib/vault-store";
 import { AnimatedFolder } from "@/components/ui/animated-folder";
 import { MiniItemThumbnail } from "./mini-item-thumbnail";
@@ -27,7 +28,7 @@ export function ItemGrid({ folders, items }: { folders: Folder[]; items: VaultIt
 
   return (
     <div
-      className="grid gap-3 sm:gap-4"
+      className="grid auto-rows-[230px] gap-3 sm:gap-4"
       style={{ gridTemplateColumns: "repeat(auto-fill, minmax(135px, 1fr))" }}
     >
       {folders.map((folder) => (
@@ -42,6 +43,13 @@ export function ItemGrid({ folders, items }: { folders: Folder[]; items: VaultIt
 
 function FolderCard({ folder, orderedIds }: { folder: Folder; orderedIds: string[] }) {
   const router = useRouter();
+  const pathname = usePathname();
+  const [isNavigating, setIsNavigating] = useState(false);
+
+  // Reset do estado de navegação quando a rota muda (entrada na pasta concluída)
+  useEffect(() => {
+    setIsNavigating(false);
+  }, [pathname]);
   const selectedIds = useVaultStore((s) => s.selectedIds);
   const toggleSelect = useVaultStore((s) => s.toggleSelect);
   const selectRange = useVaultStore((s) => s.selectRange);
@@ -53,6 +61,7 @@ function FolderCard({ folder, orderedIds }: { folder: Folder; orderedIds: string
   const isSelected = selectedIds.has(folder.id);
   const storeItems = useVaultStore((s) => s.items);
   const folderItems = getItemsInFolder(storeItems, folder.id);
+  const folderSize = folderItems.reduce((acc, item) => acc + (item.fileSize ?? 0), 0);
   const topItems = folderItems.slice(0, 3);
   const paperThumbnails = topItems.map((item) => (
     <MiniItemThumbnail key={item.id} item={item} />
@@ -74,6 +83,7 @@ function FolderCard({ folder, orderedIds }: { folder: Folder; orderedIds: string
       toggleSelect(folder.id);
       return;
     }
+    setIsNavigating(true);
     setCurrentFolder(folder.id);
     router.push(`/vault/folder/${folder.id}`);
   };
@@ -117,30 +127,45 @@ function FolderCard({ folder, orderedIds }: { folder: Folder; orderedIds: string
         whileTap={{ scale: 0.985 }}
         transition={{ type: "spring", bounce: 0, duration: 0.25 }}
         className={cn(
-          "group flex cursor-pointer flex-col gap-3 rounded-[var(--radius-lg)] border bg-[var(--surface)] p-4 shadow-[var(--shadow-sm)] transition-shadow hover:shadow-[var(--shadow-md)]",
+          "group relative flex h-full cursor-pointer flex-col gap-2 rounded-[var(--radius-lg)] border bg-[var(--surface)] p-4 shadow-[var(--shadow-sm)] transition-shadow hover:shadow-[var(--shadow-md)]",
           isSelected ? "border-[var(--primary)] ring-2 ring-[var(--ring)]" : isDropTarget ? "drop-target-active" : "border-[var(--border)]",
           isBeingDragged && "opacity-40"
         )}
       >
-        <div className="flex items-start justify-between">
+        {isNavigating && (
+          <div className="absolute inset-0 z-20 flex items-center justify-center rounded-[var(--radius-lg)] bg-[var(--surface)]/70 backdrop-blur-[2px]">
+            <Loader2 className="h-5 w-5 animate-spin text-[var(--primary)]" />
+          </div>
+        )}
+        <div className="relative flex min-h-0 flex-1 items-center justify-center">
           <AnimatedFolder
             color={labelColorHex(folder.color) || "#5227FF"}
-            size={0.45}
+            size={0.75}
             items={paperThumbnails}
           />
-          <ItemDropdownMenu
-            id={folder.id}
-            kind="folder"
-            onOpen={() => {
-              setCurrentFolder(folder.id);
-              router.push(`/vault/folder/${folder.id}`);
-            }}
-          />
+          <div className="absolute right-0 top-0">
+            <ItemDropdownMenu
+              id={folder.id}
+              kind="folder"
+              onOpen={() => {
+                setCurrentFolder(folder.id);
+                router.push(`/vault/folder/${folder.id}`);
+              }}
+            />
+          </div>
         </div>
-        <div>
-          <h3 className="truncate text-sm font-medium text-[var(--foreground)]">{folder.name}</h3>
-          <p className="text-caption mt-0.5 text-xs text-[var(--foreground-subtle)]">
+        <div className="min-w-0">
+          <h3 className="truncate text-xl font-semibold tracking-tight text-[var(--foreground)]">
+            {folder.name}
+          </h3>
+          <p className="text-caption mt-1 truncate text-sm text-[var(--foreground-subtle)]">
             {folder.itemCount} {folder.itemCount === 1 ? "item" : "itens"}
+            {folderSize > 0 && (
+              <>
+                <span className="mx-1.5">·</span>
+                {formatBytes(folderSize)}
+              </>
+            )}
           </p>
         </div>
       </motion.div>
