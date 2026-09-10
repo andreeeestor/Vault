@@ -37,9 +37,8 @@ export function ItemDetailSidebar({
   const isEditable = true;
 
   return (
-    <aside className="flex w-full lg:w-[300px] shrink-0 flex-col gap-6 overflow-y-auto border-t lg:border-t-0 lg:border-l border-[var(--border)] bg-[var(--background-elevated)] p-4 sm:p-5">
-      <div className="flex items-center justify-between">
-        <h2 className="text-heading text-base font-semibold text-[var(--foreground)]">Detalhes</h2>
+    <aside className="flex w-60 min-w-0 shrink-0 flex-col gap-5 overflow-y-auto overflow-x-hidden border-t lg:border-t-0 lg:border-l border-[var(--border)] bg-[var(--background-elevated)] p-3.5">
+      <div className="flex items-center gap-1.5">
         {onClose && (
           <button
             onClick={onClose}
@@ -50,6 +49,7 @@ export function ItemDetailSidebar({
             <PanelRightClose className="h-4 w-4" />
           </button>
         )}
+        <h2 className="text-heading text-base font-semibold text-[var(--foreground)]">Detalhes</h2>
       </div>
 
       <dl className="flex flex-col gap-3 text-sm">
@@ -129,9 +129,15 @@ export function ItemDetailSidebar({
 
 function Row({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex items-center justify-between">
-      <dt className="text-[var(--foreground-subtle)]">{label}</dt>
-      <dd suppressHydrationWarning className="font-medium text-[var(--foreground)]">{value}</dd>
+    <div className="flex items-center justify-between gap-2">
+      <dt className="shrink-0 text-[var(--foreground-subtle)]">{label}</dt>
+      <dd
+        suppressHydrationWarning
+        className="min-w-0 truncate text-right font-medium text-[var(--foreground)]"
+        title={value}
+      >
+        {value}
+      </dd>
     </div>
   );
 }

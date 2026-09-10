@@ -168,7 +168,7 @@ export function VaultWorkspace({ folderId }: { folderId: string }) {
                     </div>
                     {/* Details sidebar (hidden on small screens, colapsável) */}
                     {isDetailsOpen ? (
-                      <div className="hidden lg:block">
+                      <div className="hidden w-60 shrink-0 lg:block">
                         <ItemDetailSidebar
                           item={item}
                           onClose={() => setIsDetailsOpen(false)}
