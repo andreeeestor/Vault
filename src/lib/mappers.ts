@@ -30,6 +30,7 @@ export function mapItem(
     reminderSent?: boolean | null;
     expiresAt?: Date | string | null;
     diagramData?: string | null;
+    spreadsheetData?: string | null;
   }
 ): VaultItem {
   return {
@@ -62,6 +63,7 @@ export function mapItem(
     reminderSent: !!i.reminderSent,
     expiresAt: i.expiresAt ? new Date(i.expiresAt) : null,
     diagramData: i.diagramData ?? null,
+    spreadsheetData: i.spreadsheetData ?? null,
     createdAt: new Date(i.createdAt),
     updatedAt: new Date(i.updatedAt),
   };

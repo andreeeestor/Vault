@@ -8,6 +8,7 @@ import {
   createLinkSchema,
   createNoteSchema,
   createSnippetSchema,
+  createSpreadsheetSchema,
   renameSchema,
 } from "@/lib/validators";
 
@@ -231,6 +232,38 @@ export async function updateDiagramData(itemId: string, diagramData: string) {
   const item = await db.item.update({
     where: { id: itemId, userId },
     data: { diagramData },
+  });
+  revalidatePath("/vault");
+  if (item.folderId) {
+    revalidatePath(`/vault/folder/${item.folderId}`);
+  }
+  return item;
+}
+
+export async function createSpreadsheet(input: unknown) {
+  const userId = await requireUserId();
+  const data = createSpreadsheetSchema.parse(input);
+
+  const item = await db.item.create({
+    data: {
+      userId,
+      type: "SPREADSHEET",
+      title: data.title,
+      folderId: data.folderId,
+      spreadsheetData: null,
+      expiresAt: data.expiresAt ?? null,
+    },
+  });
+
+  revalidatePath("/vault");
+  return item;
+}
+
+export async function updateSpreadsheetData(itemId: string, spreadsheetData: string) {
+  const userId = await requireUserId();
+  const item = await db.item.update({
+    where: { id: itemId, userId },
+    data: { spreadsheetData },
   });
   revalidatePath("/vault");
   if (item.folderId) {

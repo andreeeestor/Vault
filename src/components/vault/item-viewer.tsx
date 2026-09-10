@@ -41,6 +41,10 @@ const DocumentEditor = dynamic(
   () => import("./document-editor").then((m) => m.DocumentEditor),
   { ssr: false, loading: EditorLoading }
 );
+const SpreadsheetEditor = dynamic(
+  () => import("./spreadsheet-editor").then((m) => m.SpreadsheetEditor),
+  { ssr: false, loading: EditorLoading }
+);
 
 export function ItemViewer({ item }: { item: VaultItem }) {
   if (item.type === "NOTE") {
@@ -180,6 +184,8 @@ function renderPrimaryContent(item: VaultItem) {
       return <ReminderViewer item={item} />;
     case "DIAGRAM":
       return <DiagramEditor item={item} />;
+    case "SPREADSHEET":
+      return <SpreadsheetEditor item={item} />;
     default:
       return null;
   }

@@ -2,7 +2,19 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { FolderPlus, StickyNote, Code2, Link2, Plus, Bell, PenLine, BookText, X, ChevronDown } from "lucide-react";
+import {
+  FolderPlus,
+  StickyNote,
+  Code2,
+  Link2,
+  Plus,
+  Bell,
+  PenLine,
+  BookText,
+  X,
+  ChevronDown,
+  Table2,
+} from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,7 +32,15 @@ import { FolderColorPicker } from "./folder-color-picker";
 interface NewEntityModalProps {
   open: boolean;
   onClose: () => void;
-  kind: "note" | "document" | "snippet" | "link" | "folder" | "reminder" | "diagram";
+  kind:
+    | "note"
+    | "document"
+    | "snippet"
+    | "link"
+    | "folder"
+    | "reminder"
+    | "diagram"
+    | "spreadsheet";
 }
 
 export function NewEntityModal({ open, onClose, kind }: NewEntityModalProps) {
@@ -33,6 +53,7 @@ export function NewEntityModal({ open, onClose, kind }: NewEntityModalProps) {
   const createFolder = useVaultStore((s) => s.createFolder);
   const createReminder = useVaultStore((s) => s.createReminder);
   const createDiagram = useVaultStore((s) => s.createDiagram);
+  const createSpreadsheet = useVaultStore((s) => s.createSpreadsheet);
   const openTab = useVaultStore((s) => s.openTab);
 
   const [title, setTitle] = useState("");
@@ -66,8 +87,8 @@ export function NewEntityModal({ open, onClose, kind }: NewEntityModalProps) {
           unit === "minutos"
             ? num * 60 * 1000
             : unit === "dias"
-            ? num * 24 * 60 * 60 * 1000
-            : num * 60 * 60 * 1000; // horas
+              ? num * 24 * 60 * 60 * 1000
+              : num * 60 * 60 * 1000; // horas
         expiresAt = new Date(Date.now() + ms);
       }
     }
@@ -75,18 +96,43 @@ export function NewEntityModal({ open, onClose, kind }: NewEntityModalProps) {
     startTransition(async () => {
       try {
         if (kind === "note") {
-          const item = await createNote(trimmedTitle, getFolderIdForDb(), expiresAt);
-          toast.success(expiresAt ? `Nota temporária criada! Expira em ${expiryTime}.` : "Nota criada com sucesso!");
+          const item = await createNote(
+            trimmedTitle,
+            getFolderIdForDb(),
+            expiresAt
+          );
+          toast.success(
+            expiresAt
+              ? `Nota temporária criada! Expira em ${expiryTime}.`
+              : "Nota criada com sucesso!"
+          );
           openTab(item);
           handleClose();
         } else if (kind === "document") {
-          const item = await createDocument(trimmedTitle, getFolderIdForDb(), expiresAt);
-          toast.success(expiresAt ? `Documento temporário criado! Expira em ${expiryTime}.` : "Documento criado com sucesso!");
+          const item = await createDocument(
+            trimmedTitle,
+            getFolderIdForDb(),
+            expiresAt
+          );
+          toast.success(
+            expiresAt
+              ? `Documento temporário criado! Expira em ${expiryTime}.`
+              : "Documento criado com sucesso!"
+          );
           openTab(item);
           handleClose();
         } else if (kind === "snippet") {
-          const item = await createSnippet(trimmedTitle, getFolderIdForDb(), language, expiresAt);
-          toast.success(expiresAt ? `Snippet temporário criado! Expira em ${expiryTime}.` : "Snippet criado com sucesso!");
+          const item = await createSnippet(
+            trimmedTitle,
+            getFolderIdForDb(),
+            language,
+            expiresAt
+          );
+          toast.success(
+            expiresAt
+              ? `Snippet temporário criado! Expira em ${expiryTime}.`
+              : "Snippet criado com sucesso!"
+          );
           openTab(item);
           handleClose();
         } else if (kind === "link") {
@@ -94,13 +140,28 @@ export function NewEntityModal({ open, onClose, kind }: NewEntityModalProps) {
             toast.error("Informe a URL do link.");
             return;
           }
-          const parsedUrl = url.trim().startsWith("http") ? url.trim() : `https://${url.trim()}`;
-          const item = await createLink(trimmedTitle, getFolderIdForDb(), parsedUrl, expiresAt);
-          toast.success(expiresAt ? `Link temporário criado! Expira em ${expiryTime}.` : "Link adicionado com sucesso!");
+          const parsedUrl = url.trim().startsWith("http")
+            ? url.trim()
+            : `https://${url.trim()}`;
+          const item = await createLink(
+            trimmedTitle,
+            getFolderIdForDb(),
+            parsedUrl,
+            expiresAt
+          );
+          toast.success(
+            expiresAt
+              ? `Link temporário criado! Expira em ${expiryTime}.`
+              : "Link adicionado com sucesso!"
+          );
           openTab(item);
           handleClose();
         } else if (kind === "folder") {
-          const folder = await createFolder(trimmedTitle, currentFolderId, folderColor);
+          const folder = await createFolder(
+            trimmedTitle,
+            currentFolderId,
+            folderColor
+          );
           toast.success(`Pasta "${folder.name}" criada!`);
           router.push(`/vault/folder/${folder.id}`);
           handleClose();
@@ -119,13 +180,28 @@ export function NewEntityModal({ open, onClose, kind }: NewEntityModalProps) {
             reminderContent.trim() || null,
             reminderDate,
             getFolderIdForDb(),
-            expiresAt,
+            expiresAt
           );
-          toast.success(`Lembrete agendado para ${reminderDate.toLocaleString("pt-BR")}!`);
+          toast.success(
+            `Lembrete agendado para ${reminderDate.toLocaleString("pt-BR")}!`
+          );
           handleClose();
         } else if (kind === "diagram") {
-          const item = await createDiagram(trimmedTitle, getFolderIdForDb(), expiresAt);
+          const item = await createDiagram(
+            trimmedTitle,
+            getFolderIdForDb(),
+            expiresAt
+          );
           toast.success("Diagrama criado! Abrindo editor...");
+          openTab(item);
+          handleClose();
+        } else if (kind === "spreadsheet") {
+          const item = await createSpreadsheet(
+            trimmedTitle,
+            getFolderIdForDb(),
+            expiresAt
+          );
+          toast.success("Planilha criada! Abrindo editor...");
           openTab(item);
           handleClose();
         }
@@ -156,6 +232,7 @@ export function NewEntityModal({ open, onClose, kind }: NewEntityModalProps) {
     folder: FolderPlus,
     reminder: Bell,
     diagram: PenLine,
+    spreadsheet: Table2,
   };
 
   const Icon = icons[kind];
@@ -203,13 +280,22 @@ export function NewEntityModal({ open, onClose, kind }: NewEntityModalProps) {
       inputLabel: "Nome do diagrama",
       placeholder: "Arquitetura do sistema, Fluxo de cadastro...",
     },
+    spreadsheet: {
+      title: "Nova planilha",
+      desc: "Crie planilhas com linhas e colunas editáveis para dados estruturados",
+      inputLabel: "Nome da planilha",
+      placeholder: "Orçamento, Lista de tarefas, Inventário...",
+    },
   };
 
   const config = labels[kind];
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && handleClose()}>
-      <DialogContent showClose={false} className="p-0 overflow-hidden max-w-md w-[calc(100vw-2rem)] sm:w-full">
+      <DialogContent
+        showClose={false}
+        className="p-0 overflow-hidden max-w-md w-[calc(100vw-2rem)] sm:w-full"
+      >
         <div className="max-h-[90vh] overflow-y-auto">
         <div className="flex items-center gap-3 border-b border-[var(--border)] px-5 py-4">
           <div
@@ -237,7 +323,8 @@ export function NewEntityModal({ open, onClose, kind }: NewEntityModalProps) {
         <div className="p-5 flex flex-col gap-4">
           <div>
             <label className="text-sm font-medium text-[var(--foreground)]">
-              {config.inputLabel} <span className="text-[var(--danger)]">*</span>
+              {config.inputLabel}{" "}
+              <span className="text-[var(--danger)]">*</span>
             </label>
             <Input
               autoFocus
@@ -252,7 +339,10 @@ export function NewEntityModal({ open, onClose, kind }: NewEntityModalProps) {
           {kind === "folder" && (
             <div>
               <label className="text-sm font-medium text-[var(--foreground)]">
-                Cor da pasta <span className="text-xs text-[var(--foreground-subtle)] font-normal">(Opcional)</span>
+                Cor da pasta{" "}
+                <span className="text-xs text-[var(--foreground-subtle)] font-normal">
+                  (Opcional)
+                </span>
               </label>
               <div className="mt-1.5">
                 <FolderColorPicker
@@ -294,7 +384,8 @@ export function NewEntityModal({ open, onClose, kind }: NewEntityModalProps) {
               </div>
               <div>
                 <label className="text-sm font-medium text-[var(--foreground)]">
-                  Data e hora do envio <span className="text-[var(--danger)]">*</span>
+                  Data e hora do envio{" "}
+                  <span className="text-[var(--danger)]">*</span>
                 </label>
                 <input
                   type="datetime-local"
@@ -318,9 +409,15 @@ export function NewEntityModal({ open, onClose, kind }: NewEntityModalProps) {
                     {languageLabel(language)}
                     <ChevronDown className="h-3.5 w-3.5 text-[var(--foreground-subtle)]" />
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="start" className="w-[380px] max-h-60 overflow-y-auto">
+                  <DropdownMenuContent
+                    align="start"
+                    className="w-[380px] max-h-60 overflow-y-auto"
+                  >
                     {SNIPPET_LANGUAGES.map((lang) => (
-                      <DropdownMenuItem key={lang.id} onSelect={() => setLanguage(lang.id)}>
+                      <DropdownMenuItem
+                        key={lang.id}
+                        onSelect={() => setLanguage(lang.id)}
+                      >
                         {lang.label}
                       </DropdownMenuItem>
                     ))}
@@ -339,15 +436,20 @@ export function NewEntityModal({ open, onClose, kind }: NewEntityModalProps) {
                 className="mt-1 h-4 w-4 rounded border-[var(--border)] text-[var(--primary)] focus:ring-[var(--primary)] bg-[var(--surface)] outline-none cursor-pointer"
               />
               <div className="flex-1 select-none">
-                <span className="text-sm font-medium text-[var(--foreground)]">Arquivo temporário</span>
+                <span className="text-sm font-medium text-[var(--foreground)]">
+                  Arquivo temporário
+                </span>
                 <p className="text-xs text-[var(--foreground-subtle)] mt-0.5">
-                  Após passar o tempo configurado, o arquivo é apagado automaticamente.
+                  Após passar o tempo configurado, o arquivo é apagado
+                  automaticamente.
                 </p>
               </div>
             </label>
             {isTemporary && (
               <div className="mt-2 pl-6">
-                <label className="text-xs font-medium text-[var(--foreground-subtle)]">Tempo de expiração</label>
+                <label className="text-xs font-medium text-[var(--foreground-subtle)]">
+                  Tempo de expiração
+                </label>
                 <div className="mt-1 flex gap-2">
                   <Input
                     value={expiryTime.split(" ")[0] || "24"}
@@ -375,7 +477,11 @@ export function NewEntityModal({ open, onClose, kind }: NewEntityModalProps) {
             )}
           </div>
 
-          <Button onClick={handleCreate} disabled={isPending} className="w-full mt-2">
+          <Button
+            onClick={handleCreate}
+            disabled={isPending}
+            className="w-full mt-2"
+          >
             <Plus className="h-4 w-4" />
             {isPending ? "Criando…" : "Criar"}
           </Button>

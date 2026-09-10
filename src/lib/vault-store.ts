@@ -36,6 +36,7 @@ import {
   softDeleteItems as apiSoftDeleteItems,
   createReminder as apiCreateReminder,
   createDiagram as apiCreateDiagram,
+  createSpreadsheet as apiCreateSpreadsheet,
 } from "@/actions/items";
 
 import { mapFolder, mapItem } from "@/lib/mappers";
@@ -92,6 +93,7 @@ interface VaultState {
   createLink: (title: string, folderId: string | null, url: string, expiresAt?: Date | null) => Promise<VaultItem>;
   createReminder: (title: string, noteContent: string | null, reminderAt: Date, folderId: string | null, expiresAt?: Date | null) => Promise<VaultItem>;
   createDiagram: (title: string, folderId: string | null, expiresAt?: Date | null) => Promise<VaultItem>;
+  createSpreadsheet: (title: string, folderId: string | null, expiresAt?: Date | null) => Promise<VaultItem>;
 
   renameEntity: (id: string, name: string, kind: "item" | "folder") => Promise<void>;
   deleteFolder: (id: string) => Promise<void>;
@@ -314,6 +316,18 @@ export const useVaultStore = create<VaultState>((set, get) => ({
 
   createDiagram: async (title, folderId, expiresAt) => {
     const rawItem = await apiCreateDiagram({ title, folderId, expiresAt });
+    const item = mapItem(rawItem);
+    set((state) => ({
+      items: [item, ...state.items],
+      folders: state.folders.map((f) =>
+        f.id === folderId ? { ...f, itemCount: f.itemCount + 1 } : f
+      ),
+    }));
+    return item;
+  },
+
+  createSpreadsheet: async (title, folderId, expiresAt) => {
+    const rawItem = await apiCreateSpreadsheet({ title, folderId, expiresAt });
     const item = mapItem(rawItem);
     set((state) => ({
       items: [item, ...state.items],

@@ -73,7 +73,7 @@ model Item {
   folderId String?
   folder   Folder? @relation(fields: [folderId], references: [id], onDelete: SetNull)
 
-  type        String // IMAGE | PDF | AUDIO | NOTE | SNIPPET | LINK | PASSWORD | REMINDER | DIAGRAM
+  type        String // IMAGE | PDF | AUDIO | NOTE | SNIPPET | LINK | PASSWORD | REMINDER | DIAGRAM | SPREADSHEET
   title       String
   description String?
   tags        String[]
@@ -120,6 +120,9 @@ model Item {
 
   // Diagrama (Excalidraw) — JSON serializado da cena
   diagramData String?
+
+  // Planilha — JSON serializado { rows, cols, cells }
+  spreadsheetData String? @db.Text
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

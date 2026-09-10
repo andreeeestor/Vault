@@ -8,7 +8,8 @@ export type ItemType =
   | "LINK"
   | "PASSWORD"
   | "REMINDER"
-  | "DIAGRAM";
+  | "DIAGRAM"
+  | "SPREADSHEET";
 
 export type LabelColor =
   | "violet"
@@ -86,6 +87,9 @@ export interface VaultItem {
 
   // Diagrama (Excalidraw JSON)
   diagramData?: string | null;
+
+  // Planilha — JSON serializado { rows, cols, cells }
+  spreadsheetData?: string | null;
 
   createdAt: Date;
   updatedAt: Date;

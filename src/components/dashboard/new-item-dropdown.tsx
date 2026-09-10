@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { Plus, Upload, StickyNote, Code2, Link2, KeyRound, FolderPlus, Mic, FileText, Bell, PenLine, BookText, ChevronRight } from "lucide-react";
+import { Plus, Upload, StickyNote, Code2, Link2, KeyRound, FolderPlus, Mic, FileText, Bell, PenLine, BookText, Table2 } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -26,13 +26,13 @@ export function NewItemDropdown() {
   const [hasMasterPass, setHasMasterPass] = useState(false);
   const [isEntityModalOpen, setIsEntityModalOpen] = useState(false);
   const [isAudioModalOpen, setIsAudioModalOpen] = useState(false);
-  const [entityKind, setEntityKind] = useState<"note" | "document" | "snippet" | "link" | "folder" | "reminder" | "diagram">("note");
+  const [entityKind, setEntityKind] = useState<"note" | "document" | "snippet" | "link" | "folder" | "reminder" | "diagram" | "spreadsheet">("note");
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const currentFolderId = useVaultStore((s) => s.currentFolderId);
   const addItem = useVaultStore((s) => s.addItem);
 
-  const openEntityModal = (kind: "note" | "document" | "snippet" | "link" | "folder" | "reminder" | "diagram") => {
+  const openEntityModal = (kind: "note" | "document" | "snippet" | "link" | "folder" | "reminder" | "diagram" | "spreadsheet") => {
     setEntityKind(kind);
     setIsEntityModalOpen(true);
   };
@@ -158,6 +158,10 @@ export function NewItemDropdown() {
 
           <DropdownMenuItem onSelect={() => openEntityModal("diagram")}>
             <PenLine className="h-4 w-4" /> Novo diagrama
+          </DropdownMenuItem>
+
+          <DropdownMenuItem onSelect={() => openEntityModal("spreadsheet")}>
+            <Table2 className="h-4 w-4" /> Nova planilha
           </DropdownMenuItem>
           
           <DropdownMenuSeparator />
