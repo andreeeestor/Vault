@@ -1,7 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import { Star, Archive, Trash2, FolderInput, Share2, Save } from "lucide-react";
+import {
+  Star,
+  Archive,
+  Trash2,
+  FolderInput,
+  Share2,
+  Save,
+  PanelRightClose,
+} from "lucide-react";
 import type { VaultItem } from "@/types";
 import { ITEM_TYPE_META } from "@/lib/item-meta";
 import { formatBytes, formatRelativeDate, labelColorHex } from "@/lib/utils";
@@ -11,7 +19,13 @@ import { useVaultStore } from "@/lib/vault-store";
 import { MoveModal } from "./move-modal";
 import { toast } from "sonner";
 
-export function ItemDetailSidebar({ item }: { item: VaultItem }) {
+export function ItemDetailSidebar({
+  item,
+  onClose,
+}: {
+  item: VaultItem;
+  onClose?: () => void;
+}) {
   const toggleFavorite = useVaultStore((s) => s.toggleFavorite);
   const toggleArchive = useVaultStore((s) => s.toggleArchive);
   const softDelete = useVaultStore((s) => s.softDelete);
@@ -24,8 +38,18 @@ export function ItemDetailSidebar({ item }: { item: VaultItem }) {
 
   return (
     <aside className="flex w-full lg:w-[300px] shrink-0 flex-col gap-6 overflow-y-auto border-t lg:border-t-0 lg:border-l border-[var(--border)] bg-[var(--background-elevated)] p-4 sm:p-5">
-      <div>
+      <div className="flex items-center justify-between">
         <h2 className="text-heading text-base font-semibold text-[var(--foreground)]">Detalhes</h2>
+        {onClose && (
+          <button
+            onClick={onClose}
+            title="Fechar painel de detalhes"
+            aria-label="Fechar painel de detalhes"
+            className="flex h-6 w-6 items-center justify-center rounded-md text-[var(--foreground-muted)] transition-colors hover:bg-[var(--surface-hover)] hover:text-[var(--foreground)]"
+          >
+            <PanelRightClose className="h-4 w-4" />
+          </button>
+        )}
       </div>
 
       <dl className="flex flex-col gap-3 text-sm">

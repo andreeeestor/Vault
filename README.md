@@ -62,6 +62,9 @@ Principais fluxos integrados e funcionais:
 - ✅ **Anotações Integradas em Qualquer Tipo de Arquivo:** Todos os itens (`LINK`, `IMAGE`, `PDF`, `AUDIO`, `SNIPPET`, `DIAGRAM`, `PASSWORD`, `REMINDER`) contam com abas de visualização (Conteúdo, Anotações e Dividido/Empilhado) para adicionar instruções, receitas e notas.
 - ✅ **Tratamento de Imagens em Notas:** Inserção por colagem (`Cmd+V` / `Ctrl+V`), arrastar e soltar (drag & drop) ou botão no editor, com compressão automática em Canvas e conversão para Data URLs persistentes (evitando imagens quebradas).
 - ✅ **Editor de Diagramas (Excalidraw):** Criação e edição de quadros vetoriais, mapas mentais e esquemas visuais com salvamento e exportação.
+- ✅ **Editor de Planilhas:** Criação e edição de planilhas (`SPREADSHEET`) com células, linhas e colunas serializadas em JSON (`spreadsheetData`).
+- ✅ **Edição Confortável de Notas/Documentos:** A tecla `Tab` indenta o texto (ou aninha itens de lista) dentro do editor em vez de tirar o foco — `Shift+Tab` reverte. Botões de lista (marcadores e numerada) disponíveis na barra de ferramentas fixa da nota.
+- ✅ **Painel de Detalhes Colapsável:** A sidebar de detalhes do item (tipo, pasta, salvar alterações, ações) pode ser fechada e reaberta com um clique, liberando mais espaço para o conteúdo.
 - ✅ **Mover Arquivos e Pastas:** Modal de navegação hierárquica (`MoveModal`) com busca rápida, prevenção de loops cíclicos e integração com menus de contexto, toolbar em lote e sidebar.
 - ✅ **Expiração e Limpeza Automática:** Definição de validade para arquivos e notas temporárias (`expiresAt`), com limpeza automática diária por Cron Job (`/api/cron/cleanup`) otimizado para o Vercel Hobby.
 - ✅ **Cofre de Senhas Criptografado:** Criptografia AES-256-GCM em tempo real com derivação de chave PBKDF2. Inclui criação da senha mestra inicial, cadastro de segredos criptografados, revelação segura e troca de senha mestra.
@@ -75,6 +78,7 @@ Principais fluxos integrados e funcionais:
 
 - Pastas aninhadas infinitamente, com uma pasta raiz fixa ("Meu Vault") por usuário.
 - **Navegação por Abas**: Abra múltiplos arquivos simultaneamente em abas no topo da área de trabalho, troque de aba instantaneamente sem perder o foco ou o progresso não salvo.
+- **Painel de Detalhes Colapsável**: A sidebar de detalhes do arquivo aberto (tipo, pasta, tamanho, botão de salvar alterações e ações) pode ser fechada pelo botão no próprio painel e reaberta pela alça na borda direita da área de trabalho.
 - **Menções `@` estilo Notion**: Digite `@` no conteúdo de qualquer documento para mencionar e criar links diretos para outros arquivos ou pastas do Vault. Clicar na menção abre o arquivo na aba ou navega para a pasta.
 - Breadcrumb clicável no topo, incluindo suporte a **soltar itens diretamente em um nível do breadcrumb** para mover para cima na hierarquia.
 - **Modal de Mover (`MoveModal`)**: Mova um ou múltiplos arquivos e pastas selecionadas para qualquer nível de pasta com busca integrada e prevenção contra mover uma pasta para dentro de si mesma.
@@ -90,9 +94,10 @@ Principais fluxos integrados e funcionais:
 
 | Tipo | Armazenamento | Preview / Editor |
 |---|---|---|
-| Nota | Banco (HTML/Markdown) | Editor Rich Text com suporte a imagens, formatação, exportação (PDF/Word/MD) e `@mentions` |
+| Nota | Banco (HTML/Markdown) | Editor Rich Text com suporte a imagens, listas, indentação com `Tab`, formatação, exportação (PDF/Word/MD) e `@mentions` |
 | Snippet | Banco (código) | **Monaco Editor real**, com syntax highlight, 17 linguagens, auto-save e tema customizado |
 | Diagrama | Banco (JSON Excalidraw) | **Excalidraw vetorial real** para criação de quadros, esquemas e desenhos |
+| Planilha | Banco (JSON de células) | Editor de planilhas com linhas, colunas e células editáveis |
 | Link | Banco (URL) | Card com preview estilo OG (título, descrição, imagem) + bloco de anotações anexado |
 | Imagem | Cloudinary / Base64 | Grid masonry + visualizador com zoom + notas anexadas |
 | PDF | Cloudinary | `<iframe>` do próprio arquivo + notas anexadas |
@@ -147,7 +152,7 @@ Definido em `prisma/schema.prisma`. Modelos principais:
 
 - **User** — dados de conta, hash da senha mestra do cofre (`vaultMasterKeyHash`) e salt (`vaultSalt`), plano, uso/limite de armazenamento, campos de integração com Stripe.
 - **Folder** — pastas com auto-relacionamento (`parentId` → `FolderHierarchy`), cor, ícone, flag `isRoot`.
-- **Item** — modelo unificado para todos os tipos (`NOTE`, `SNIPPET`, `DIAGRAM`, `IMAGE`, `PDF`, `AUDIO`, `LINK`, `PASSWORD`, `REMINDER`), com suporte a `noteContent`, `diagramData`, `expiresAt`, `reminderAt`, `isDeleted`/`deletedAt`.
+- **Item** — modelo unificado para todos os tipos (`NOTE`, `SNIPPET`, `DIAGRAM`, `SPREADSHEET`, `IMAGE`, `PDF`, `AUDIO`, `LINK`, `PASSWORD`, `REMINDER`), com suporte a `noteContent`, `diagramData`, `spreadsheetData`, `expiresAt`, `reminderAt`, `isDeleted`/`deletedAt`.
 - **Account** / **Session** / **VerificationToken** — modelos padrão do adapter Prisma do NextAuth.
 
 ---
@@ -264,6 +269,8 @@ A persistência do app é totalmente dinâmica. O front-end utiliza **Zustand** 
 - [x] Conectar todas as telas principais ao Postgres via Prisma (pastas, itens, notas, snippets, senhas e configurações)
 - [x] Sistema de abas estilo VS Code com Keep-Alive e guardas contra perda de alterações não salvas
 - [x] Editor de diagramas vetoriais baseado em Excalidraw (`DIAGRAM`)
+- [x] Editor de planilhas (`SPREADSHEET`) com dados serializados em JSON
+- [x] Indentação com `Tab`/`Shift+Tab` nos editores de nota e documento, botões de lista na nota e painel de detalhes colapsável
 - [x] Anotações integradas em todos os tipos de itens (`LINK`, `IMAGE`, `PDF`, `AUDIO`, etc.)
 - [x] Menções e interlinking entre arquivos e pastas (`@mention` estilo Notion)
 - [x] Tratamento de colagem (paste) e arrastar/soltar (drop) de imagens com auto-compressão

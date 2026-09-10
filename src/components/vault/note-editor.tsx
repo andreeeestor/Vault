@@ -642,6 +642,29 @@ export function NoteEditor({
         setMentionOpen(false);
         return;
       }
+
+      // Tab indenta o texto (ou o item de lista) em vez de tirar o foco do editor.
+      // Shift+Tab remove a indentação / remove o aninhamento da lista.
+      if (e.key === "Tab" && !readOnly) {
+        e.preventDefault();
+        const sel = window.getSelection();
+        const startNode =
+          sel && sel.rangeCount > 0 ? sel.getRangeAt(0).startContainer : null;
+        const listEl =
+          startNode instanceof Element
+            ? startNode.closest("li")
+            : startNode?.parentElement?.closest("li") ?? null;
+        if (listEl) {
+          document.execCommand(e.shiftKey ? "outdent" : "indent");
+        } else if (!e.shiftKey) {
+          document.execCommand("insertHTML", false, "&nbsp;&nbsp;&nbsp;&nbsp;");
+        } else {
+          document.execCommand("outdent");
+        }
+        handleInput();
+        return;
+      }
+
       const mod = e.metaKey || e.ctrlKey;
       if (!mod) return;
 
@@ -665,6 +688,8 @@ export function NoteEditor({
       selectedIndex,
       insertMention,
       handleSave,
+      readOnly,
+      handleInput,
     ]
   );
 
@@ -745,6 +770,7 @@ export function NoteEditor({
           wordCount={wordCount}
           onToggleReadOnly={() => setReadOnly((v) => !v)}
           onAddImage={() => imageInputRef.current?.click()}
+          onFormat={execFormat}
           onExportMd={handleExportMd}
           onExportDocx={handleExportDocx}
           onExportPdf={handleExportPdf}
@@ -861,6 +887,7 @@ function StaticToolbar({
   wordCount,
   onToggleReadOnly,
   onAddImage,
+  onFormat,
   onExportMd,
   onExportDocx,
   onExportPdf,
@@ -871,6 +898,7 @@ function StaticToolbar({
   wordCount: number;
   onToggleReadOnly: () => void;
   onAddImage: () => void;
+  onFormat: (command: string, value?: string) => void;
   onExportMd: () => void;
   onExportDocx: () => void;
   onExportPdf: () => void;
@@ -899,13 +927,29 @@ function StaticToolbar({
         </button>
 
         {!readOnly && (
-          <button
-            onClick={onAddImage}
-            className="flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-semibold text-foreground-muted transition-colors hover:bg-surface-hover"
-          >
-            <ImageIcon className="h-3.5 w-3.5 text-primary" />
-            Inserir Imagem
-          </button>
+          <>
+            <button
+              onClick={onAddImage}
+              className="flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-semibold text-foreground-muted transition-colors hover:bg-surface-hover"
+            >
+              <ImageIcon className="h-3.5 w-3.5 text-primary" />
+              Inserir Imagem
+            </button>
+            <button
+              onClick={() => onFormat("insertUnorderedList")}
+              className="flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-semibold text-foreground-muted transition-colors hover:bg-surface-hover"
+            >
+              <List className="h-3.5 w-3.5 text-primary" />
+              Lista
+            </button>
+            <button
+              onClick={() => onFormat("insertOrderedList")}
+              className="flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-semibold text-foreground-muted transition-colors hover:bg-surface-hover"
+            >
+              <ListOrdered className="h-3.5 w-3.5 text-primary" />
+              Lista numerada
+            </button>
+          </>
         )}
 
         <SaveIndicator isDirty={isDirty} isPending={isPending} />

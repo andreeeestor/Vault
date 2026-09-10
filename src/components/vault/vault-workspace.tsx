@@ -1,8 +1,13 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { LayoutPanelLeft, Folder as FolderIcon, PanelLeftClose } from "lucide-react";
+import {
+  LayoutPanelLeft,
+  Folder as FolderIcon,
+  PanelLeftClose,
+  PanelRightOpen,
+} from "lucide-react";
 import { useVaultStore, getChildFolders, getItemsInFolder } from "@/lib/vault-store";
 import { ITEM_TYPE_META } from "@/lib/item-meta";
 import { DashboardHeader } from "@/components/dashboard/header";
@@ -86,6 +91,9 @@ export function VaultWorkspace({ folderId }: { folderId: string }) {
   const activeItem = activeTabId ? items.find((i) => i.id === activeTabId) ?? null : null;
   const hasTabs = openTabs.length > 0;
 
+  // Painel de detalhes do item (colapsável)
+  const [isDetailsOpen, setIsDetailsOpen] = useState(true);
+
   return (
     /*
       VaultWorkspace fills the flex-1 column in DashboardLayout.
@@ -158,10 +166,24 @@ export function VaultWorkspace({ folderId }: { folderId: string }) {
                     <div className="relative min-w-0 flex-1 overflow-hidden">
                       <ItemViewer item={item} />
                     </div>
-                    {/* Details sidebar (hidden on small screens) */}
-                    <div className="hidden lg:block">
-                      <ItemDetailSidebar item={item} />
-                    </div>
+                    {/* Details sidebar (hidden on small screens, colapsável) */}
+                    {isDetailsOpen ? (
+                      <div className="hidden lg:block">
+                        <ItemDetailSidebar
+                          item={item}
+                          onClose={() => setIsDetailsOpen(false)}
+                        />
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => setIsDetailsOpen(true)}
+                        title="Mostrar painel de detalhes"
+                        aria-label="Mostrar painel de detalhes"
+                        className="hidden h-full w-9 shrink-0 items-start justify-center border-l border-[var(--border)] bg-[var(--background-elevated)] pt-4 text-[var(--foreground-muted)] transition-colors hover:bg-[var(--surface-hover)] hover:text-[var(--foreground)] lg:flex"
+                      >
+                        <PanelRightOpen className="h-4 w-4" />
+                      </button>
+                    )}
                   </div>
                 );
               })}

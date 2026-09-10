@@ -309,6 +309,31 @@ export function DocumentEditor({ item }: { item: VaultItem }) {
     handleInput();
   };
 
+  // Tab indenta o texto (ou o item de lista) em vez de tirar o foco do editor.
+  // Shift+Tab remove a indentação / remove o aninhamento da lista.
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent) => {
+      if (e.key !== "Tab") return;
+      e.preventDefault();
+      const sel = window.getSelection();
+      const startNode =
+        sel && sel.rangeCount > 0 ? sel.getRangeAt(0).startContainer : null;
+      const listEl =
+        startNode instanceof Element
+          ? startNode.closest("li")
+          : startNode?.parentElement?.closest("li") ?? null;
+      if (listEl) {
+        document.execCommand(e.shiftKey ? "outdent" : "indent");
+      } else if (!e.shiftKey) {
+        document.execCommand("insertHTML", false, "&nbsp;&nbsp;&nbsp;&nbsp;");
+      } else {
+        document.execCommand("outdent");
+      }
+      handleInput();
+    },
+    [handleInput]
+  );
+
   const handleExportDocx = useCallback(() => {
     if (!editorRef.current) return;
     exportToDocx(item.title, editorRef.current.innerHTML);
@@ -444,6 +469,7 @@ export function DocumentEditor({ item }: { item: VaultItem }) {
                 isEditorFocusedRef.current = false;
               }}
               onInput={handleInput}
+              onKeyDown={handleKeyDown}
               onPaste={handlePaste}
               onDrop={handleDrop}
               spellCheck
